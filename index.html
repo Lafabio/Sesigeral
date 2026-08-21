@@ -1430,6 +1430,7 @@ function showGeradorView() {
         }))
       }));
       frame.contentWindow.postMessage({ tipo: 'sesigeral-planos', planos }, '*');
+      frame.contentWindow.postMessage({ tipo: 'sesigeral-habilidades', habilidades: (typeof HABILIDADES_DATA !== 'undefined' ? HABILIDADES_DATA : []) }, '*');
     } catch (e) { /* noop */ }
   });
 }

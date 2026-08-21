@@ -22,6 +22,9 @@
         window.SESIGERAL_PLANOS=d.planos;
         if(typeof renderPlanoSelect==='function')renderPlanoSelect();
       }
+      if(d&&d.tipo==='sesigeral-habilidades'&&Array.isArray(d.habilidades)){
+        window.SESI_HABILIDADES=d.habilidades;
+      }
     }catch(e){}
   });
 })();
@@ -2090,6 +2093,19 @@ async function buscarBncc(){
   btn.disabled=true; btn.textContent='⏳…';
   clearBnccDesc();
 
+  // ── 1) Busca na base SESI (mesma base dos planos de aula) ──
+  const sesi = (window.SESI_HABILIDADES||[]).find(h=>String(h.codigo||'').trim().toUpperCase()===codigo);
+  if(sesi){
+    const desc = sesi.habilidade||('Habilidade '+codigo);
+    bnccDescCache = {codigo, descricao: desc};
+    const el = document.getElementById('bnccDesc');
+    el.style.display='block';
+    el.innerHTML=`<strong>${esc(codigo)}${sesi.componente?' · '+esc(sesi.componente):''}:</strong> ${esc(desc)} <span style="color:var(--mu);font-size:10px;">(base SESI)</span>`;
+    btn.disabled=false; btn.textContent='🔍 Buscar';
+    return;
+  }
+
+  // ── 2) Fallback: API BNCC ──
   // ── Infere nível e disciplina pelo código ──
   // Formato EF + ano(2) + disciplina(2-3) + num(2) = Fundamental
   // EM + ano(2) + disciplina(2-3) + num(3) = Médio
