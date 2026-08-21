@@ -18,6 +18,10 @@
     try{
       var d=ev.data||{};
       if(d&&d.tipo==='sesigeral-chave'&&d.chave){localStorage.setItem('groqApiKey',d.chave);}
+      if(d&&d.tipo==='sesigeral-planos'&&Array.isArray(d.planos)){
+        window.SESIGERAL_PLANOS=d.planos;
+        if(typeof renderPlanoSelect==='function')renderPlanoSelect();
+      }
     }catch(e){}
   });
 })();
@@ -290,6 +294,11 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     </div>
   </div>
   <div class="sb-s">
+    <div class="slbl">Plano de Aula Vinculado</div>
+    <div class="fl"><select id="selPlano" onchange="aplicarPlanoVinculado()"><option value="">— Livre (sem vínculo) —</option></select></div>
+    <div style="font-size:10px;color:var(--mu);line-height:1.5" id="planoHabInfo"></div>
+  </div>
+  <div class="sb-s">
     <div class="slbl">Tipo de Prova</div>
     <div class="tipo-tg" id="tipoTg">
       <button class="active" onclick="setTipoProva('efaf',this)">Fundamental (A–D)</button>
@@ -360,6 +369,15 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
       <div>
         <label style="font-size:10.5px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px;">Objeto de Aprendizagem</label>
         <input type="text" id="iaObjeto" placeholder="Ex: Fotossíntese, Frações, Revolução Industrial…" style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;">
+      </div>
+
+      <!-- HABILIDADE DO PLANO VINCULADO (Sesigeral) -->
+      <div id="iaPlanoBloco" style="display:none;">
+        <label style="font-size:10.5px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px;">📋 Habilidade do plano vinculado</label>
+        <select id="iaPlanoHab" onchange="usarHabilidadeDoPlano()" style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid #bbf7d0;border-radius:6px;padding:7px 10px;background:#f0fdf4;color:var(--tx);">
+          <option value="">— Selecione —</option>
+        </select>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px;">Preenche automaticamente objeto, código BNCC e objetivo de aprendizagem.</div>
       </div>
 
       <!-- HABILIDADE BNCC — painel completo com abas -->
@@ -1642,6 +1660,77 @@ function carregarAvaliacao(inp){
 }
 
 // ══════════════════════════════════════════════════════════════
+// INTEGRAÇÃO SESIGERAL — PLANOS DE AULA VINCULADOS
+// ══════════════════════════════════════════════════════════════
+function renderPlanoSelect(){
+  const sel=document.getElementById('selPlano'); if(!sel)return;
+  const planos=window.SESIGERAL_PLANOS||[];
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Livre (sem vínculo) —</option>'+planos.map((p,i)=>{
+    const n=(p.habilidades||[]).length;
+    const lbl=[(p.disciplina||'Sem disciplina'),(p.turma?'Turma '+p.turma:''),(p.trimestre?p.trimestre+'º trim':'')].filter(Boolean).join(' · ');
+    return '<option value="'+i+'">'+lbl+' — '+n+' hab.</option>';
+  }).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur; else sel.value='';
+}
+function aplicarPlanoVinculado(){
+  const sel=document.getElementById('selPlano');
+  const info=document.getElementById('planoHabInfo');
+  const i=parseInt(sel.value,10);
+  const planos=window.SESIGERAL_PLANOS||[];
+  window.PLANO_VINCULADO=null;
+  if(isNaN(i)||!planos[i]){ info.innerHTML=''; autoSave(); return; }
+  const p=planos[i];
+  window.PLANO_VINCULADO=p;
+  try{
+    if(p.disciplina){ if(!disciplinas.includes(p.disciplina)) addDiscItem(p.disciplina); document.getElementById('selDisc').value=p.disciplina; }
+    const mapaSerie={'1º ano':'1ª Série – EM','2º ano':'2ª Série – EM','3º ano':'3ª Série – EM'};
+    const serie=mapaSerie[p.anoSerie]||'';
+    if(serie) document.getElementById('selSerie').value=serie;
+    if(p.turma) document.getElementById('selTurma').value=p.turma;
+    if(p.trimestre) document.getElementById('selTrim').value=p.trimestre+'º';
+  }catch(e){}
+  const habs=p.habilidades||[];
+  info.innerHTML=habs.length
+    ? '<strong style="color:var(--ok)">'+habs.length+' habilidade(s)</strong> vinculada(s). Ao gerar questão com IA, escolha uma no campo "Habilidade do plano".'
+    : 'Este plano não tem habilidades cadastradas.';
+  const selHab=document.getElementById('iaPlanoHab');
+  if(selHab){
+    selHab.innerHTML='<option value="">— Selecione —</option>'+habs.map((h,j)=>{
+      const txt=(h.codigo||('H'+(j+1)))+' — '+String(h.habilidade||'').slice(0,70)+(String(h.habilidade||'').length>70?'…':'');
+      return '<option value="'+j+'">'+txt+'</option>';
+    }).join('');
+  }
+  const bloco=document.getElementById('iaPlanoBloco');
+  if(bloco) bloco.style.display=habs.length?'block':'none';
+  autoSave();
+}
+function usarHabilidadeDoPlano(){
+  const sel=document.getElementById('iaPlanoHab');
+  const j=parseInt(sel.value,10);
+  const p=window.PLANO_VINCULADO;
+  if(!p||isNaN(j)||!(p.habilidades||[])[j])return;
+  const h=p.habilidades[j];
+  document.getElementById('iaObjeto').value=h.objetivoAprendizagem||h.objetoConhecimento||h.habilidade||'';
+  document.getElementById('iaBnccCodigo').value=h.codigo||'';
+  clearBnccDesc();
+  if(h.codigo&&typeof buscarBncc==='function')buscarBncc();
+}
+function contextoPlanoVinculado(){
+  const p=window.PLANO_VINCULADO; if(!p)return '';
+  const sel=document.getElementById('iaPlanoHab');
+  const j=sel?parseInt(sel.value,10):NaN;
+  const h=(p.habilidades||[])[j];
+  if(!h)return '';
+  let ctx='\nPLANO DE AULA VINCULADO (elabore a questão alinhada a este planejamento):';
+  ctx+='\n- Habilidade BNCC: '+(h.codigo||'—')+(h.habilidade?' — '+h.habilidade:'');
+  if(h.objetivoAprendizagem)ctx+='\n- Objetivo de aprendizagem: '+h.objetivoAprendizagem;
+  if(h.objetoConhecimento)ctx+='\n- Objeto de conhecimento: '+h.objetoConhecimento;
+  if(p.disciplina)ctx+='\n- Disciplina/Turma: '+(p.disciplina+(p.anoSerie?' ('+p.anoSerie+')':''));
+  return ctx;
+}
+
+// ══════════════════════════════════════════════════════════════
 // IA GROQ — GERAÇÃO DE QUESTÕES COM BNCC
 // ══════════════════════════════════════════════════════════════
 let iaNivel = 'fundamental';
@@ -2115,7 +2204,7 @@ REGRAS OBRIGATÓRIAS PARA O ENUNCIADO:
   // ─── PROMPT MÚLTIPLA ESCOLHA ──────────────────────────────────────────────
   const promptMultipla = `Você é um elaborador expert em questões pedagógicas e de vestibular.
 ESTILO: ${formatoCtx}
-TEMA/OBJETO: "${objeto}"${bnccCtx}
+TEMA/OBJETO: "${objeto}"${bnccCtx}${contextoPlanoVinculado()}
 DIFICULDADE: ${iaDificuldade}
 NÚMERO DE ALTERNATIVAS: exatamente ${numAlts} (${letras.join(', ')})
 ${regrasEnunciado}
@@ -2137,7 +2226,7 @@ ATENÇÃO: apenas UMA correta. Varie o gabarito (não sempre B). Distratores dev
   // ─── PROMPT SOMATÓRIA (7 itens: 01 02 04 08 16 32 64 — máx 127) ─────────
   const promptSomatoria = `Você é um elaborador expert em questões de SOMATÓRIA.
 ESTILO: ${formatoCtx}
-TEMA/OBJETO: "${objeto}"${bnccCtx}
+TEMA/OBJETO: "${objeto}"${bnccCtx}${contextoPlanoVinculado()}
 DIFICULDADE: ${iaDificuldade}
 ${regrasEnunciado}
 
@@ -2169,7 +2258,7 @@ ATENÇÃO: use EXATAMENTE 7 itens. Textos NÃO devem incluir o valor numérico. 
   // ─── PROMPT DISCURSIVA ────────────────────────────────────────────────────
   const promptDiscursiva = `Você é um elaborador expert em questões dissertativas.
 ESTILO: ${formatoCtx}
-TEMA/OBJETO: "${objeto}"${bnccCtx}
+TEMA/OBJETO: "${objeto}"${bnccCtx}${contextoPlanoVinculado()}
 DIFICULDADE: ${iaDificuldade}
 ${regrasEnunciado}
 

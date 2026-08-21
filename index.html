@@ -1415,6 +1415,21 @@ function showGeradorView() {
     try {
       const chave = localStorage.getItem('groq_api_key') || '';
       if (chave) frame.contentWindow.postMessage({ tipo: 'sesigeral-chave', chave }, '*');
+      const planos = (state.dados.planos || []).map((p) => ({
+        disciplina: p.identificacao?.disciplina || '',
+        anoSerie: p.identificacao?.anoSerie || '',
+        turma: p.identificacao?.turma || '',
+        trimestre: p.identificacao?.trimestre || null,
+        atualizadoEm: p.atualizadoEm || '',
+        habilidades: (p.habilidades || []).map((h) => ({
+          codigo: h.codigo || '',
+          habilidade: h.habilidade || '',
+          componente: h.componente || '',
+          objetoConhecimento: (p.objetoConhecimentoPorHabilidade || {})[h.codigo] || '',
+          objetivoAprendizagem: p.avaliacao?.rubricasPorHabilidade?.[h.codigo]?.objetivoAprendizagem || ''
+        }))
+      }));
+      frame.contentWindow.postMessage({ tipo: 'sesigeral-planos', planos }, '*');
     } catch (e) { /* noop */ }
   });
 }
