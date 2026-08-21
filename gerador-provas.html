@@ -396,14 +396,14 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
         <!-- ABA: Código direto -->
         <div id="bnccPanelCodigo">
           <div style="display:flex;gap:8px;">
-            <input type="text" id="iaBnccCodigo" placeholder="Ex: EF06CI01, EM13CNT101…" style="flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;" oninput="clearBnccDesc()">
+            <input type="text" id="iaBnccCodigo" placeholder="Código da habilidade (ex: do plano vinculado)…" style="flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;" oninput="clearBnccDesc()">
             <button onclick="buscarBncc()" style="background:var(--ac);color:#fff;border:none;font-size:11px;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;" id="btnBuscarBncc">🔍 Buscar</button>
           </div>
           <div id="bnccDesc" style="margin-top:6px;font-size:11px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 10px;display:none;"></div>
           <div id="bnccErro" style="margin-top:6px;font-size:11px;color:var(--dn);display:none;"></div>
-          <!-- Sugestões -->
-          <div id="bnccSugestoes" style="margin-top:8px;">
-            <span style="font-size:10px;color:var(--mu);">Exemplos: </span>
+          <!-- Sugestões: habilidades do plano vinculado -->
+          <div id="bnccSugestoes" style="margin-top:8px;display:none;">
+            <span style="font-size:10px;color:var(--mu);">Habilidades do plano: </span>
             <span id="bnccExemplos" style="font-size:10px;cursor:pointer;"></span>
           </div>
         </div>
@@ -1703,6 +1703,7 @@ function aplicarPlanoVinculado(){
   }
   const bloco=document.getElementById('iaPlanoBloco');
   if(bloco) bloco.style.display=habs.length?'block':'none';
+  if(typeof atualizarBnccExemplos==='function')atualizarBnccExemplos();
   autoSave();
 }
 function usarHabilidadeDoPlano(){
@@ -1755,11 +1756,6 @@ function setFormatoIA(fmt, btn){
   document.getElementById('fmtDesc').textContent = FORMATO_DESC[fmt]||'';
   // ENEM e UDESC sugerem somatória? Não — apenas mostram descrição
 }
-
-const BNCC_EXEMPLOS = {
-  fundamental: ['EF06CI01','EF07CI01','EF08CI10','EF09CI14','EF06MA01','EF07MA01','EF06HI01','EF07LP01'],
-  medio:       ['EM13CNT101','EM13MAT101','EM13LGG101','EM13CHS101','EM13CNT301','EM13MAT303']
-};
 
 // Disciplinas disponíveis por nível
 const BNCC_DISCIPLINAS = {
@@ -2043,13 +2039,17 @@ function setDifIA(dif, btn){
 }
 
 function atualizarBnccExemplos(){
-  const exemplos = BNCC_EXEMPLOS[iaNivel]||[];
+  const wrap = document.getElementById('bnccSugestoes');
   const el = document.getElementById('bnccExemplos');
-  el.innerHTML = exemplos.map(c=>`<span onclick="usarExemploBncc('${c}')" style="background:var(--acbg);padding:2px 6px;border-radius:4px;margin-right:4px;border:1px solid #bfdbfe;display:inline-block;margin-bottom:3px;color:var(--ac);">${c}</span>`).join('');
+  const habs = (window.PLANO_VINCULADO&&window.PLANO_VINCULADO.habilidades)||[];
+  if(!habs.length){ wrap.style.display='none'; el.innerHTML=''; return; }
+  wrap.style.display='block';
+  el.innerHTML = habs.map((h,i)=>`<span onclick="usarHabilidadeDoPlanoIdx(${i})" style="background:var(--acbg);padding:2px 6px;border-radius:4px;margin-right:4px;border:1px solid #bfdbfe;display:inline-block;margin-bottom:3px;color:var(--ac);" title="${(h.habilidade||'').replace(/"/g,'&quot;')}">${h.codigo||('H'+(i+1))}</span>`).join('');
 }
-function usarExemploBncc(codigo){
-  document.getElementById('iaBnccCodigo').value = codigo;
-  clearBnccDesc();
+function usarHabilidadeDoPlanoIdx(i){
+  const sel = document.getElementById('iaPlanoHab');
+  if(sel && [...sel.options].some(o=>o.value===String(i))) sel.value = String(i);
+  usarHabilidadeDoPlano();
 }
 function clearBnccDesc(){
   document.getElementById('bnccDesc').style.display='none';
