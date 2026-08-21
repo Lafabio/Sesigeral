@@ -737,7 +737,7 @@ JSON de resposta:`;
         method: 'POST',
         headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           temperature: 0.5,
           max_tokens: 900,
           messages: [
@@ -2304,7 +2304,7 @@ Responda EXCLUSIVAMENTE em JSON puro, sem markdown:
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         temperature: 0.78,
         max_tokens: 1800,
         messages: [
