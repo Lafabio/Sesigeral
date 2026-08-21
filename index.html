@@ -1407,7 +1407,7 @@ function showGeradorView() {
   content.style.maxWidth = 'none';
   content.style.padding = '0';
   content.appendChild(el(`
-    <iframe id="frame-gerador" src="gerador-provas.html" title="Gerador de Provas"
+    <iframe id="frame-gerador" src="gerador-provas.html?v=${Date.now()}" title="Gerador de Provas"
       style="width:100%;height:calc(100vh - 64px);border:none;display:block;"></iframe>
   `));
   const frame = content.querySelector('#frame-gerador');
