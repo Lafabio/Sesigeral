@@ -1396,6 +1396,29 @@ function showScheduleView() {
   renderScheduleGrid(content);
 }
 
+// ============================================================================
+// Gerador de Provas — aba integrada (iframe)
+// ============================================================================
+function showGeradorView() {
+  renderShell();
+  document.getElementById('action-bar').style.display = 'none';
+  document.getElementById('stepper').style.display = 'none';
+  const content = document.getElementById('view-content');
+  content.style.maxWidth = 'none';
+  content.style.padding = '0';
+  content.appendChild(el(`
+    <iframe id="frame-gerador" src="gerador-provas.html" title="Gerador de Provas"
+      style="width:100%;height:calc(100vh - 64px);border:none;display:block;"></iframe>
+  `));
+  const frame = content.querySelector('#frame-gerador');
+  frame.addEventListener('load', () => {
+    try {
+      const chave = localStorage.getItem('groq_api_key') || '';
+      if (chave) frame.contentWindow.postMessage({ tipo: 'sesigeral-chave', chave }, '*');
+    } catch (e) { /* noop */ }
+  });
+}
+
 function getDiaSemanaNumero(diaPt) {
   const mapa = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5 };
   return mapa[diaPt] || 1;
@@ -3609,6 +3632,7 @@ function renderShell() {
           <button class="theme-toggle" id="btn-tema" title="Alternar tema claro/escuro">${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀' : '☾'}</button>
           <button class="btn-icon" id="btn-dashboard" title="Meus planos">Planos</button>
           <button class="btn-icon" id="btn-grade" title="Grade horária">Grade</button>
+          <button class="btn-icon" id="btn-provas" title="Gerador de Provas">Provas</button>
           <button class="btn-icon" id="btn-config" title="Configurações">Config</button>
           ${USER_NOME ? '<button class="btn-icon" id="btn-sair" title="Sair" style="color:var(--danger);">Sair</button>' : ''}
         </div>
@@ -3626,6 +3650,7 @@ function renderShell() {
 
   document.getElementById('btn-dashboard').addEventListener('click', showDashboard);
   document.getElementById('btn-grade').addEventListener('click', showScheduleView);
+  document.getElementById('btn-provas').addEventListener('click', showGeradorView);
   document.getElementById('btn-config').addEventListener('click', showConfigProfessor);
   document.getElementById('btn-tema').addEventListener('click', (e) => {
     const novoTema = alternarTema();
