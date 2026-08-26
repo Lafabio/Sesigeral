@@ -248,8 +248,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     <div class="slbl">Capa SESI 2026</div>
     <div class="fl"><label>Área do Conhecimento</label><input id="capaArea" placeholder="Ex: CIÊNCIAS DA NATUREZA - BIOLOGIA" oninput="autoSave()"></div>
     <div class="fl"><label>Professor(a)</label><select id="selProf" onchange="autoSave()"><option value="">— Selecione —</option></select></div>
-    <div class="fl"><label>Disciplina (contexto IA)</label><select id="selDisc" onchange="autoSave()"><option value="">— Selecione —</option></select></div>
-    <div class="fl"><label>Turmas (separadas por vírgula)</label><input id="capaTurmas" placeholder="Ex: 101, 102, 201" oninput="autoSave()"></div>
+    <div class="fl"><label>Turma</label><input id="capaTurmas" placeholder="Ex: 101, 102, 201" oninput="autoSave()"></div>
+    <div class="fl"><label>Estudante</label><input id="capaEstudante" placeholder="Nome do(a) estudante" oninput="autoSave()"></div>
     <div class="fl"><label>Data da Prova</label>
       <div class="cal-wrap">
         <button type="button" class="cal-btn" id="calBtn" onclick="toggleCal(event)">Selecionar data…</button>
@@ -592,7 +592,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   renderCal();
   document.addEventListener('click',e=>{ if(!e.target.closest('.cal-wrap')) document.getElementById('calPop').classList.remove('open'); });
   // Restaurar capa do sessionStorage
-  try{ const saved=JSON.parse(sessionStorage.getItem('gp_c')||'null'); if(saved){ const m={capaArea:'s',capaTurmas:'t',capaOrientacoes:'o',capaObjSocioemo:'se',capaObjEdTech:'et',capaRubricasHabs:'r'}; Object.entries(m).forEach(([id,key])=>{ const el=document.getElementById(id); if(el&&saved[key]) el.value=saved[key]; }); } }catch(e){}
+  try{ const saved=JSON.parse(sessionStorage.getItem('gp_c')||'null'); if(saved){ const m={capaArea:'s',capaTurmas:'t',capaOrientacoes:'o',capaObjSocioemo:'se',capaObjEdTech:'et',capaRubricasHabs:'r',capaEstudante:'est'}; Object.entries(m).forEach(([id,key])=>{ const el=document.getElementById(id); if(el&&saved[key]) el.value=saved[key]; }); } }catch(e){}
   try{ const e=sessionStorage.getItem('gp_e'); if(e) document.getElementById('nomeEscola').value=e; }catch(e){}
 });
 
@@ -921,7 +921,7 @@ function setSomat(id,i,f,v){ const q=questoes.find(q=>q.id===id); if(!q)return; 
 function setImg(id,inp){ if(!inp.files[0])return; const r=new FileReader(); r.onload=e=>{ const q=questoes.find(q=>q.id===id); if(q){q.imagem=e.target.result;renderAll();}}; r.readAsDataURL(inp.files[0]); }
 function rmImg(id){ const q=questoes.find(q=>q.id===id); if(q){q.imagem=null;renderAll();} }
 function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); }
-function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r})); }catch(e){} }
+function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; const est=document.getElementById('capaEstudante')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r,est})); }catch(e){} }
 function openPreview(){ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); }
 function closePreview(){ document.getElementById('modalPreview').classList.add('hidden'); }
 
@@ -937,6 +937,7 @@ function buildHTML(_questoes, _versaoLabel){
   const instrucoes=document.getElementById('instrucoes').value;
   const dataStr=document.getElementById('calBtn').textContent.trim();
   const capaArea=document.getElementById('capaArea')?.value||'';
+  const capaEstudante=document.getElementById('capaEstudante')?.value||'';
   const capaTurmas=document.getElementById('capaTurmas')?.value||'';
   const capaOrientacoes=document.getElementById('capaOrientacoes')?.value||'';
   const capaObjSocioemo=document.getElementById('capaObjSocioemo')?.value||'';
@@ -982,6 +983,7 @@ function buildHTML(_questoes, _versaoLabel){
   <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
     <tr>${_cw('Área do conhecimento: <u>'+(esc(capaArea)||'_______________')+'</u>','50%')}${_c('Professor(a): <u>'+(esc(prof)||'______________________________')+'</u>')}</tr>
     <tr>${_cw('Turma: '+turmasCapa,'50%')}${_c('Data: <u>'+dataFmt+'</u>')}</tr>
+    <tr>${_cw('Estudante: <u>'+(esc(capaEstudante)||'_______________')+'</u>','100%','')}</tr>
   </table>
   <div style="font-size:9.5pt;font-weight:bold;margin:8px 0 3px;border-bottom:1px solid #000;padding-bottom:2px;">Orientações</div>
   <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
@@ -1199,9 +1201,8 @@ async function buildAndDownloadDocx(_questoes, _versaoLabel){
     const cab_r1 =
       tc(cLogo,  logoXml, {vmStart:true, va:'center', sml:true}) +
       tc(cCentro,[
-        wPara(escola, {bold:true, sz:32, center:true, spA:20}),
-        wPara(cidade, {sz:18, center:true, spA:20}),
-        wPara(tituloDocx, {bold:true, sz:26, center:true}),
+        wPara(capaArea||'escola', {bold:true, sz:26, center:true, spA:20}),
+        wPara(tituloDocx, {bold:true, sz:22, center:true}),
       ], {va:'center', sml:true}) +
       tc(cNlbl,  notaVert(), {vmStart:true, va:'center', sml:true}) +
       tc(cNbox,  wPara(''), {vmStart:true, va:'center', sml:true});
@@ -1210,7 +1211,6 @@ async function buildAndDownloadDocx(_questoes, _versaoLabel){
       tc(cLogo,  wPara(''), {vmCont:true, sml:true}) +
       tc(cCentro,[
         wParaRuns([{t:'Professor(a): ',bold:true,sz:18},{t:prof||'_______________________',sz:18}],{spB:20}),
-        wParaRuns([{t:'Disciplina: ',bold:true,sz:18},{t:disc||'___________________',sz:18}]),
       ], {va:'center', sml:true}) +
       tc(cNlbl,  wPara(''), {vmCont:true, sml:true}) +
       tc(cNbox,  wPara(''), {vmCont:true, sml:true});
@@ -1218,10 +1218,8 @@ async function buildAndDownloadDocx(_questoes, _versaoLabel){
     const cab_r3 =
       tc(cabW,
         wParaRuns([
-          {t:'Aluno(a): ',bold:true,sz:18},{t:'__________________________________  ',sz:18},
-          {t:'Série: ',bold:true,sz:18},{t:serie+'  ',sz:18},
-          {t:'Turma: ',bold:true,sz:18},{t:(turma||'___')+'  ',sz:18},
-          {t:'Trim.: ',bold:true,sz:18},{t:trimVal+'  ',sz:18},
+          {t:'Estudante: ',bold:true,sz:18},{t:(capaEstudante||'__________________________________')+'  ',sz:18},
+          {t:'Turma: ',bold:true,sz:18},{t:(capaTurmas||'___')+'  ',sz:18},
           {t:'Data: ',bold:true,sz:18},{t:dataFmt,sz:18},
         ]),
       {span:4, va:'center', sml:true});
@@ -1619,6 +1617,7 @@ function salvarAvaliacao(){
     turma:     document.getElementById('selTurma').value,
     trim:      document.getElementById('selTrim').value,
     instrucoes:document.getElementById('instrucoes').value,
+    capaEstudante: document.getElementById('capaEstudante')?.value||'',
     tipoProva,
     selectedDate,
     professors,
@@ -1652,6 +1651,7 @@ function carregarAvaliacao(inp){
       document.getElementById('tituloAval').value  = st.titulo||'';
       document.getElementById('selTurma').value    = st.turma||'';
       document.getElementById('instrucoes').value  = st.instrucoes||'';
+      if(document.getElementById('capaEstudante')) document.getElementById('capaEstudante').value = st.capaEstudante||'';
       setTimeout(()=>{
         if(st.prof)  document.getElementById('selProf').value  = st.prof;
         if(st.disc)  document.getElementById('selDisc').value  = st.disc;
