@@ -223,6 +223,27 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 <aside class="sb no-print" id="sidebarEl">
   <!-- Toggle retrair -->
   <button class="sb-toggle" id="sbToggleBtn" onclick="toggleSidebar()" title="Recolher/expandir menu">◀</button>
+  <!-- Campos internos -->
+  <div class="sb-s">
+    <div class="slbl">Dados da Avaliação</div>
+    <div class="fl"><label>Nome da Escola</label><input id="nomeEscola" placeholder="Ex: Colégio Municipal..." oninput="autoSave()"></div>
+    <div class="fl"><label>Cidade / UF</label><input id="cidadeEscola" placeholder="Ex: Tubarão – SC" oninput="autoSave()"></div>
+    <div class="fl"><label>Título</label><input id="tituloAval" placeholder="Ex: AVALIAÇÃO MENSAL 1" oninput="autoSave()"></div>
+    <div class="fl"><label>Série / Ano</label>
+      <select id="selSerie" onchange="autoSave()">
+        <option value="">— Selecione —</option>
+        <optgroup label="Ens. Fund. – Anos Iniciais"><option>1º Ano</option><option>2º Ano</option><option>3º Ano</option><option>4º Ano</option><option>5º Ano</option></optgroup>
+        <optgroup label="Ens. Fund. – Anos Finais"><option>6º Ano</option><option>7º Ano</option><option>8º Ano</option><option>9º Ano</option></optgroup>
+        <optgroup label="Ens. Médio"><option>1ª Série – EM</option><option>2ª Série – EM</option><option>3ª Série – EM</option></optgroup>
+      </select>
+    </div>
+    <div class="fl"><label>Turma</label><input id="selTurma" placeholder="Ex: A, 9B…" oninput="autoSave()"></div>
+    <div class="fl"><label>Trimestre</label>
+      <select id="selTrim" onchange="autoSave()">
+        <option value="">— Selecione —</option><option>1º</option><option>2º</option><option>3º</option>
+      </select>
+    </div>
+  </div>
   <div class="sb-s">
     <div class="slbl">Capa SESI 2026</div>
     <div class="fl"><label>Área do Conhecimento</label><input id="capaArea" placeholder="Ex: CIÊNCIAS DA NATUREZA - BIOLOGIA" oninput="autoSave()"></div>
