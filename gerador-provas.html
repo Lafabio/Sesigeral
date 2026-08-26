@@ -97,9 +97,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 .cal-d.today{background:var(--acbg);font-weight:700;color:var(--ac)}
 .cal-d.other-m{color:#ccc}
 .editor{padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:0}
-.pts-bar{max-width:880px;margin:0 auto 12px;background:var(--card);border:1px solid var(--br);border-radius:var(--r);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;font-size:12px;box-shadow:var(--sh)}
-.ptot{font-weight:700;font-size:14px;color:var(--ac)}
-.pwarn{color:var(--dn);font-size:11px;display:none}
 .qw{max-width:880px;margin:0 auto 11px;padding:13px 15px;border:1px solid var(--br);border-radius:var(--r);background:var(--card);box-shadow:var(--sh);position:relative}
 .qw:hover .qctrl{opacity:1}
 .qtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
@@ -143,7 +140,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 .somat-rem{background:#fee2e2;border:1px solid #fca5a5;color:var(--dn);font-size:11px;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
 .somat-add:hover{background:#1e40af}
 .somat-rem:hover{background:#fecaca}
-.pts-in{width:46px;font-family:'IBM Plex Sans',sans-serif;font-size:11px;border:1px solid var(--br);border-radius:5px;padding:2px 5px;text-align:center}
 .add-btn{width:100%;max-width:880px;margin:0 auto 8px;padding:11px;border:2px dashed var(--br);border-radius:var(--r);background:transparent;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;color:var(--mu);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
 .add-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--acbg)}
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow-y:auto}
@@ -281,11 +277,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     </div>
   </div>
   <div class="sb-s">
-    <div class="slbl">Pontuação padrão por questão</div>
-    <div class="fl"><input id="ptsDefault" type="number" value="1" min="0.1" step="0.1"></div>
-    <div style="font-size:10.5px;color:var(--mu)" id="ptsSummary"></div>
-  </div>
-  <div class="sb-s">
     <div class="slbl">Instruções no cabeçalho</div>
     <div class="fl"><textarea id="instrucoes" rows="3" oninput="autoSave()">Sua avaliação será corrigida conforme as opções marcadas. Não rasure! Pinte a alternativa com caneta preta ou azul.</textarea></div>
   </div>
@@ -297,10 +288,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 </aside>
 
 <main class="editor">
-  <div class="pts-bar no-print">
-    <span>Total: <span class="ptot" id="totalPts">10,0</span> pontos</span>
-    <span class="pwarn" id="ptsWarn">⚠ Soma ≠ 10,0</span>
-  </div>
   <div id="qContainer"></div>
   <button class="add-btn no-print" onclick="addQ()">＋ Adicionar Questão</button>
 
@@ -581,7 +568,7 @@ const SOMA_SEQ=[1,2,4,8,16,32,64];
 window.addEventListener('DOMContentLoaded',()=>{
   ['Português','Matemática','Ciências','História','Geografia','Inglês','Arte','Educação Física','Biologia','Física','Química','Filosofia','Sociologia','Redação'].forEach(d=>addDiscItem(d));
   for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla');
-  renderCal(); updatePts();
+  renderCal();
   document.addEventListener('click',e=>{ if(!e.target.closest('.cal-wrap')) document.getElementById('calPop').classList.remove('open'); });
   // Restaurar capa do sessionStorage
   try{ const saved=JSON.parse(sessionStorage.getItem('gp_c')||'null'); if(saved){ const m={capaArea:'s',capaTurmas:'t',capaOrientacoes:'o',capaObjSocioemo:'se',capaObjEdTech:'et',capaRubricasHabs:'r'}; Object.entries(m).forEach(([id,key])=>{ const el=document.getElementById(id); if(el&&saved[key]) el.value=saved[key]; }); } }catch(e){}
@@ -867,12 +854,12 @@ function setTipoProva(t,btn){ tipoProva=t; document.querySelectorAll('#tipoTg bu
 function addQ(tipo){
   tipo=tipo||'multipla';
   const letras=tipoProva==='em'?[...LEM]:[...LEF];
-  questoes.push({id:++qId,tipo,distrator:'',imagem:null,consigna:'',enunciado:'',pts:parseFloat(document.getElementById('ptsDefault').value)||1,alternativas:letras.map((l,i)=>({letra:l,texto:'',correta:i===0})),somatoria:[{v:1,txt:'',ok:false},{v:2,txt:'',ok:false},{v:4,txt:'',ok:false},{v:8,txt:'',ok:false}],linhas:4});
-  renderQ(questoes[questoes.length-1]); updatePts();
+  questoes.push({id:++qId,tipo,distrator:'',imagem:null,consigna:'',enunciado:'',alternativas:letras.map((l,i)=>({letra:l,texto:'',correta:i===0})),somatoria:[{v:1,txt:'',ok:false},{v:2,txt:'',ok:false},{v:4,txt:'',ok:false},{v:8,txt:'',ok:false}],linhas:4});
+  renderQ(questoes[questoes.length-1]);
 }
-function delQ(id){ if(questoes.length<=1){alert('A prova precisa ter ao menos 1 questão.');return;} if(!confirm('Remover esta questão?'))return; questoes=questoes.filter(q=>q.id!==id); renderAll(); updatePts(); }
+function delQ(id){ if(questoes.length<=1){alert('A prova precisa ter ao menos 1 questão.');return;} if(!confirm('Remover esta questão?'))return; questoes=questoes.filter(q=>q.id!==id); renderAll(); }
 function moveQ(id,dir){ const i=questoes.findIndex(q=>q.id===id),ni=i+dir; if(ni<0||ni>=questoes.length)return; [questoes[i],questoes[ni]]=[questoes[ni],questoes[i]]; renderAll(); }
-function dupQ(id){ const q=questoes.find(q=>q.id===id); if(!q)return; const nq=JSON.parse(JSON.stringify(q)); nq.id=++qId; questoes.splice(questoes.findIndex(q=>q.id===id)+1,0,nq); renderAll(); updatePts(); }
+function dupQ(id){ const q=questoes.find(q=>q.id===id); if(!q)return; const nq=JSON.parse(JSON.stringify(q)); nq.id=++qId; questoes.splice(questoes.findIndex(q=>q.id===id)+1,0,nq); renderAll(); }
 function setTipoQ(id,tipo){ const q=questoes.find(q=>q.id===id); if(!q)return; q.tipo=tipo; if(tipo==='multipla'){const letras=tipoProva==='em'?[...LEM]:[...LEF]; q.alternativas=letras.map((l,i)=>({letra:l,texto:q.alternativas[i]?q.alternativas[i].texto:'',correta:i===0}));} renderAll(); }
 function addSomatItem(id){ const q=questoes.find(q=>q.id===id); if(!q)return; const used=q.somatoria.map(s=>s.v),next=SOMA_SEQ.find(v=>!used.includes(v)); if(!next){alert('Todos os valores já foram adicionados.');return;} q.somatoria.push({v:next,txt:'',ok:false}); q.somatoria.sort((a,b)=>SOMA_SEQ.indexOf(a.v)-SOMA_SEQ.indexOf(b.v)); renderAll(); }
 function remSomatItem(id){ const q=questoes.find(q=>q.id===id); if(!q||q.somatoria.length<=1){alert('Mínimo de 1 item.');return;} q.somatoria.pop(); renderAll(); }
@@ -894,7 +881,7 @@ function renderQ(q){
     tipoArea=`<div class="qf"><label>Linhas para resposta discursiva</label><div style="display:flex;align-items:center;gap:8px;margin-top:4px;"><input type="number" value="${q.linhas}" min="1" max="20" style="width:60px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:5px;padding:4px 7px;" oninput="setF(${q.id},'linhas',parseInt(this.value)||4)"><span style="font-size:11px;color:var(--mu);">linhas em branco</span></div></div>`;
   }
   div.innerHTML=`
-  <div class="qtop"><span class="qnum">QUESTÃO ${numStr}</span><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:var(--mu);"><input type="number" class="pts-in" value="${q.pts}" min="0.1" step="0.1" onchange="setF(${q.id},'pts',parseFloat(this.value)||1);updatePts()"> pts</span><div class="qctrl"><button class="qb mv" onclick="moveQ(${q.id},-1)">↑</button><button class="qb mv" onclick="moveQ(${q.id},1)">↓</button><button class="qb" onclick="dupQ(${q.id})">⧉ Dup</button><button class="qb del" onclick="delQ(${q.id})">✕ Remover</button></div></div></div>
+  <div class="qtop"><span class="qnum">QUESTÃO ${numStr}</span><div style="display:flex;align-items:center;gap:8px;"><div class="qctrl"><button class="qb mv" onclick="moveQ(${q.id},-1)">↑</button><button class="qb mv" onclick="moveQ(${q.id},1)">↓</button><button class="qb" onclick="dupQ(${q.id})">⧉ Dup</button><button class="qb del" onclick="delQ(${q.id})">✕ Remover</button></div></div></div>
   <div class="qtipo"><span>Tipo:</span><button class="qtbtn ${q.tipo==='multipla'?'active':''}" onclick="setTipoQ(${q.id},'multipla')">Múltipla Escolha</button><button class="qtbtn ${q.tipo==='somatoria'?'active':''}" onclick="setTipoQ(${q.id},'somatoria')">Somatória</button><button class="qtbtn ${q.tipo==='discursiva'?'active':''}" onclick="setTipoQ(${q.id},'discursiva')">Discursiva</button></div>
   <div class="qf"><label>① Texto Distrator (opcional)</label><textarea placeholder="Cole aqui o texto base…" oninput="setF(${q.id},'distrator',this.value)">${q.distrator||''}</textarea></div>
   <div class="qf"><label>② Imagem (opcional)</label><div class="imgdrop" onclick="document.getElementById('qi-${q.id}').click()"><input type="file" id="qi-${q.id}" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="setImg(${q.id},this)">${imgHTML}</div></div>
@@ -912,13 +899,7 @@ function setAltOk(id,i){ const q=questoes.find(q=>q.id===id); if(!q)return; q.al
 function setSomat(id,i,f,v){ const q=questoes.find(q=>q.id===id); if(!q)return; q.somatoria[i][f]=v; const soma=q.somatoria.filter(s=>s.ok).reduce((a,s)=>a+s.v,0); const hint=document.getElementById(`somat-hint-${id}`); if(hint) hint.innerHTML=`Gabarito: <strong>${soma||'—'}</strong>`; }
 function setImg(id,inp){ if(!inp.files[0])return; const r=new FileReader(); r.onload=e=>{ const q=questoes.find(q=>q.id===id); if(q){q.imagem=e.target.result;renderAll();}}; r.readAsDataURL(inp.files[0]); }
 function rmImg(id){ const q=questoes.find(q=>q.id===id); if(q){q.imagem=null;renderAll();} }
-function updatePts(){
-  const tot=questoes.reduce((a,q)=>a+(parseFloat(q.pts)||0),0);
-  document.getElementById('totalPts').textContent=tot.toFixed(1).replace('.',',');
-  document.getElementById('ptsWarn').style.display=Math.abs(tot-10)>0.01?'':'none';
-  document.getElementById('ptsSummary').textContent=`${questoes.length} questão(ões) · Total ${tot.toFixed(1)} pts`;
-}
-function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); updatePts(); }
+function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); }
 function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r})); }catch(e){} }
 function openPreview(){ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); }
 function closePreview(){ document.getElementById('modalPreview').classList.add('hidden'); }
@@ -1005,8 +986,8 @@ function buildHTML(_questoes, _versaoLabel){
   // ── QUESTÕES: usa _questoes (já embaralhado) ──
   let qsHtml='';
   _questoes.forEach((q,i)=>{
-    const numStr=String(i+1).padStart(2,'0'),pts=q.pts.toFixed(1).replace('.',',');
-    qsHtml+=`<div style="margin-bottom:20px;font-family:Arial,sans-serif;font-size:11pt;page-break-inside:avoid;"><div style="font-weight:bold;font-size:11.5pt;margin-bottom:6px;">QUESTÃO ${numStr} <span style="font-size:10pt;font-weight:normal;">(${pts} pts)</span></div>`;
+    const numStr=String(i+1).padStart(2,'0');
+    qsHtml+=`<div style="margin-bottom:20px;font-family:Arial,sans-serif;font-size:11pt;page-break-inside:avoid;"><div style="font-weight:bold;font-size:11.5pt;margin-bottom:6px;">QUESTÃO ${numStr}</div>`;
     if(q.distrator&&q.distrator.trim()) qsHtml+=`<div style="border-left:3px solid #bbb;padding:5px 12px;margin-bottom:8px;font-style:italic;font-size:10.5pt;background:#fafafa;">${q.distrator.replace(/\n/g,'<br>')}</div>`;
     if(q.imagem) qsHtml+=`<div style="margin-bottom:8px;text-align:center;"><img src="${q.imagem}" style="max-width:100%;max-height:200px;border:1px solid #ddd;"></div>`;
     if(q.consigna&&q.consigna.trim()) qsHtml+=`<div style="font-style:italic;margin-bottom:5px;font-size:10.5pt;color:#333;">${q.consigna}</div>`;
@@ -1150,8 +1131,8 @@ async function buildAndDownloadDocx(_questoes, _versaoLabel){
     }
 
     function notaVert(){
-      return ['N','O','T','A'].map((c,i)=>
-        `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="${i<3?40:0}"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>${c}</w:t></w:r></w:p>`
+      return ['C','O','N','C','E','I','T','O'].map((c,i)=>
+        `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="${i<7?40:0}"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>${c}</w:t></w:r></w:p>`
       ).join('');
     }
 
@@ -1331,9 +1312,8 @@ async function buildAndDownloadDocx(_questoes, _versaoLabel){
       const q=_questoes[_qi];
       const i=_qi;
       const numStr=String(i+1).padStart(2,'0');
-      const pts=q.pts.toFixed(1).replace('.',',');
 
-      qsXml+=wParaRuns([{t:'QUESTÃO '+numStr+' ',bold:true,sz:24},{t:'('+pts+' pts)',sz:18,color:'555555'}],{spB:160,spA:60});
+      qsXml+=wParaRuns([{t:'QUESTÃO '+numStr+' ',bold:true,sz:24}],{spB:160,spA:60});
 
       if(q.distrator&&q.distrator.trim()){
         q.distrator.split('\n').forEach(line=>{ qsXml+=wPara(line,{sz:19,it:true,color:'444444',ind:360,spB:40}); });
@@ -1618,7 +1598,6 @@ function salvarAvaliacao(){
     turma:     document.getElementById('selTurma').value,
     trim:      document.getElementById('selTrim').value,
     instrucoes:document.getElementById('instrucoes').value,
-    ptsDefault:document.getElementById('ptsDefault').value,
     tipoProva,
     selectedDate,
     professors,
@@ -1652,7 +1631,6 @@ function carregarAvaliacao(inp){
       document.getElementById('tituloAval').value  = st.titulo||'';
       document.getElementById('selTurma').value    = st.turma||'';
       document.getElementById('instrucoes').value  = st.instrucoes||'';
-      if(st.ptsDefault) document.getElementById('ptsDefault').value = st.ptsDefault;
       setTimeout(()=>{
         if(st.prof)  document.getElementById('selProf').value  = st.prof;
         if(st.disc)  document.getElementById('selDisc').value  = st.disc;
@@ -1673,7 +1651,7 @@ function carregarAvaliacao(inp){
       });
       qId = st.qId||0;
       questoes = st.questoes||[];
-      renderAll(); updatePts();
+      renderAll();
       logoB64 = st.logoB64||null;
       const img = document.getElementById('logoImg');
       if(logoB64){ img.src=logoB64; img.style.display='block'; document.getElementById('logoHint').style.display='none'; }
@@ -2377,7 +2355,6 @@ Responda EXCLUSIVAMENTE em JSON puro, sem markdown:
       imagem:    null,
       consigna:  gerada.consigna || '',
       enunciado: enunciado,
-      pts:       parseFloat(document.getElementById('ptsDefault').value) || 1,
       alternativas: letras.map((l,i)=>({letra:l,texto:'',correta:i===0})),
       somatoria: SOMA_VALS.map(v=>({v, txt:'', ok:false})),
       linhas:    4
@@ -2407,7 +2384,6 @@ Responda EXCLUSIVAMENTE em JSON puro, sem markdown:
 
     questoes.push(novaQ);
     renderAll();
-    updatePts();
 
     // Monta mensagem de status
     let statusExtra = '';
