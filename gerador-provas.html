@@ -1708,12 +1708,22 @@ function aplicarPlanoVinculado(){
   const p=planos[i];
   window.PLANO_VINCULADO=p;
   try{
+    // Dados da avaliação
     if(p.disciplina){ if(!disciplinas.includes(p.disciplina)) addDiscItem(p.disciplina); document.getElementById('selDisc').value=p.disciplina; }
     const mapaSerie={'1º ano':'1ª Série – EM','2º ano':'2ª Série – EM','3º ano':'3ª Série – EM'};
     const serie=mapaSerie[p.anoSerie]||'';
     if(serie) document.getElementById('selSerie').value=serie;
     if(p.turma) document.getElementById('selTurma').value=p.turma;
     if(p.trimestre) document.getElementById('selTrim').value=p.trimestre+'º';
+    // Capa SESI 2026
+    if(p.disciplina) document.getElementById('capaArea').value=p.disciplina;
+    if(p.turma) document.getElementById('capaTurmas').value=p.turma;
+    // Data da prova a partir do plano
+    const dataStr=p.dataAula||p.atualizadoEm||'';
+    if(dataStr){ const d=new Date(dataStr); if(!isNaN(d)){ selectedDate=d; calYear=d.getFullYear(); calMonth=d.getMonth(); renderCal(); document.getElementById('calBtn').textContent=d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear(); }}
+    // Rubricas da capa: habilidades do plano (uma por linha)
+    const habs=p.habilidades||[];
+    if(habs.length){ document.getElementById('capaRubricasHabs').value=habs.map(h=>(h.codigo||'')+') '+String(h.habilidade||'').slice(0,120)).join('\n'); }
   }catch(e){}
   const habs=p.habilidades||[];
   info.innerHTML=habs.length
