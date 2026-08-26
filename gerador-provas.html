@@ -583,6 +583,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla');
   renderCal(); updatePts();
   document.addEventListener('click',e=>{ if(!e.target.closest('.cal-wrap')) document.getElementById('calPop').classList.remove('open'); });
+  // Restaurar capa do sessionStorage
+  try{ const saved=JSON.parse(sessionStorage.getItem('gp_c')||'null'); if(saved){ const m={capaArea:'s',capaTurmas:'t',capaOrientacoes:'o',capaObjSocioemo:'se',capaObjEdTech:'et',capaRubricasHabs:'r'}; Object.entries(m).forEach(([id,key])=>{ const el=document.getElementById(id); if(el&&saved[key]) el.value=saved[key]; }); } }catch(e){}
+  try{ const e=sessionStorage.getItem('gp_e'); if(e) document.getElementById('nomeEscola').value=e; }catch(e){}
 });
 
 function loadLogo(inp){
@@ -916,7 +919,7 @@ function updatePts(){
   document.getElementById('ptsSummary').textContent=`${questoes.length} questão(ões) · Total ${tot.toFixed(1)} pts`;
 }
 function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); updatePts(); }
-function autoSave(){ try{sessionStorage.setItem('gp_e',document.getElementById('nomeEscola').value);}catch(e){} }
+function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r})); }catch(e){} }
 function openPreview(){ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); }
 function closePreview(){ document.getElementById('modalPreview').classList.add('hidden'); }
 
