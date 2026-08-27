@@ -246,7 +246,28 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
   </div>
   <div class="sb-s">
     <div class="slbl">Capa SESI 2026</div>
-    <div class="fl"><label>Área do Conhecimento</label><input id="capaArea" placeholder="Ex: CIÊNCIAS DA NATUREZA - BIOLOGIA" oninput="autoSave()"></div>
+    <div class="fl"><label>Área do Conhecimento</label><input id="capaArea" placeholder="Selecione ou digite…" list="listaAreas" oninput="autoSave()">
+      <datalist id="listaAreas">
+        <option value="LINGUAGENS E SUAS TECNOLOGIAS">
+        <option value="CIÊNCIAS DA NATUREZA E SUAS TECNOLOGIAS">
+        <option value="CIÊNCIAS HUMANAS E SOCIAIS APLICADAS">
+        <option value="MATEMÁTICA E SUA TECNOLOGIA">
+        <option value="ARTE">
+        <option value="EDUCAÇÃO FÍSICA">
+        <option value="LÍNGUA PORTUGUESA">
+        <option value="LÍNGUA INGLESA">
+        <option value="MATEMÁTICA">
+        <option value="FÍSICA">
+        <option value="QUÍMICA">
+        <option value="BIOLOGIA">
+        <option value="HISTÓRIA">
+        <option value="GEOGRAFIA">
+        <option value="FILOSOFIA">
+        <option value="SOCIOLOGIA">
+        <option value="LITERATURA">
+        <option value="ENSINO RELIGIOSO">
+      </datalist>
+    </div>
     <div class="fl"><label>Professor(a)</label><select id="selProf" onchange="autoSave()"><option value="">— Selecione —</option></select></div>
     <div class="fl"><label>Turma</label><input id="capaTurmas" placeholder="Ex: 101, 102, 201" oninput="autoSave()"></div>
     <div class="fl"><label>Estudante</label><input id="capaEstudante" placeholder="Nome do(a) estudante" oninput="autoSave()"></div>
