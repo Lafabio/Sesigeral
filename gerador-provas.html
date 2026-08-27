@@ -224,6 +224,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
   <!-- Toggle retrair -->
   <button class="sb-toggle" id="sbToggleBtn" onclick="toggleSidebar()" title="Recolher/expandir menu">◀</button>
   <!-- Campos internos -->
+  <input type="hidden" id="selDisc" value="">
   <div class="sb-s">
     <div class="slbl">Dados da Avaliação</div>
     <div class="fl"><label>Nome da Escola</label><input id="nomeEscola" placeholder="Ex: Colégio Municipal..." oninput="autoSave()"></div>
@@ -943,7 +944,7 @@ function setImg(id,inp){ if(!inp.files[0])return; const r=new FileReader(); r.on
 function rmImg(id){ const q=questoes.find(q=>q.id===id); if(q){q.imagem=null;renderAll();} }
 function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); }
 function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; const est=document.getElementById('capaEstudante')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r,est})); }catch(e){} }
-function openPreview(){ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); }
+function openPreview(){ try{ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); }catch(e){ console.error('Erro no preview:',e); alert('Erro ao gerar preview:\n'+e.message); } }
 function closePreview(){ document.getElementById('modalPreview').classList.add('hidden'); }
 
 // ══════════════════════════════════════════════════════════════
