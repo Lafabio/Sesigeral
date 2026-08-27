@@ -430,8 +430,10 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
               </select>
             </div>
           </div>
-          <!-- Botão carregar -->
-          <button onclick="bnccNavCarregar()" style="width:100%;background:var(--ac);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:700;padding:7px;border-radius:6px;cursor:pointer;margin-bottom:4px;" id="btnBnccNavLoad">⬇ Carregar Habilidades</button>
+<!-- Botão carregar -->
+          <button onclick="bnccNavCarregar()" style="width:100%;background:var(--ac);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:700;padding:7px;border-radius:6px;cursor:pointer;margin-bottom:6px;" id="btnBnccNavLoad">⬇ Carregar Habilidades</button>
+          <!-- Busca por palavra-chave -->
+          <input type="text" id="bnccBusca" placeholder="🔍 Buscar habilidade por palavra-chave…" oninput="bnccFiltrarBusca()" style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:11px;border:1px solid var(--br);border-radius:6px;padding:6px 9px;margin-bottom:6px;background:var(--card);color:var(--tx);">
           <!-- Lista de habilidades -->
           <div id="bnccNavHabilidades">
             <div class="bncc-empty">Selecione a disciplina e clique em <strong>Carregar Habilidades</strong></div>
@@ -1973,6 +1975,7 @@ function bnccFlattenHabilidades(data){
 }
 
 // ── BNCC Nav: Carregar habilidades da API ──
+let bnccNavLista = [];
 async function bnccNavCarregar(){
   const disc  = document.getElementById('bnccNavDisc').value;
   const ano   = document.getElementById('bnccNavAno').value;
@@ -1994,9 +1997,12 @@ async function bnccNavCarregar(){
     url = ano ? `${BASE}/bncc_fundamental/disciplina/${disc}/${ano}` : `${BASE}/bncc_fundamental/disciplina/${disc}/`;
   }
 
-  try{
+try{
     const data  = await bnccFetch(url);
     const lista = bnccFlattenHabilidades(data);
+    bnccNavLista = lista;
+    const buscaEl = document.getElementById('bnccBusca');
+    if(buscaEl) buscaEl.value = '';
     renderBnccHabilidades(lista);
   }catch(err){
     document.getElementById('bnccNavHabilidades').innerHTML =
@@ -2043,6 +2049,18 @@ function renderBnccHabilidades(lista){
   html += '</div>';
   html += `<div style="font-size:10px;color:var(--mu);margin-top:5px;text-align:right;">${lista.length} habilidade(s)</div>`;
   cont.innerHTML = html;
+}
+
+// ── Filtra lista de habilidades por palavra-chave ──
+function bnccFiltrarBusca(){
+  const termo = (document.getElementById('bnccBusca').value||'').trim().toLowerCase();
+  if(!termo){ renderBnccHabilidades(bnccNavLista); return; }
+  const aceitos = bnccNavLista.filter(h =>
+    (h.codigo||'').toLowerCase().includes(termo) ||
+    (h.descricao||'').toLowerCase().includes(termo) ||
+    (h.unidade||'').toLowerCase().includes(termo)
+  );
+  renderBnccHabilidades(aceitos);
 }
 
 // ── Seleciona habilidade e preenche o campo de código ──
