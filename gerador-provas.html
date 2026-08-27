@@ -288,7 +288,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     <div class="fl"><label>Orientações da capa</label><textarea id="capaOrientacoes" rows="7" oninput="autoSave()"></textarea></div>
     <div class="fl"><label>Habilidade Socioemocional — objetivo (opcional)</label><input id="capaObjSocioemo" placeholder="Deixar em branco para preencher à mão" oninput="autoSave()"></div>
     <div class="fl"><label>Habilidade Ed. Tecnológica — objetivo (opcional)</label><input id="capaObjEdTech" placeholder="Deixar em branco para preencher à mão" oninput="autoSave()"></div>
-    <div class="fl"><label>Habilidades p/ Rubricas da capa</label><textarea id="capaRubricasHabs" rows="4" placeholder="(EM13CNT101) - Texto da habilidade…&#10;Uma por linha" oninput="autoSave()"></textarea>
+    <div class="fl"><label>Habilidades p/ Rubricas da capa</label><textarea id="capaRubricasHabs" rows="8" placeholder="(EM13CNT101) - Texto da habilidade…&#10;Uma por linha" oninput="autoSave()"></textarea>
       <div style="font-size:10px;color:var(--mu);line-height:1.5;margin-top:3px">Aparecem na tabela de Rubricas (conceitos A · B · C) da capa.</div></div>
   </div>
   <div class="sb-s">
@@ -1747,7 +1747,7 @@ function aplicarPlanoVinculado(){
     if(dataStr){ const d=new Date(dataStr); if(!isNaN(d)){ selectedDate=d; calYear=d.getFullYear(); calMonth=d.getMonth(); renderCal(); document.getElementById('calBtn').textContent=d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear(); }}
     // Rubricas da capa: habilidades do plano (uma por linha)
     const habs=p.habilidades||[];
-    if(habs.length){ document.getElementById('capaRubricasHabs').value=habs.map(h=>(h.codigo||'')+') '+String(h.habilidade||'').slice(0,120)).join('\n'); }
+    if(habs.length){ document.getElementById('capaRubricasHabs').value=habs.map(h=>(h.codigo||'')+') '+String(h.habilidade||'')).join('\n'); }
   }catch(e){}
   const habs=p.habilidades||[];
   info.innerHTML=habs.length
