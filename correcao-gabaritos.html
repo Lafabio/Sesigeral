@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Correção de Gabaritos — SESI</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{--bg:#F5F7FA;--surface:#FFF;--surface-alt:#EAF1F8;--ink:#1D1D1B;--ink-muted:#54657A;--ink-faint:#8C99A8;--border:#DCE4ED;--border-strong:#C2CEDC;--primary:#0047B6;--primary-hover:#003485;--primary-soft:#E5ECF8;--primary-soft-border:#BBCBEA;--sesi-blue:#0047B6;--sesi-teal:#03748C;--sesi-green:#31A636;--sesi-red:#CD372A;--sesi-yellow:#F2B817;--sesi-cream:#F9EED9;--success:#2E7A22;--success-soft:#E7F4E2;--success-border:#A8D89C;--danger:#AE2C20;--danger-soft:#FBE7E4;--danger-border:#E7AA9F;--warning:#A6740C;--warning-soft:#FCF1DC;--warning-border:#EBC77E;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--shadow-sm:0 1px 2px rgba(20,36,54,.07);--shadow-md:0 4px 16px rgba(20,36,54,.12);--shadow-lg:0 12px 32px rgba(20,36,54,.18);--font-display:'Fraunces',Georgia,serif;--font-body:'IBM Plex Sans',-apple-system,sans-serif;--font-mono:'IBM Plex Mono','Courier New',monospace;}
+html[data-theme="dark"]{--bg:#0F1620;--surface:#161F2C;--surface-alt:#1D2836;--ink:#E8EDF4;--ink-muted:#A6B3C2;--ink-faint:#71808F;--border:#2A3645;--border-strong:#3B4A5C;--primary:#5C8FE0;--primary-hover:#7BA5E8;--primary-soft:#1E2C44;--primary-soft-border:#344B6E;--success:#5FB86C;--success-soft:#19301F;--success-border:#2F6B3C;--danger:#E27358;--danger-soft:#32201C;--danger-border:#6B3A2C;--warning:#E0AC52;--warning-soft:#332712;--warning-border:#6B5226;--shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 16px rgba(0,0,0,.4);--shadow-lg:0 12px 32px rgba(0,0,0,.5);}
+*{box-sizing:border-box;}html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;margin:0;}h2{font-size:1.4rem;}h3{font-size:1.05rem;}h4{font-size:.95rem;}
+p{margin:0 0 .75em;color:var(--ink-muted);}
+a{color:var(--primary);text-decoration:none;}a:hover{text-decoration:underline;}
+button,input,select,textarea{font-family:inherit;font-size:inherit;}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+
+.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:30;}
+.topbar__brand{display:flex;align-items:center;gap:10px;}
+.topbar__logo{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:15px;}
+.topbar__title{font-family:var(--font-display);font-weight:600;font-size:1.05rem;color:var(--ink);}
+.topbar__user{display:flex;align-items:center;gap:12px;font-size:.85rem;color:var(--ink-muted);}
+.theme-toggle{background:none;border:1px solid var(--border-strong);color:var(--ink-muted);cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.theme-toggle:hover{background:var(--surface-alt);}
+
+main.content{width:100%;max-width:880px;margin:0 auto;padding:24px 20px 120px;}
+.page-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-sm);margin-bottom:20px;}
+@media(max-width:640px){.page-card{padding:18px;border-radius:var(--radius-md);}main.content{padding:16px 14px;}}
+.page-header{margin-bottom:20px;}
+.page-header__desc{margin-top:6px;color:var(--ink-muted);font-size:.9rem;}
+.section-divider{height:1px;background:var(--border);margin:24px 0;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.field__hint{font-size:.78rem;color:var(--ink-faint);margin-top:4px;}
+.input,.select{width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);}
+.input:focus,.select:focus{border-color:var(--primary);}
+.input-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:var(--radius-sm);border:1px solid transparent;font-weight:600;font-size:.88rem;cursor:pointer;transition:background .15s ease;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--primary-hover);}
+.btn-secondary{background:var(--surface);color:var(--ink);border-color:var(--border-strong);}.btn-secondary:hover:not(:disabled){background:var(--surface-alt);}
+.btn-danger{background:transparent;color:var(--danger);}.btn-danger:hover:not(:disabled){background:var(--danger-soft);}
+.btn-sm{padding:6px 12px;font-size:.8rem;}.btn-block{width:100%;}
+
+.alert{padding:12px 14px;border-radius:var(--radius-sm);font-size:.85rem;margin-bottom:16px;border:1px solid;}
+.alert-danger{background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger);}
+.alert-success{background:var(--success-soft);border-color:var(--success-border);color:var(--success);}
+.alert-warning{background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning);}
+
+.spinner{width:18px;height:18px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-block{display:flex;align-items:center;gap:10px;padding:16px;color:var(--ink-muted);font-size:.88rem;}
+
+.sesi-brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);}
+.sesi-brand__icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--sesi-blue);border-radius:6px;padding:0 9px;height:32px;}
+.sesi-brand__icon .bars{display:flex;flex-direction:column;gap:2.5px;}
+.sesi-brand__icon .bars span{display:block;height:2.5px;border-radius:1px;background:rgba(255,255,255,.85);}
+.sesi-brand__icon .bars span:nth-child(1){width:13px;}
+.sesi-brand__icon .bars span:nth-child(2){width:9px;}
+.sesi-brand__icon .bars span:nth-child(3){width:13px;}
+.sesi-brand__icon .word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-style:italic;color:#fff;font-size:16px;}
+.sesi-brand__text{font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:.66rem;line-height:1.18;letter-spacing:.01em;color:var(--ink);}
+
+.result-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:16px;}
+.result-table th{background:var(--surface-alt);padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border-strong);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);}
+.result-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--ink);}
+.result-table tr:hover{background:var(--primary-soft);}
+.result-table .correta{color:var(--success);font-weight:700;}
+.result-table .errada{color:var(--danger);font-weight:700;}
+.result-table .em-branco{color:var(--ink-faint);}
+
+.gab-input{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;margin-top:8px;}
+.gab-input .field{margin-bottom:0;}
+.gab-input .input{text-align:center;font-weight:700;font-size:1.1rem;text-transform:uppercase;}
+
+.upload-zone{border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:32px;text-align:center;background:var(--surface-alt);cursor:pointer;transition:border-color .15s,background .15s;}
+.upload-zone:hover{border-color:var(--primary);background:var(--primary-soft);}
+.upload-zone.dragover{border-color:var(--primary);background:var(--primary-soft);}
+.upload-zone input[type="file"]{display:none;}
+.upload-zone__icon{font-size:2.5rem;margin-bottom:8px;}
+.upload-zone__text{font-weight:600;color:var(--ink);}
+.upload-zone__hint{font-size:.82rem;color:var(--ink-faint);margin-top:4px;}
+
+.file-list{margin-top:12px;}
+.file-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;background:var(--surface);font-size:.85rem;}
+.file-item__name{font-weight:500;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-item__remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:1.1rem;padding:2px 6px;border-radius:4px;}
+.file-item__remove:hover{background:var(--danger-soft);}
+
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;text-align:center;}
+.stat-card__value{font-size:1.8rem;font-weight:700;font-family:var(--font-display);color:var(--primary);line-height:1;}
+.stat-card__label{font-size:.75rem;color:var(--ink-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;font-weight:600;}
+
+.toast-host{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar__brand">
+    <div class="topbar__logo">📝</div>
+    <span class="topbar__title">Correção de Gabaritos</span>
+  </div>
+  <div class="topbar__user">
+    <button class="theme-toggle" id="btn-theme" title="Alternar tema">☾</button>
+  </div>
+</div>
+
+<main class="content">
+
+  <!-- PASSO 1: Configuração -->
+  <div class="page-card" id="step-config">
+    <div class="page-header">
+      <div class="sesi-brand" style="margin-bottom:6px;">
+        <div class="sesi-brand__icon"><div class="bars"><span></span><span></span><span></span></div><span class="word">SESI</span></div>
+        <div class="sesi-brand__text">Escola de Referência</div>
+      </div>
+      <h2>Correção Automática de Gabaritos</h2>
+      <p class="page-header__desc">Configure a chave da API Gemini e o gabarito da prova.</p>
+    </div>
+
+    <div class="section-divider"></div>
+    <h4 style="margin-bottom:12px;">Configuração da IA</h4>
+    <div class="field">
+      <label for="geminiKey">Chave da API (Google Gemini)</label>
+      <div style="display:flex;gap:6px;">
+        <input class="input" id="geminiKey" type="password" placeholder="AIza..." style="flex:1;font-family:var(--font-mono);font-size:.78rem;"/>
+        <button type="button" id="btn-toggle-key" class="btn btn-secondary" style="width:42px;padding:0;" title="Mostrar/ocultar">👁</button>
+      </div>
+      <div class="field__hint">Obtida em <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>. Fica salva apenas neste navegador.</div>
+    </div>
+
+    <div class="section-divider"></div>
+    <h4 style="margin-bottom:12px;">Gabarito da Prova</h4>
+    <div id="gab-info"></div>
+    <p class="text-sm" style="margin-bottom:8px;">Se gerou a prova pelo Gerador de Provas, o gabarito será importado automaticamente. Caso contrário, preencha manualmente.</p>
+    <div class="gab-input" id="gab-inputs"></div>
+
+    <div class="section-divider"></div>
+    <button class="btn btn-primary" id="btn-start">Próximo →</button>
+  </div>
+
+  <!-- PASSO 2: Upload -->
+  <div class="page-card" id="step-upload" style="display:none;">
+    <div class="page-header">
+      <h2>Envio das Folhas de Resposta</h2>
+      <p class="page-header__desc">Arraste fotos ou PDFs das folhas preenchidas pelos alunos.</p>
+    </div>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" multiple accept="image/*,.pdf"/>
+      <div class="upload-zone__icon">📄</div>
+      <div class="upload-zone__text">Arraste arquivos aqui ou clique para selecionar</div>
+      <div class="upload-zone__hint">JPG, PNG, WEBP ou PDF — cada página será processada individualmente</div>
+    </div>
+
+    <div class="file-list" id="file-list"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-secondary" id="btn-back-config">← Voltar</button>
+      <button class="btn btn-primary" id="btn-process" style="flex:1;" disabled>▶ Processar Gabaritos</button>
+    </div>
+  </div>
+
+  <!-- PASSO 3: Resultado -->
+  <div class="page-card" id="step-result" style="display:none;">
+    <div class="page-header">
+      <h2>Resultado da Correção</h2>
+      <p class="page-header__desc" id="result-desc"></p>
+    </div>
+
+    <div class="stat-cards" id="stat-cards"></div>
+
+    <div style="overflow-x:auto;">
+      <table class="result-table" id="result-table">
+        <thead id="result-thead"></thead>
+        <tbody id="result-tbody"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn btn-secondary" id="btn-new-process">🔄 Nova correção</button>
+      <button class="btn btn-primary" id="btn-download-csv">⬇ Baixar CSV</button>
+    </div>
+
+    <div id="error-list" style="margin-top:16px;"></div>
+  </div>
+
+</main>
+
+<div class="toast-host" id="toast-host"></div>
+
+<script>
+// ============================================================================
+// Configuração e estado
+// ============================================================================
+const GEMINI_KEY_STORAGE = 'sesi_gemini_key';
+const GABARITO_STORAGE = 'sesi_gabarito';
+const QUESTOES_GERADAS_KEY = 'sesi_gabarito_gerado';
+const ALTERNATIVAS = ['A','B','C','D','E'];
+
+let files = [];
+let resultados = [];
+let geminiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+let gabarito = JSON.parse(localStorage.getItem(GABARITO_STORAGE) || '{}');
+let questoesGeradas = null;
+
+// ============================================================================
+// Receber gabarito do gerador de provas (via postMessage)
+// ============================================================================
+window.addEventListener('message', (ev) => {
+  try {
+    const d = ev.data || {};
+    if (d.tipo === 'sesi-gabarito-gerado' && d.gabarito) {
+      questoesGeradas = d.gabarito;
+      aplicarGabaritoGerado(d.gabarito);
+      showToast('Gabarito carregado do Gerador de Provas!', 'success');
+    }
+    if (d.tipo === 'sesi-chave-gemini' && d.chave) {
+      geminiKey = d.chave;
+      localStorage.setItem(GEMINI_KEY_STORAGE, geminiKey);
+      document.getElementById('geminiKey').value = geminiKey;
+    }
+  } catch(e) {}
+});
+
+// Também tenta ler do localStorage ao carregar (caso o gerador já tenha salvado)
+function tentarCarregarGabaritoGerado() {
+  try {
+    const raw = localStorage.getItem(QUESTOES_GERADAS_KEY);
+    if (raw) {
+      const gab = JSON.parse(raw);
+      if (gab && gab._total) {
+        questoesGeradas = gab;
+        aplicarGabaritoGerado(gab);
+      }
+    }
+  } catch(e) {}
+}
+
+function aplicarGabaritoGerado(gab) {
+  const total = gab._total || 0;
+  const letras = (gab._letras || 'ABCDE').split('');
+  gabarito = {};
+  // Recriar os inputs de gabarito de acordo com o número de questões
+  const container = document.getElementById('gab-inputs');
+  container.innerHTML = '';
+  for (let i = 1; i <= total; i++) {
+    const tipo = gab['tipo_' + i] || 'multipla';
+    const num = String(i);
+    if (tipo === 'multipla') {
+      const resp = gab[num] || '';
+      gabarito[num] = resp;
+      const div = document.createElement('div');
+      div.className = 'field';
+      div.innerHTML = `<label>Q${num.padStart(2,'0')}</label><input class="input" maxlength="1" data-q="${num}" placeholder="–" value="${resp}" readonly style="background:var(--success-soft);border-color:var(--success-border);color:var(--success);font-weight:700;"/>`;
+      container.appendChild(div);
+    } else if (tipo === 'somatoria') {
+      const soma = gab['soma_' + i];
+      gabarito['soma_' + num] = soma;
+      const div = document.createElement('div');
+      div.className = 'field';
+      div.innerHTML = `<label>Q${num.padStart(2,'0')} (soma)</label><input class="input" type="text" data-q="${num}" value="${soma ?? '—'}" readonly style="background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning);"/>`;
+      container.appendChild(div);
+    } else {
+      // discursiva — não entra no gabarito
+      const div = document.createElement('div');
+      div.className = 'field';
+      div.innerHTML = `<label>Q${num.padStart(2,'0')}</label><input class="input" type="text" value="Discursiva" readonly style="background:var(--surface-alt);color:var(--ink-faint);" />`;
+      container.appendChild(div);
+    }
+  }
+  localStorage.setItem(GABARITO_STORAGE, JSON.stringify(gabarito));
+  // Atualizar info
+  const infoDiv = document.getElementById('gab-info');
+  if (infoDiv) {
+    infoDiv.innerHTML = `<div class="alert alert-success">Gabarito importado do Gerador de Provas: <strong>${total} questões</strong> — ${gab._disciplina || ''} ${gab._turma ? '· Turma ' + gab._turma : ''} ${gab._titulo ? '· ' + gab._titulo : ''}</div>`;
+  }
+}
+
+// ============================================================================
+// Tema
+// ============================================================================
+const THEME_KEY = 'sesi_corr_theme';
+function applyTheme() {
+  const t = localStorage.getItem(THEME_KEY) || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('btn-theme').textContent = t === 'dark' ? '☀' : '☾';
+}
+applyTheme();
+document.getElementById('btn-theme').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(THEME_KEY, next);
+  document.getElementById('btn-theme').textContent = next === 'dark' ? '☀' : '☾';
+});
+
+// ============================================================================
+// Toast
+// ============================================================================
+function showToast(msg, type = 'info') {
+  const host = document.getElementById('toast-host');
+  const colors = { info: '#2C3E6B', success: '#2F6B49', error: '#A8431F' };
+  const t = document.createElement('div');
+  t.style.cssText = `background:${colors[type]||colors.info};color:#fff;padding:10px 18px;border-radius:8px;font-size:.85rem;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.18);white-space:nowrap;`;
+  t.textContent = msg;
+  host.appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ============================================================================
+// Gabarito inputs (modo manual — fallback quando não veio do gerador)
+// ============================================================================
+function getQuestoesFromGabarito() {
+  // Detecta o número de questões do gabarito salvo
+  let maxQ = 0;
+  for (const k of Object.keys(gabarito)) {
+    const n = parseInt(k);
+    if (!isNaN(n) && n > maxQ) maxQ = n;
+  }
+  if (maxQ > 0) return Array.from({length: maxQ}, (_, i) => String(i + 1));
+  // Fallback: questões 3-10 (formato antigo SESI)
+  return ['3','4','5','6','7','8','9','10'];
+}
+
+function renderGabInputs() {
+  const questoes = questoesGeradas
+    ? Array.from({length: questoesGeradas._total || 10}, (_, i) => String(i + 1))
+    : getQuestoesFromGabarito();
+  const container = document.getElementById('gab-inputs');
+  container.innerHTML = '';
+  questoes.forEach(q => {
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.innerHTML = `<label>Q${q.padStart(2,'0')}</label><input class="input" maxlength="1" data-q="${q}" placeholder="–" value="${gabarito[q]||''}"/>`;
+    container.appendChild(div);
+    div.querySelector('input').addEventListener('input', (e) => {
+      const v = e.target.value.toUpperCase().trim();
+      e.target.value = v;
+      if (v && ALTERNATIVAS.includes(v)) gabarito[q] = v;
+      else delete gabarito[q];
+      localStorage.setItem(GABARITO_STORAGE, JSON.stringify(gabarito));
+    });
+  });
+}
+renderGabInputs();
+tentarCarregarGabaritoGerado();
+
+// ============================================================================
+// API Key
+// ============================================================================
+document.getElementById('geminiKey').value = geminiKey;
+document.getElementById('geminiKey').addEventListener('input', (e) => {
+  geminiKey = e.target.value.trim();
+  localStorage.setItem(GEMINI_KEY_STORAGE, geminiKey);
+});
+document.getElementById('btn-toggle-key').addEventListener('click', () => {
+  const inp = document.getElementById('geminiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+// ============================================================================
+// Navegação entre steps
+// ============================================================================
+function showStep(step) {
+  ['step-config','step-upload','step-result'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById(step).style.display = '';
+}
+document.getElementById('btn-start').addEventListener('click', () => {
+  if (!geminiKey) { showToast('Configure a chave da API Gemini primeiro.', 'error'); return; }
+  showStep('step-upload');
+});
+document.getElementById('btn-back-config').addEventListener('click', () => showStep('step-config'));
+document.getElementById('btn-new-process').addEventListener('click', () => {
+  files = [];
+  resultados = [];
+  renderFileList();
+  showStep('step-config');
+});
+
+// ============================================================================
+// Upload de arquivos
+// ============================================================================
+const uploadZone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', (e) => addFiles(e.target.files));
+
+function addFiles(fileList) {
+  for (const f of fileList) {
+    if (!files.some(x => x.name === f.name && x.size === f.size)) {
+      files.push(f);
+    }
+  }
+  renderFileList();
+  document.getElementById('btn-process').disabled = files.length === 0;
+}
+
+function renderFileList() {
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  files.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    const icon = f.name.toLowerCase().endsWith('.pdf') ? '📕' : '🖼️';
+    item.innerHTML = `<span style="margin-right:8px;">${icon}</span><span class="file-item__name">${escapeHtml(f.name)}</span><span style="color:var(--ink-faint);font-size:.78rem;margin-right:8px;">${(f.size/1024).toFixed(0)} KB</span><button class="file-item__remove" data-idx="${i}" title="Remover">✕</button>`;
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.file-item__remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      files.splice(parseInt(btn.dataset.idx), 1);
+      renderFileList();
+      document.getElementById('btn-process').disabled = files.length === 0;
+    });
+  });
+  document.getElementById('btn-process').disabled = files.length === 0;
+}
+
+// ============================================================================
+// Gemini API
+// ============================================================================
+async function resizeImage(file, maxSize = 1600) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => { URL.revokeObjectURL(url); resolve(blob); }, 'image/jpeg', 0.9);
+    };
+    img.src = url;
+  });
+}
+
+async function callGemini(base64Data, mimeType, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+  const body = {
+    contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64Data } }] }],
+    generationConfig: { temperature: 0.0, responseMimeType: 'application/json' }
+  };
+  const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Erro HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+function buildPrompt() {
+  const totalQuestoes = questoesGeradas ? questoesGeradas._total : Object.keys(gabarito).filter(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_')).length || 10;
+  const discursivas = [];
+  const objetivas = [];
+  for (let i = 1; i <= totalQuestoes; i++) {
+    const tipo = questoesGeradas ? (questoesGeradas['tipo_' + i] || 'multipla') : (gabarito['tipo_' + i] || 'multipla');
+    if (tipo === 'discursiva') discursivas.push(i);
+    else objetivas.push(i);
+  }
+  const discText = discursivas.length ? `As questões ${discursivas.map(q => 'Q' + String(q).padStart(2,'0')).join(', ')} são DISCURSIVAS, ignore.` : '';
+  const objText = objetivas.length ? `As questões ${objetivas.map(q => 'Q' + String(q).padStart(2,'0')).join(', ')} são OBJETIVAS.` : '';
+  const opts = (questoesGeradas?._letras || 'ABCDE').split(' ').join(' ');
+
+  return `Você é um sistema especializado em leitura óptica de gabaritos escolares SESI. Analise a imagem com MÁXIMA ATENÇÃO.
+ESTRUTURA DA FOLHA SESI (de cima para baixo):
+[CABECALHO] "SESI — Escola de Referência" + campos: Área do conhecimento, Professor(a), Turma, Data, Estudante.
+[ORIENTAÇÕES] Tabela de habilidades.
+[RUBRICAS] Tabela de rubricas A/B/C.
+[DESCRIÇÃO] "Sua avaliação será corrigida conforme as opções marcadas. Não rasure! Pinte a alternativa com caneta preta ou azul."
+[QUESTÕES] A prova tem ${totalQuestoes} questões no total. ${discText} ${objText}
+[GABARITO] Tabela na lateral direita da página com números e alternativas.
+COMO IDENTIFICAR BOLHA PINTADA: ela aparece PREENCHIDA/SÓLIDA/ESCURA em contraste com as bolhas vizinhas que são VAZIAS (só tem contorno e letra). Em fotos pode aparecer azul escuro ou roxo escuro.
+PROCESSO: 1) Leia nome do aluno no campo Estudante. 2) Para cada questão objetiva, olhe as alternativas e identifique qual está preenchida.
+REGRA ABSOLUTA: sua resposta deve conter APENAS o JSON abaixo, sem nenhum texto antes ou depois:
+{"nome":"NOME","obj":{"1":"A","2":"B",...},"obs":"Q01:A(pintada) Q02:B(pintada) etc — descreva cada questão"}
+Use os números das questões começando de 1. Se questão estiver em branco use null. Se imagem ilegível: {"erro":"motivo"}.`;
+}
+
+async function processFile(file, idx, total) {
+  const status = document.getElementById('result-desc');
+  status.textContent = `Processando ${idx}/${total}: ${file.name}...`;
+
+  const isPdf = file.name.toLowerCase().endsWith('.pdf');
+
+  if (isPdf) {
+    const pages = await extractPdfPages(file);
+    const results = [];
+    for (let i = 0; i < pages.length; i++) {
+      const r = await processImageBlob(pages[i].blob, `${file.name} — pág. ${i+1}`, idx, total);
+      results.push(r);
+    }
+    return results;
+  } else {
+    return [await processImageBlob(file, file.name, idx, total)];
+  }
+}
+
+async function extractPdfPages(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const uint8 = new Uint8Array(arrayBuffer);
+
+  // Simple PDF page extraction using canvas
+  // For a full implementation, we'd use pdf.js, but here we send the raw PDF to Gemini
+  // Gemini supports PDF directly
+  const pages = [];
+  const base64 = btoa(String.fromCharCode(...uint8));
+  pages.push({ blob: file, base64, mime: 'application/pdf' });
+  return pages;
+}
+
+async function processImageBlob(blob, fileName, idx, total) {
+  const status = document.getElementById('result-desc');
+  status.textContent = `Processando ${idx}/${total}: ${fileName}...`;
+
+  try {
+    let base64, mimeType;
+
+    if (blob.type === 'application/pdf') {
+      const ab = await blob.arrayBuffer();
+      base64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
+      mimeType = 'application/pdf';
+    } else {
+      const resized = await resizeImage(blob);
+      const ab = await resized.arrayBuffer();
+      base64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
+      mimeType = 'image/jpeg';
+    }
+
+    const response = await callGemini(base64, mimeType, buildPrompt());
+    let jsonStr = response.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    let dados;
+    try { dados = JSON.parse(jsonStr); }
+    catch { dados = { erro: 'Resposta fora do padrão JSON pela IA.' }; }
+
+    dados.arquivo = fileName;
+    return dados;
+  } catch (e) {
+    return { arquivo: fileName, erro: e.message };
+  }
+}
+
+// ============================================================================
+// Processamento
+// ============================================================================
+document.getElementById('btn-process').addEventListener('click', async () => {
+  if (!files.length) return;
+  const btn = document.getElementById('btn-process');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processando...';
+  resultados = [];
+
+  showStep('step-result');
+  document.getElementById('result-desc').textContent = 'Iniciando processamento...';
+  document.getElementById('stat-cards').innerHTML = '';
+  document.getElementById('result-thead').innerHTML = '';
+  document.getElementById('result-tbody').innerHTML = '';
+  document.getElementById('error-list').innerHTML = '';
+
+  for (let i = 0; i < files.length; i++) {
+    const res = await processFile(files[i], i + 1, files.length);
+    resultados.push(...res);
+  }
+
+  renderResults();
+  btn.disabled = false;
+  btn.innerHTML = '▶ Processar Gabaritos';
+});
+
+// ============================================================================
+// Renderizar resultados
+// ============================================================================
+function getQuestoesObjetivasFromGabarito() {
+  const qs = [];
+  for (const [k, v] of Object.entries(gabarito)) {
+    if (k.startsWith('soma_') || k.startsWith('tipo_') || k.startsWith('_')) continue;
+    const n = parseInt(k);
+    if (!isNaN(n)) qs.push(String(n));
+  }
+  qs.sort((a, b) => parseInt(a) - parseInt(b));
+  return qs.length ? qs : ['3','4','5','6','7','8','9','10'];
+}
+
+function renderResults() {
+  const status = document.getElementById('result-desc');
+  const temGab = Object.keys(gabarito).some(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_'));
+  const questoesObj = questoesGeradas
+    ? Array.from({length: questoesGeradas._total || 10}, (_, i) => String(i + 1)).filter(q => (questoesGeradas['tipo_' + q] || 'multipla') !== 'discursiva')
+    : getQuestoesObjetivasFromGabarito();
+
+  // Stats
+  const totalAlunos = resultados.filter(r => !r.erro).length;
+  const totalErros = resultados.filter(r => r.erro).length;
+  let acertosTotal = 0, questoesCorrigidas = 0;
+
+  if (temGab) {
+    resultados.forEach(r => {
+      if (r.erro || !r.obj) return;
+      questoesObj.forEach(q => {
+        if (gabarito[q] && r.obj[q]) {
+          questoesCorrigidas++;
+          if (r.obj[q] === gabarito[q]) acertosTotal++;
+        }
+      });
+    });
+  }
+
+  const mediaAcertos = questoesCorrigidas > 0 ? ((acertosTotal / questoesCorrigidas) * 100).toFixed(1) : '—';
+
+  document.getElementById('stat-cards').innerHTML = `
+    <div class="stat-card"><div class="stat-card__value">${totalAlunos}</div><div class="stat-card__label">Alunos lidos</div></div>
+    <div class="stat-card"><div class="stat-card__value">${totalErros}</div><div class="stat-card__label">Erros</div></div>
+    ${temGab ? `<div class="stat-card"><div class="stat-card__value">${acertosTotal}/${questoesCorrigidas}</div><div class="stat-card__label">Acertos</div></div>
+    <div class="stat-card"><div class="stat-card__value">${mediaAcertos}%</div><div class="stat-card__label">Média</div></div>` : ''}
+  `;
+
+  // Table header
+  let thead = '<tr><th>Aluno</th>';
+  questoesObj.forEach(q => { thead += `<th>Q${q.padStart(2,'0')}</th>`; });
+  if (temGab) thead += '<th>Acertos</th>';
+  thead += '</tr>';
+  document.getElementById('result-thead').innerHTML = thead;
+
+  // Table body
+  let tbody = '';
+  resultados.forEach(r => {
+    if (r.erro) {
+      tbody += `<tr><td>${escapeHtml(r.arquivo)}</td><td colspan="${questoesObj.length + (temGab?1:0)}" style="color:var(--danger);">❌ ${escapeHtml(r.erro)}</td></tr>`;
+      return;
+    }
+    let acertos = 0;
+    let row = `<td>${escapeHtml(r.nome || r.arquivo)}</td>`;
+    questoesObj.forEach(q => {
+      const resp = r.obj?.[q] || '';
+      const correta = gabarito[q];
+      if (correta && resp) {
+        if (resp === correta) { row += `<td class="correta">✅ ${resp}</td>`; acertos++; }
+        else { row += `<td class="errada">❌ ${resp}</td>`; }
+      } else {
+        row += `<td class="em-branco">${resp || '—'}</td>`;
+      }
+    });
+    if (temGab) row += `<td><strong>${acertos}/${questoesObj.length}</strong></td>`;
+    tbody += `<tr>${row}</tr>`;
+  });
+  document.getElementById('result-tbody').innerHTML = tbody;
+
+  status.textContent = `${resultados.length} folha(s) processada(s).`;
+}
+
+// ============================================================================
+// Download CSV
+// ============================================================================
+document.getElementById('btn-download-csv').addEventListener('click', () => {
+  if (!resultados.length) return;
+  const temGab = Object.keys(gabarito).some(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_'));
+  const questoesObjCsv = questoesGeradas
+    ? Array.from({length: questoesGeradas._total || 10}, (_, i) => String(i + 1)).filter(q => (questoesGeradas['tipo_' + q] || 'multipla') !== 'discursiva')
+    : getQuestoesObjetivasFromGabarito();
+  const headers = ['Arquivo','NomeAluno', ...questoesObjCsv.map(q => 'Q'+q.padStart(2,'0'))];
+  if (temGab) headers.push('Acertos');
+
+  let csv = headers.join(';') + '\n';
+  resultados.forEach(r => {
+    const row = [r.arquivo||'', r.nome||''];
+    let acertos = 0;
+    questoesObjCsv.forEach(q => {
+      const resp = r.obj?.[q] || '';
+      row.push(resp);
+      if (temGab && gabarito[q] && resp === gabarito[q]) acertos++;
+    });
+    if (temGab) row.push(acertos);
+    csv += row.join(';') + '\n';
+  });
+
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `correcao_sesi_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('CSV baixado com sucesso!', 'success');
+});
+
+function escapeHtml(s = '') {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

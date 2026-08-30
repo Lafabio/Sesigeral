@@ -946,7 +946,7 @@ function setImg(id,inp){ if(!inp.files[0])return; const r=new FileReader(); r.on
 function rmImg(id){ const q=questoes.find(q=>q.id===id); if(q){q.imagem=null;renderAll();} }
 function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); }
 function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; const est=document.getElementById('capaEstudante')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r,est})); }catch(e){} }
-function openPreview(){ try{ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); }catch(e){ console.error('Erro no preview:',e); alert('Erro ao gerar preview:\n'+e.message); } }
+function openPreview(){ try{ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); extrairESalvarGabarito(); }catch(e){ console.error('Erro no preview:',e); alert('Erro ao gerar preview:\n'+e.message); } }
 function closePreview(){ document.getElementById('modalPreview').classList.add('hidden'); }
 
 // ══════════════════════════════════════════════════════════════
@@ -1054,6 +1054,7 @@ function buildHTML(_questoes, _versaoLabel){
 async function exportPDF(){
   const btn=document.getElementById('btnExport');
   btn.disabled=true; btn.textContent='⏳ Gerando PDF…';
+  extrairESalvarGabarito();
   try{
     const d=document.createElement('div');
     d.style.cssText='position:absolute;left:-9999px;top:0;width:190mm;padding:10mm;background:white;';
@@ -1081,6 +1082,7 @@ async function exportPDF(){
 async function exportDOCX(){
   const btn=document.getElementById('btnDocx');
   btn.disabled=true; btn.textContent='⏳ Gerando DOCX…';
+  extrairESalvarGabarito();
   try{
     await buildAndDownloadDocx(questoes, null);
   }catch(err){
@@ -1624,6 +1626,34 @@ function buildGabaritoRodape(qs, versaoLabel){
     <h3>🗝 Gabarito — Versão ${versaoLabel} (uso exclusivo do professor)</h3>
     <table class="gab-table"><tr><th>Questão</th><th>Resposta</th></tr>${rows}</table>
   </div>`;
+}
+
+// ── Extrai gabarito do array questoes e salva no localStorage ──
+function extrairESalvarGabarito(){
+  const gabarito = {};
+  const tipo = tipoProva === 'em' ? 'em' : 'ef';
+  questoes.forEach((q, i) => {
+    const num = i + 1;
+    if(q.tipo === 'multipla'){
+      const correta = q.alternativas.find(a => a.correta);
+      if(correta) gabarito[String(num)] = correta.letra;
+    } else if(q.tipo === 'somatoria'){
+      const soma = q.somatoria.filter(s => s.ok).reduce((a,s) => a + s.v, 0);
+      gabarito['soma_' + num] = soma;
+    }
+    gabarito['tipo_' + num] = q.tipo;
+  });
+  gabarito._total = questoes.length;
+  gabarito._tipo = tipo;
+  gabarito._letras = tipo === 'em' ? LEM.join('') : LEF.join('');
+  gabarito._turma = document.getElementById('selTurma')?.value || '';
+  gabarito._disciplina = document.getElementById('selDisc')?.value || '';
+  gabarito._titulo = document.getElementById('tituloAval')?.value || '';
+  localStorage.setItem('sesi_gabarito_gerado', JSON.stringify(gabarito));
+  // Envia para o parent (index.html) repassar para correção
+  if(window.parent && window.parent !== window){
+    window.parent.postMessage({ tipo: 'sesi-gabarito-gerado', gabarito }, '*');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════

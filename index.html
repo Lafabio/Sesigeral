@@ -1435,6 +1435,36 @@ function showGeradorView() {
   });
 }
 
+// ============================================================================
+// Correção de Gabaritos — aba integrada (iframe)
+// ============================================================================
+function showCorrecaoView() {
+  renderShell();
+  document.getElementById('action-bar').style.display = 'none';
+  document.getElementById('stepper').style.display = 'none';
+  const content = document.getElementById('view-content');
+  content.style.maxWidth = 'none';
+  content.style.padding = '0';
+  content.appendChild(el(`
+    <iframe id="frame-correcao" src="correcao-gabaritos.html?v=${Date.now()}" title="Correção de Gabaritos"
+      style="width:100%;height:calc(100vh - 64px);border:none;display:block;"></iframe>
+  `));
+  const frame = content.querySelector('#frame-correcao');
+  frame.addEventListener('load', () => {
+    try {
+      // Envia chave Gemini
+      const geminiKey = localStorage.getItem('sesi_gemini_key') || '';
+      if (geminiKey) frame.contentWindow.postMessage({ tipo: 'sesi-chave-gemini', chave: geminiKey }, '*');
+      // Envia gabarito gerado (se existir)
+      const gabRaw = localStorage.getItem('sesi_gabarito_gerado');
+      if (gabRaw) {
+        const gab = JSON.parse(gabRaw);
+        frame.contentWindow.postMessage({ tipo: 'sesi-gabarito-gerado', gabarito: gab }, '*');
+      }
+    } catch (e) { /* noop */ }
+  });
+}
+
 function getDiaSemanaNumero(diaPt) {
   const mapa = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5 };
   return mapa[diaPt] || 1;
@@ -3649,6 +3679,7 @@ function renderShell() {
           <button class="btn-icon" id="btn-dashboard" title="Meus planos">Planos</button>
           <button class="btn-icon" id="btn-grade" title="Grade horária">Grade</button>
           <button class="btn-icon" id="btn-provas" title="Gerador de Provas">Provas</button>
+          <button class="btn-icon" id="btn-correcao" title="Correção de Gabaritos">Correção</button>
           <button class="btn-icon" id="btn-config" title="Configurações">Config</button>
           ${USER_NOME ? '<button class="btn-icon" id="btn-sair" title="Sair" style="color:var(--danger);">Sair</button>' : ''}
         </div>
@@ -3667,6 +3698,7 @@ function renderShell() {
   document.getElementById('btn-dashboard').addEventListener('click', showDashboard);
   document.getElementById('btn-grade').addEventListener('click', showScheduleView);
   document.getElementById('btn-provas').addEventListener('click', showGeradorView);
+  document.getElementById('btn-correcao').addEventListener('click', showCorrecaoView);
   document.getElementById('btn-config').addEventListener('click', showConfigProfessor);
   document.getElementById('btn-tema').addEventListener('click', (e) => {
     const novoTema = alternarTema();
