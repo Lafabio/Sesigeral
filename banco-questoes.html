@@ -674,13 +674,18 @@ async function uploadImagem(file){
 // IA: ANALISAR QUESTÃO
 // ══════════════════════════════════════════════════════════════
 async function analisarQuestaoIA(){
+  console.log('[BQ-IA] analisarQuestaoIA chamada');
+  // DEBUG: remover esta linha depois do teste
+  alert('[DEBUG] analisarQuestaoIA foi chamada! Texto: ' + (document.getElementById('questaoColada').value.trim().substring(0,50) || '(vazio)') + ' | Key: ' + (localStorage.getItem('gemini_api_key') ? 'SIM' : 'NAO'));
   const texto = document.getElementById('questaoColada').value.trim();
   if(!texto){
+    console.log('[BQ-IA] Texto vazio');
     mostrarStatus('iaStatus', '⚠️ Cole uma questão primeiro.', 'erro');
     return;
   }
 
   const apiKey = localStorage.getItem('gemini_api_key');
+  console.log('[BQ-IA] API key found:', !!apiKey, apiKey ? apiKey.substring(0,6)+'...' : 'null');
   if(!apiKey){
     mostrarStatus('iaStatus', '⚠️ Cole sua chave Gemini no banner acima ou faça login pelo <a href="index.html" style="color:var(--primary);font-weight:700;">Sesigeral</a>.', 'erro');
     return;
@@ -692,6 +697,7 @@ async function analisarQuestaoIA(){
   mostrarStatus('iaStatus', '⏳ A IA está analisando a questão...', 'load');
 
   try{
+    console.log('[BQ-IA] Fetching Gemini API...');
     const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
@@ -731,21 +737,27 @@ Formato esperado:
       })
     });
 
+    console.log('[BQ-IA] Response status:', resp.status, resp.ok ? 'OK' : 'FAIL');
     if(!resp.ok){
-      const errData = await resp.json().catch(()=>({error:{message:resp.statusText}}));
-      throw new Error(`Gemini API: ${errData?.error?.message || resp.statusText}`);
+      const errBody = await resp.json().catch(()=>({error:{message:resp.statusText}}));
+      console.error('[BQ-IA] API error:', errBody);
+      throw new Error(`Gemini API (${resp.status}): ${errBody?.error?.message || resp.statusText}`);
     }
 
     const data = await resp.json();
+    console.log('[BQ-IA] Raw response:', data);
     const raw = data.choices?.[0]?.message?.content || '';
+    console.log('[BQ-IA] Content:', raw.substring(0,200));
     let jsonStr = raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
     let resultado;
     try{ resultado = JSON.parse(jsonStr); }
     catch(pe){
+      console.warn('[BQ-IA] JSON parse failed, trying regex extraction');
       const match = jsonStr.match(/\{[\s\S]+\}/);
       if(match) resultado = JSON.parse(match[0]);
-      else throw new Error('Resposta da IA não é JSON válido.');
+      else throw new Error('Resposta da IA não é JSON válido: ' + raw.substring(0,300));
     }
+    console.log('[BQ-IA] Parsed result:', resultado);
 
     // Preencher campos
     if(resultado.area_conhecimento) document.getElementById('campoArea').value = resultado.area_conhecimento;
@@ -771,6 +783,7 @@ Formato esperado:
     mostrarStatus('iaStatus', `✅ Análise concluída! Área: <strong>${resultado.area_conhecimento||'?'}</strong>, Disciplina: <strong>${resultado.disciplina||'?'}</strong>, Dificuldade: <strong>${resultado.nivel_dificuldade||'?'}</strong>. Revise e edite os campos antes de salvar.`, 'ok');
 
   }catch(err){
+    console.error('[BQ-IA] Erro:', err);
     mostrarStatus('iaStatus', `❌ <strong>Erro:</strong> ${err.message}`, 'erro');
   }finally{
     btn.disabled = false;
