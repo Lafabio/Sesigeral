@@ -4432,9 +4432,19 @@ function renderLoginForm() {
     if (!user) return showToast('Email não encontrado. Crie uma conta.', 'error');
     const hash = await hashSenha(senha);
     if (hash !== user.senhaHash) return showToast('Senha incorreta.', 'error');
-    const nome = email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const nome = user.nome || email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     setCurrentAuthUser({ email, nome, criadoEm: user.criadoEm });
     aoLogar(nome);
+    if (user.nome || user.unidadeEducacional || user.disciplinas) {
+      state.dados.professor = {
+        ...state.dados.professor,
+        nome: user.nome || state.dados.professor?.nome || nome,
+        unidadeEducacional: user.unidadeEducacional || state.dados.professor?.unidadeEducacional || '',
+        disciplinas: user.disciplinas || state.dados.professor?.disciplinas || [],
+        disciplina: (user.disciplinas || state.dados.professor?.disciplinas || [])[0] || ''
+      };
+      salvarDadosUsuario(nome, state.dados);
+    }
     showDashboard();
   });
 
@@ -4445,20 +4455,38 @@ function renderLoginForm() {
 function renderRegisterForm() {
   const container = document.getElementById('auth-form');
   container.innerHTML = '';
+  let regDisciplinas = [];
   container.appendChild(el(`
     <form id="auth-register-form">
       <div class="field" style="text-align:left;">
         <label for="reg-email">Email SESI</label>
-        <input class="input" id="reg-email" type="email" placeholder="seu.nome@edu.sesisc.org.br" required />
+        <input class="input" id="reg-email" type="email" placeholder="seu.nome@edu.sesisc.org.br" required autocomplete="email" />
         <p class="field__hint">Use o email institucional SESI no formato: nome@edu.sesisc.org.br</p>
       </div>
       <div class="field" style="text-align:left;">
+        <label for="reg-nome">Nome completo</label>
+        <input class="input" id="reg-nome" type="text" placeholder="Seu nome" required autocomplete="name" />
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="reg-unidade">Unidade Educacional</label>
+        <input class="input" id="reg-unidade" type="text" placeholder="Ex: Sesi Tubarão II" required />
+      </div>
+      <div class="field" style="text-align:left;">
+        <label>Disciplinas</label>
+        <div id="reg-disciplinas-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input class="input" id="reg-disciplina-input" placeholder="Ex: Matemática" style="flex:1;" />
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-reg-add-disc">+</button>
+        </div>
+        <p class="field__hint">Adicione todas as disciplinas que leciona.</p>
+      </div>
+      <div class="field" style="text-align:left;">
         <label for="reg-senha">Crie uma senha</label>
-        <input class="input" id="reg-senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+        <input class="input" id="reg-senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password" />
       </div>
       <div class="field" style="text-align:left;">
         <label for="reg-senha2">Confirme a senha</label>
-        <input class="input" id="reg-senha2" type="password" placeholder="Repita a senha" required minlength="6" />
+        <input class="input" id="reg-senha2" type="password" placeholder="Repita a senha" required minlength="6" autocomplete="new-password" />
       </div>
       <div class="field" style="text-align:left;">
         <label for="reg-pergunta">Pergunta secreta (para recuperação)</label>
@@ -4482,17 +4510,44 @@ function renderRegisterForm() {
     </div>
   `));
 
+  function renderRegChips() {
+    const chips = document.getElementById('reg-disciplinas-chips');
+    chips.innerHTML = regDisciplinas.map((d, i) => `<span class="chip is-active" data-idx="${i}">${escapeHtml(d)} ✕</span>`).join('');
+    chips.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => { regDisciplinas.splice(parseInt(chip.dataset.idx), 1); renderRegChips(); });
+    });
+  }
+
+  document.getElementById('btn-reg-add-disc').addEventListener('click', () => {
+    const input = document.getElementById('reg-disciplina-input');
+    const val = input.value.trim();
+    if (val && !regDisciplinas.some(d => d.toLowerCase() === val.toLowerCase())) {
+      regDisciplinas.push(val);
+      renderRegChips();
+      input.value = '';
+    }
+  });
+
+  document.getElementById('reg-disciplina-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-reg-add-disc').click(); }
+  });
+
   document.getElementById('link-voltar-login').addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
 
   document.getElementById('auth-register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    const nome = document.getElementById('reg-nome').value.trim();
+    const unidade = document.getElementById('reg-unidade').value.trim();
     const senha = document.getElementById('reg-senha').value;
     const senha2 = document.getElementById('reg-senha2').value;
     const pergunta = document.getElementById('reg-pergunta').value;
     const resposta = document.getElementById('reg-resposta').value.trim();
 
     if (!validateEmail(email)) return showToast('Use o email no formato: nome@edu.sesisc.org.br', 'error');
+    if (!nome) return showToast('Informe seu nome completo.', 'error');
+    if (!unidade) return showToast('Informe a unidade educacional.', 'error');
+    if (regDisciplinas.length === 0) return showToast('Adicione pelo menos uma disciplina.', 'error');
     if (senha.length < 6) return showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
     if (senha !== senha2) return showToast('As senhas não conferem.', 'error');
     if (!pergunta || !resposta) return showToast('Escolha uma pergunta e responda.', 'error');
@@ -4506,6 +4561,9 @@ function renderRegisterForm() {
       senhaHash: hash,
       pergunta,
       respostaHash: hashResposta,
+      nome,
+      unidadeEducacional: unidade,
+      disciplinas: regDisciplinas,
       criadoEm: new Date().toISOString()
     };
     saveUsers(users);
@@ -4604,6 +4662,168 @@ function renderRecoverForm() {
   });
 }
 
+// ---- Minha Conta: perfil, senha, exclusão ----
+function renderMinhaConta() {
+  const authUser = getCurrentAuthUser();
+  if (!authUser) { renderAuth(); return; }
+  const users = getUsers();
+  const user = users[authUser.email] || {};
+  const professor = state.dados.professor || {};
+  const planos = state.dados.planos || [];
+  const criado = user.criadoEm ? new Date(user.criadoEm).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+  const disciplinas = Array.isArray(professor.disciplinas) ? professor.disciplinas : (professor.disciplina ? [professor.disciplina] : []);
+
+  appRoot.innerHTML = '';
+  appRoot.appendChild(el(`
+    <div style="min-height:100vh;background:var(--bg);padding:20px;">
+      <div style="width:100%;max-width:600px;margin:0 auto;">
+        <div class="page-card" style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <h2>Minha Conta</h2>
+            <button class="btn btn-ghost btn-sm" id="conta-voltar">← Voltar</button>
+          </div>
+
+          <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.88rem;">
+              <div><strong style="color:var(--ink-faint);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Email</strong><br/>${escapeHtml(authUser.email)}</div>
+              <div><strong style="color:var(--ink-faint);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Conta criada</strong><br/>${criado}</div>
+              <div><strong style="color:var(--ink-faint);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Planos salvos</strong><br/>${planos.length} plano${planos.length !== 1 ? 's' : ''}</div>
+              <div><strong style="color:var(--ink-faint);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Disciplinas</strong><br/>${disciplinas.length ? escapeHtml(disciplinas.join(', ')) : '—'}</div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+          <h3 style="margin-bottom:12px;">Editar Perfil</h3>
+          <form id="form-editar-perfil">
+            <div class="field" style="text-align:left;">
+              <label for="edit-nome">Nome completo</label>
+              <input class="input" id="edit-nome" value="${escapeHtml(professor.nome || '')}" placeholder="Seu nome" />
+            </div>
+            <div class="field" style="text-align:left;">
+              <label for="edit-unidade">Unidade Educacional</label>
+              <input class="input" id="edit-unidade" value="${escapeHtml(professor.unidadeEducacional || '')}" placeholder="Ex: Sesi Tubarão II" />
+            </div>
+            <div class="field" style="text-align:left;">
+              <label>Disciplinas</label>
+              <div id="edit-disciplinas-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+                ${disciplinas.map((d, i) => `<span class="chip is-active" data-idx="${i}">${escapeHtml(d)} ✕</span>`).join('')}
+              </div>
+              <div style="display:flex;gap:6px;">
+                <input class="input" id="edit-disciplina-input" placeholder="Adicionar disciplina" style="flex:1;" />
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-add-disciplina">+</button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:4px;">Salvar perfil</button>
+          </form>
+
+          <div class="section-divider"></div>
+          <h3 style="margin-bottom:12px;">Alterar Senha</h3>
+          <form id="form-mudar-senha">
+            <div class="field" style="text-align:left;">
+              <label for="senha-atual">Senha atual</label>
+              <input class="input" id="senha-atual" type="password" placeholder="Sua senha atual" required autocomplete="current-password" />
+            </div>
+            <div class="field" style="text-align:left;">
+              <label for="senha-nova">Nova senha</label>
+              <input class="input" id="senha-nova" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+            </div>
+            <div class="field" style="text-align:left;">
+              <label for="senha-nova2">Confirme a nova senha</label>
+              <input class="input" id="senha-nova2" type="password" placeholder="Repita a nova senha" required minlength="6" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:4px;">Alterar senha</button>
+          </form>
+
+          <div class="section-divider"></div>
+          <h3 style="margin-bottom:12px;color:var(--danger);">Zona de Perigo</h3>
+          <p style="font-size:.85rem;margin-bottom:12px;">Excluir sua conta remove todos os seus dados permanentemente. Esta ação não pode ser desfeita.</p>
+          <button class="btn btn-danger" id="btn-excluir-conta">Excluir minha conta</button>
+        </div>
+      </div>
+    </div>
+  `));
+
+  let disciplinasEdit = [...disciplinas];
+
+  document.getElementById('conta-voltar').addEventListener('click', () => { showDashboard(); });
+
+  document.getElementById('btn-add-disciplina').addEventListener('click', () => {
+    const input = document.getElementById('edit-disciplina-input');
+    const val = input.value.trim();
+    if (val && !disciplinasEdit.some(d => d.toLowerCase() === val.toLowerCase())) {
+      disciplinasEdit.push(val);
+      renderDisciplinasChips();
+      input.value = '';
+    }
+  });
+
+  document.getElementById('edit-disciplina-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-disciplina').click(); }
+  });
+
+  function renderDisciplinasChips() {
+    const list = document.getElementById('edit-disciplinas-list');
+    list.innerHTML = disciplinasEdit.map((d, i) => `<span class="chip is-active" data-idx="${i}">${escapeHtml(d)} ✕</span>`).join('');
+    list.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        disciplinasEdit.splice(parseInt(chip.dataset.idx), 1);
+        renderDisciplinasChips();
+      });
+    });
+  }
+  renderDisciplinasChips();
+
+  document.getElementById('form-editar-perfil').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('edit-nome').value.trim();
+    const unidade = document.getElementById('edit-unidade').value.trim();
+    if (!nome) return showToast('Informe seu nome.', 'error');
+    state.dados.professor = { ...state.dados.professor, nome, unidadeEducacional: unidade, disciplinas: disciplinasEdit, disciplina: disciplinasEdit[0] || '' };
+    salvarStorage(state.dados);
+    const auth = getCurrentAuthUser();
+    if (auth) { auth.nome = nome; setCurrentAuthUser(auth); }
+    USER_NOME = nome;
+    showToast('Perfil salvo com sucesso!', 'success');
+  });
+
+  document.getElementById('form-mudar-senha').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const atual = document.getElementById('senha-atual').value;
+    const nova = document.getElementById('senha-nova').value;
+    const nova2 = document.getElementById('senha-nova2').value;
+    if (!atual || !nova || !nova2) return showToast('Preencha todos os campos.', 'error');
+    if (nova.length < 6) return showToast('A nova senha deve ter no mínimo 6 caracteres.', 'error');
+    if (nova !== nova2) return showToast('As senhas não conferem.', 'error');
+    const hashAtual = await hashSenha(atual);
+    if (hashAtual !== user.senhaHash) return showToast('Senha atual incorreta.', 'error');
+    user.senhaHash = await hashSenha(nova);
+    saveUsers(users);
+    document.getElementById('senha-atual').value = '';
+    document.getElementById('senha-nova').value = '';
+    document.getElementById('senha-nova2').value = '';
+    showToast('Senha alterada com sucesso!', 'success');
+  });
+
+  document.getElementById('btn-excluir-conta').addEventListener('click', async () => {
+    const confirm1 = confirm('Tem certeza que deseja excluir sua conta? Todos os seus planos e dados serão perdidos permanentemente.');
+    if (!confirm1) return;
+    const confirm2 = confirm('Esta ação é IRREVERSÍVEL. Confirma a exclusão da conta?');
+    if (!confirm2) return;
+    const senha = prompt('Digite sua senha para confirmar a exclusão:');
+    if (!senha) return;
+    const hash = await hashSenha(senha);
+    if (hash !== user.senhaHash) return showToast('Senha incorreta. Conta não excluída.', 'error');
+    delete users[authUser.email];
+    saveUsers(users);
+    localStorage.removeItem(getDataKey(authUser.nome));
+    localStorage.removeItem(getSchedKey(authUser.nome));
+    clearCurrentAuthUser();
+    USER_NOME = null;
+    showToast('Conta excluída.', 'success');
+    renderAuth();
+  });
+}
+
 // ============================================================================
 // Controlador principal — roteamento entre configuração, dashboard e wizard
 // ============================================================================
@@ -4651,6 +4871,7 @@ function renderShell() {
         <div class="topbar__user">
           <span style="font-size:.78rem;color:var(--ink-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(getCurrentAuthUser()?.email || '')}">${escapeHtml((professor.nome || '').split(' ')[0] || '')}</span>
           <button class="theme-toggle" id="btn-tema" title="Alternar tema claro/escuro">${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀' : '☾'}</button>
+          <button class="btn-icon" id="btn-minha-conta" title="Minha Conta">👤 Conta</button>
           <button class="btn-icon" id="btn-dashboard" title="Meus planos">Planos</button>
           <button class="btn-icon" id="btn-grade" title="Grade horária">Grade</button>
           <button class="btn-icon" id="btn-provas" title="Gerador de Provas">Provas</button>
@@ -4672,6 +4893,7 @@ function renderShell() {
   `));
 
   document.getElementById('btn-dashboard').addEventListener('click', showDashboard);
+  document.getElementById('btn-minha-conta').addEventListener('click', renderMinhaConta);
   document.getElementById('btn-grade').addEventListener('click', showScheduleView);
   document.getElementById('btn-provas').addEventListener('click', showGeradorView);
   document.getElementById('btn-correcao').addEventListener('click', showCorrecaoView);
