@@ -1532,8 +1532,9 @@ function exportarPlanoPDF(plano) {
   if (!win) { showToast('Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.', 'info'); return; }
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${escapeHtml(titulo)}</title>
     <style>@page{margin:22mm 18mm;} body{margin:0;padding:20px;}</style></head>
-    <body>${html}${'<scr'+'ipt>'}window.onload=()=>{window.print();};${'</scr'+'ipt>'}</body></html>`);
+    <body>${html}</body></html>`);
   win.document.close();
+  win.onload = () => { win.print(); };
 }
 
 function exportarPlanoDocx(plano) {
