@@ -403,80 +403,80 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
             <label>Tema/Assunto</label>
             <input type="text" id="campoTema" class="input" placeholder="Ex: Genética, Termodinâmica, Análise Sintática...">
           </div>
+        </div>
 
-          <div class="section-divider" style="margin:20px 0"></div>
-          <h3 style="margin-bottom:14px">📝 Conteúdo da Questão</h3>
+        <div class="section-divider" style="margin:20px 0"></div>
+        <h3 style="margin-bottom:14px">📝 Conteúdo da Questão</h3>
 
+        <div class="field">
+          <label>Enunciado</label>
+          <textarea id="campoEnunciado" class="textarea" rows="4" placeholder="Enunciado completo da questão..."></textarea>
+        </div>
+
+        <!-- Alternativas (apenas para múltipla escolha) -->
+        <div id="alternativasSection">
           <div class="field">
-            <label>Enunciado</label>
-            <textarea id="campoEnunciado" class="textarea" rows="4" placeholder="Enunciado completo da questão..."></textarea>
-          </div>
-
-          <!-- Alternativas (apenas para múltipla escolha) -->
-          <div id="alternativasSection">
-            <div class="field">
-              <label>Alternativas</label>
-              <div id="alternativasList">
-                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-weight:700;color:var(--primary);width:18px">A</span>
-                  <input type="text" class="input alt-input" data-letra="A" placeholder="Texto da alternativa A">
-                  <input type="radio" name="gabarito" value="A" class="alt-radio" title="Marcar como correta">
-                </div>
-                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-weight:700;color:var(--primary);width:18px">B</span>
-                  <input type="text" class="input alt-input" data-letra="B" placeholder="Texto da alternativa B">
-                  <input type="radio" name="gabarito" value="B" class="alt-radio" title="Marcar como correta">
-                </div>
-                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-weight:700;color:var(--primary);width:18px">C</span>
-                  <input type="text" class="input alt-input" data-letra="C" placeholder="Texto da alternativa C">
-                  <input type="radio" name="gabarito" value="C" class="alt-radio" title="Marcar como correta">
-                </div>
-                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-weight:700;color:var(--primary);width:18px">D</span>
-                  <input type="text" class="input alt-input" data-letra="D" placeholder="Texto da alternativa D">
-                  <input type="radio" name="gabarito" value="D" class="alt-radio" title="Marcar como correta">
-                </div>
-                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <span style="font-weight:700;color:var(--primary);width:18px">E</span>
-                  <input type="text" class="input alt-input" data-letra="E" placeholder="Texto da alternativa E">
-                  <input type="radio" name="gabarito" value="E" class="alt-radio" title="Marcar como correta">
-                </div>
+            <label>Alternativas</label>
+            <div id="alternativasList">
+              <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-weight:700;color:var(--primary);width:18px">A</span>
+                <input type="text" class="input alt-input" data-letra="A" placeholder="Texto da alternativa A">
+                <input type="radio" name="gabarito" value="A" class="alt-radio" title="Marcar como correta">
               </div>
-              <div class="field__hint">Marque o radio ao lado da alternativa correta (gabarito).</div>
+              <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-weight:700;color:var(--primary);width:18px">B</span>
+                <input type="text" class="input alt-input" data-letra="B" placeholder="Texto da alternativa B">
+                <input type="radio" name="gabarito" value="B" class="alt-radio" title="Marcar como correta">
+              </div>
+              <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-weight:700;color:var(--primary);width:18px">C</span>
+                <input type="text" class="input alt-input" data-letra="C" placeholder="Texto da alternativa C">
+                <input type="radio" name="gabarito" value="C" class="alt-radio" title="Marcar como correta">
+              </div>
+              <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-weight:700;color:var(--primary);width:18px">D</span>
+                <input type="text" class="input alt-input" data-letra="D" placeholder="Texto da alternativa D">
+                <input type="radio" name="gabarito" value="D" class="alt-radio" title="Marcar como correta">
+              </div>
+              <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-weight:700;color:var(--primary);width:18px">E</span>
+                <input type="text" class="input alt-input" data-letra="E" placeholder="Texto da alternativa E">
+                <input type="radio" name="gabarito" value="E" class="alt-radio" title="Marcar como correta">
+              </div>
             </div>
+            <div class="field__hint">Marque o radio ao lado da alternativa correta (gabarito).</div>
           </div>
+        </div>
 
-          <!-- Somatória (escondida por padrão) -->
-          <div id="somatoriaSection" style="display:none">
-            <div class="field">
-              <label>Itens da Somatória</label>
-              <div id="somatoriaList"></div>
-              <div class="field__hint">Valores: 01, 02, 04, 08, 16, 32, 64. Marque os itens verdadeiros.</div>
-            </div>
-          </div>
-
-          <!-- Imagem -->
+        <!-- Somatória (escondida por padrão) -->
+        <div id="somatoriaSection" style="display:none">
           <div class="field">
-            <label>Imagem da Questão (opcional)</label>
-            <div class="img-drop" id="imgDrop" onclick="document.getElementById('imgInput').click()">
-              <input type="file" id="imgInput" accept="image/*" onchange="handleImagem(event)">
-              <p>Clique ou arraste uma imagem aqui</p>
-              <img id="imgPreview" style="display:none">
-            </div>
-            <button id="btnRemoverImg" class="btn btn-danger btn-sm" style="display:none;margin-top:6px" onclick="removerImagem()">Remover Imagem</button>
+            <label>Itens da Somatória</label>
+            <div id="somatoriaList"></div>
+            <div class="field__hint">Valores: 01, 02, 04, 08, 16, 32, 64. Marque os itens verdadeiros.</div>
           </div>
+        </div>
 
-          <div class="field">
-            <label>Observações (opcional)</label>
-            <textarea id="campoObs" class="textarea" rows="2" placeholder="Notas pessoais sobre a questão..."></textarea>
+        <!-- Imagem -->
+        <div class="field">
+          <label>Imagem da Questão (opcional)</label>
+          <div class="img-drop" id="imgDrop" onclick="document.getElementById('imgInput').click()">
+            <input type="file" id="imgInput" accept="image/*" onchange="handleImagem(event)">
+            <p>Clique ou arraste uma imagem aqui</p>
+            <img id="imgPreview" style="display:none">
           </div>
+          <button id="btnRemoverImg" class="btn btn-danger btn-sm" style="display:none;margin-top:6px" onclick="removerImagem()">Remover Imagem</button>
+        </div>
 
-          <!-- Botões -->
-          <div style="display:flex;gap:8px;margin-top:16px">
-            <button class="btn btn-primary" onclick="salvarQuestao()" id="btnSalvar">✅ Salvar no Banco</button>
-            <button class="btn btn-secondary" onclick="limparFormulario()">🗑 Limpar</button>
-          </div>
+        <div class="field">
+          <label>Observações (opcional)</label>
+          <textarea id="campoObs" class="textarea" rows="2" placeholder="Notas pessoais sobre a questão..."></textarea>
+        </div>
+
+        <!-- Botões -->
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn btn-primary" onclick="salvarQuestao()" id="btnSalvar">✅ Salvar no Banco</button>
+          <button class="btn btn-secondary" onclick="limparFormulario()">🗑 Limpar</button>
         </div>
       </div>
     </div>
