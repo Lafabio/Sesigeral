@@ -669,7 +669,7 @@ async function analisarQuestaoIA(){
 
   const apiKey = localStorage.getItem('gemini_api_key');
   if(!apiKey){
-    mostrarStatus('iaStatus', '⚠️ Configure a chave da Gemini na sidebar.', 'erro');
+    mostrarStatus('iaStatus', '⚠️ Chave da API Gemini não encontrada. Faça login pelo <a href="index.html" style="color:var(--primary);font-weight:700;">Sesigeral</a> primeiro.', 'erro');
     return;
   }
 
@@ -686,7 +686,7 @@ async function analisarQuestaoIA(){
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: localStorage.getItem('gemini_model') || 'gemini-2.0-flash',
+        model: 'gemini-2.0-flash',
         temperature: 0.3,
         max_tokens: 1000,
         response_format: { type: 'json_object' },
