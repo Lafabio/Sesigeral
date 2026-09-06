@@ -203,6 +203,37 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 .bncc-desc{color:var(--tx);font-size:10.5px;line-height:1.45}
 .bncc-loading{text-align:center;padding:16px;color:var(--mu);font-size:12px;font-style:italic}
 .bncc-empty{text-align:center;padding:12px;color:var(--mu);font-size:11px;background:var(--bg);border-radius:6px;border:1px dashed var(--br)}
+
+/* === RESPONSIVIDADE === */
+@media(max-width:400px){
+  .topbar{padding:6px 8px !important;flex-wrap:wrap;}
+  .topbar h1{font-size:1rem !important;}
+  .topbar .actions{gap:4px !important;}
+  .topbar .actions button{font-size:10px !important;padding:5px 6px !important;}
+  .gerar-box{padding:10px !important;}
+  .questao-card{padding:10px !important;font-size:.82rem !important;}
+  .modal{width:98% !important;padding:10px !important;margin:6px !important;}
+  .ver-btn{font-size:9px !important;padding:5px 6px !important;}
+}
+@media(max-width:640px){
+  .topbar{padding:8px 10px;gap:6px;}
+  .topbar h1{font-size:1.05rem;}
+  .topbar .actions{gap:5px;}
+  .topbar .actions button{font-size:11px;padding:6px 8px;}
+  .gerar-box{padding:14px;}
+  .questao-card{padding:14px;}
+  .alternativas-grid{grid-template-columns:1fr !important;}
+  .modal{width:96%;max-height:95vh;}
+  .modal-body{padding:14px !important;}
+  .ver-btn{font-size:10.5px;padding:6px 8px;}
+  #provas-lista{flex-direction:column;}
+  #provas-lista .ver-btn{width:100%;text-align:center;}
+}
+@media(min-width:641px) and (max-width:1024px){
+  .topbar h1{font-size:1.15rem;}
+  .gerar-box{padding:18px;}
+  .modal{width:90%;}
+}
 </style>
 </head>
 <body>
