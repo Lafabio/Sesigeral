@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banco de Questões — SESI/SC</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#F5F7FA;--surface:#FFFFFF;--surface-alt:#EAF1F8;--ink:#1D1D1B;--ink-muted:#54657A;--ink-faint:#8C99A8;--border:#DCE4ED;--border-strong:#C2CEDC;--primary:#0047B6;--primary-hover:#003485;--primary-soft:#E5ECF8;--primary-soft-border:#BBCBEA;--sesi-blue:#0047B6;--sesi-blue-light:#47B9BB;--success:#2E7A22;--success-soft:#E7F4E2;--success-border:#A8D89C;--danger:#AE2C20;--danger-soft:#FBE7E4;--danger-border:#E7AA9F;--warning:#A6740C;--warning-soft:#FCF1DC;--warning-border:#EBC77E;--font-display:'Fraunces',Georgia,serif;--font-body:'IBM Plex Sans',-apple-system,sans-serif;--font-mono:'IBM Plex Mono','Courier New',monospace;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--shadow-sm:0 1px 2px rgba(20,36,54,.07);--shadow-md:0 4px 16px rgba(20,36,54,.12);--shadow-lg:0 12px 32px rgba(20,36,54,.18)}
+html[data-theme="dark"]{--bg:#0F1620;--surface:#161F2C;--surface-alt:#1D2836;--ink:#E8EDF4;--ink-muted:#A6B3C2;--ink-faint:#71808F;--border:#2A3645;--border-strong:#3B4A5C;--primary:#5C8FE0;--primary-hover:#7BA5E8;--primary-soft:#1E2C44;--primary-soft-border:#344B6E;--sesi-blue:#5C8FE0;--sesi-blue-light:#5FC3C5;--success:#5FB86C;--success-soft:#19301F;--success-border:#2F6B3C;--danger:#E27358;--danger-soft:#32201C;--danger-border:#6B3A2C;--warning:#E0AC52;--warning-soft:#332712;--warning-border:#6B5226;--shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 16px rgba(0,0,0,.4);--shadow-lg:0 12px 32px rgba(0,0,0,.5)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;margin:0;color:var(--ink);letter-spacing:-.01em}
+h1{font-size:clamp(1.4rem,1rem + 1.2vw,1.8rem)}h2{font-size:1.15rem}h3{font-size:.95rem;font-weight:600}
+a{color:var(--primary);text-decoration:none}a:hover{text-decoration:underline}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+/* Topbar */
+.topbar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:30}
+.topbar__brand{display:flex;align-items:center;gap:10px}
+.topbar__logo{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:14px}
+.topbar__title{font-family:var(--font-display);font-weight:600;font-size:1rem}
+.topbar__actions{display:flex;align-items:center;gap:8px}
+.theme-toggle{background:none;border:1px solid var(--border-strong);color:var(--ink-muted);cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;transition:background .15s}
+.theme-toggle:hover{background:var(--surface-alt)}
+
+/* Layout */
+.app{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);padding:16px;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
+.main{flex:1;padding:20px;overflow-y:auto;max-height:calc(100vh - 56px)}
+@media(max-width:768px){.sidebar{display:none}.main{padding:14px}}
+
+/* Sidebar */
+.sb-section{margin-bottom:4px}
+.sb-label{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding-bottom:4px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.sb-field{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.sb-field label{font-size:10.5px;font-weight:600;color:var(--ink-muted)}
+.sb-field input,.sb-field select,.sb-field textarea{font-size:12px;background:var(--surface-alt);border:1px solid var(--border);color:var(--ink);padding:6px 8px;border-radius:var(--radius-sm);width:100%;transition:border-color .15s}
+.sb-field input:focus,.sb-field select:focus,.sb-field textarea:focus{border-color:var(--primary);outline:none}
+.sb-field textarea{resize:vertical;min-height:50px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto}
+.tab-btn{padding:10px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-faint);font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap;transition:all .15s}
+.tab-btn:hover{color:var(--ink-muted)}
+.tab-btn.is-active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:var(--radius-sm);border:1px solid transparent;font-weight:600;font-size:.88rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover:not(:disabled){background:var(--primary-hover)}
+.btn-secondary{background:var(--surface);color:var(--ink);border-color:var(--border-strong)}.btn-secondary:hover:not(:disabled){background:var(--surface-alt)}
+.btn-ghost{background:transparent;color:var(--ink-muted)}.btn-ghost:hover:not(:disabled){background:var(--surface-alt);color:var(--ink)}
+.btn-ai{background:var(--primary-soft);color:var(--primary);border-color:var(--primary-soft-border)}.btn-ai:hover:not(:disabled){background:var(--primary-soft-border)}
+.btn-danger{background:transparent;color:var(--danger);border-color:transparent}.btn-danger:hover:not(:disabled){background:var(--danger-soft)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.btn-block{width:100%}
+
+/* Form */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:5px}
+.field__hint{font-size:.78rem;color:var(--ink-faint);margin-top:3px}
+.input,.select,.textarea{width:100%;padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);transition:border-color .15s}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary)}
+.textarea{resize:vertical;min-height:120px;font-family:inherit}
+.input-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+
+/* Questão card */
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:10px;transition:border-color .15s}
+.q-card:hover{border-color:var(--primary-soft-border)}
+.q-card__top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.q-card__badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.badge-area{background:var(--primary-soft);color:var(--primary)}
+.badge-disc{background:var(--warning-soft);color:var(--warning)}
+.badge-diff{padding:2px 8px;border-radius:999px;font-size:.7rem;font-weight:600}
+.badge-diff.facil{background:var(--success-soft);color:var(--success)}
+.badge-diff.medio{background:var(--warning-soft);color:var(--warning)}
+.badge-diff.dificil{background:var(--danger-soft);color:var(--danger)}
+.badge-estilo{background:var(--surface-alt);color:var(--ink-muted);border:1px solid var(--border)}
+.q-card__enunciado{font-size:.88rem;color:var(--ink);margin-bottom:8px;line-height:1.5;max-height:80px;overflow:hidden;text-overflow:ellipsis}
+.q-card__meta{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-faint);flex-wrap:wrap}
+.q-card__actions{display:flex;gap:4px;margin-top:8px}
+.q-card__actions .btn-sm{font-size:.75rem;padding:4px 10px}
+
+/* Tags */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-hab{background:var(--primary-soft);color:var(--primary);font-family:var(--font-mono)}
+
+/* IA Status */
+.ia-status{padding:10px 14px;border-radius:var(--radius-sm);font-size:.85rem;margin-bottom:14px;border:1px solid;display:none}
+.ia-status.show{display:block}
+.ia-status.load{background:var(--primary-soft);border-color:var(--primary-soft-border);color:var(--primary)}
+.ia-status.ok{background:var(--success-soft);border-color:var(--success-border);color:var(--success)}
+.ia-status.erro{background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger)}
+
+/* Spinner */
+.spinner{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Alternativas list */
+.alt-list{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.alt-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-alt);border-radius:var(--radius-sm);font-size:.85rem}
+.alt-letra{font-weight:700;color:var(--primary);width:18px;flex-shrink:0}
+.alt-texto{flex:1;color:var(--ink)}
+.alt-correct{background:var(--success-soft);border:1px solid var(--success-border)}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;text-align:center}
+.stat-card__value{font-size:1.8rem;font-weight:700;font-family:var(--font-display);color:var(--primary)}
+.stat-card__label{font-size:.78rem;color:var(--ink-muted);margin-top:2px}
+.bar-chart{margin-bottom:20px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.bar-label{font-size:.82rem;color:var(--ink-muted);width:140px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:22px;background:var(--surface-alt);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .4s ease;display:flex;align-items:center;padding-left:8px;font-size:.72rem;font-weight:600;color:#fff;min-width:fit-content}
+.bar-fill.empty{background:transparent;color:var(--ink-faint)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(32,38,47,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:800px;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.modal__header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal__body{padding:16px 20px;overflow-y:auto;flex:1}
+.modal__footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--ink-faint)}
+.empty-state__icon{font-size:2.5rem;margin-bottom:10px}
+.empty-state__text{font-size:.95rem}
+
+/* Alert */
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:.85rem;margin-bottom:14px;border:1px solid}
+.alert-danger{background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger)}
+.alert-success{background:var(--success-soft);border-color:var(--success-border);color:var(--success)}
+.alert-warning{background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning)}
+
+/* Config form */
+.config-form{max-width:500px}
+.config-form .sb-field input{font-family:var(--font-mono);font-size:11px}
+
+/* Image drop */
+.img-drop{border:2px dashed var(--border-strong);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;background:var(--surface-alt);transition:all .15s;position:relative}
+.img-drop:hover{border-color:var(--primary);background:var(--primary-soft)}
+.img-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.img-drop p{font-size:.8rem;color:var(--ink-faint);pointer-events:none}
+.img-drop img{max-width:100%;max-height:120px;border-radius:4px;pointer-events:none}
+
+/* Selection mode */
+.select-mode .q-card{cursor:pointer;border:2px solid transparent}
+.select-mode .q-card:hover{border-color:var(--primary);background:var(--primary-soft)}
+.select-mode .q-card.selected{border-color:var(--primary);background:var(--primary-soft)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar__brand">
+    <div class="topbar__logo">BQ</div>
+    <span class="topbar__title">Banco de Questões</span>
+  </div>
+  <div class="topbar__actions">
+    <a href="index.html" class="btn btn-ghost btn-sm">Planejamento</a>
+    <a href="gerador-provas.html" class="btn btn-ghost btn-sm">Gerador de Provas</a>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">🌓</button>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app">
+  <!-- Sidebar Config -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">Configuração</div>
+      <div class="sb-field">
+        <label>Chave Gemini (IA)</label>
+        <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:.7rem;color:var(--primary);">Criar chave gratuita →</a>
+        <input type="password" id="cfgGeminiKey" placeholder="AIza..." value="">
+      </div>
+      <div class="sb-field">
+        <label>URL Supabase</label>
+        <input type="text" id="cfgSupaUrl" placeholder="https://xxx.supabase.co" value="">
+      </div>
+      <div class="sb-field">
+        <label>Anon Key Supabase</label>
+        <input type="password" id="cfgSupaKey" placeholder="eyJ..." value="">
+      </div>
+      <button class="btn btn-primary btn-sm btn-block" onclick="salvarConfig()">Salvar Configuração</button>
+      <div id="configStatus" class="ia-status" style="margin-top:8px"></div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Filtros Rápidos</div>
+      <div class="sb-field">
+        <label>Área de Conhecimento</label>
+        <select id="fltArea" onchange="aplicarFiltros()">
+          <option value="">Todas</option>
+          <option value="Linguagens e suas Tecnologias">Linguagens e suas Tecnologias</option>
+          <option value="Matemática e suas Tecnologias">Matemática e suas Tecnologias</option>
+          <option value="Ciências da Natureza e suas Tecnologias">Ciências da Natureza e suas Tecnologias</option>
+          <option value="Ciências Humanas e Sociais Aplicadas">Ciências Humanas e Sociais Aplicadas</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <label>Disciplina</label>
+        <select id="fltDisciplina" onchange="aplicarFiltros()">
+          <option value="">Todas</option>
+          <option value="Biologia">Biologia</option>
+          <option value="Física">Física</option>
+          <option value="Química">Química</option>
+          <option value="Matemática">Matemática</option>
+          <option value="Língua Portuguesa">Língua Portuguesa</option>
+          <option value="Língua Inglesa">Língua Inglesa</option>
+          <option value="História">História</option>
+          <option value="Geografia">Geografia</option>
+          <option value="Filosofia">Filosofia</option>
+          <option value="Sociologia">Sociologia</option>
+          <option value="Arte">Arte</option>
+          <option value="Educação Física">Educação Física</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <label>Dificuldade</label>
+        <select id="fltDificuldade" onchange="aplicarFiltros()">
+          <option value="">Todas</option>
+          <option value="facil">Fácil</option>
+          <option value="medio">Médio</option>
+          <option value="dificil">Difícil</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <label>Estilo</label>
+        <select id="fltEstilo" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="escola">Escola</option>
+          <option value="enem">ENEM</option>
+          <option value="ufsc">UFSC</option>
+          <option value="udesc">UDESC</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <label>Ano/Série</label>
+        <select id="fltAno" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="1ano">1º Ano</option>
+          <option value="2ano">2º Ano</option>
+          <option value="3ano">3º Ano</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <label>Tipo</label>
+        <select id="fltTipo" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="multipla_escolha">Múltipla Escolha</option>
+          <option value="somatoria">Somatória</option>
+          <option value="discursiva">Discursiva</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-block" onclick="limparFiltros()">Limpar Filtros</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn is-active" onclick="mudarAba('cadastrar')">📝 Cadastrar</button>
+      <button class="tab-btn" onclick="mudarAba('buscar')">🔍 Buscar</button>
+      <button class="tab-btn" onclick="mudarAba('stats')">📊 Estatísticas</button>
+    </div>
+
+    <!-- ABA: Cadastrar -->
+    <div class="aba-content" id="aba-cadastrar">
+      <div class="card">
+        <div class="card-header">
+          <h2>Cadastrar Nova Questão</h2>
+        </div>
+
+        <!-- Tipo de questão -->
+        <div class="field">
+          <label>Tipo de Questão</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="tipoMultipla" onclick="setTipoQuestao('multipla_escolha')" style="background:var(--primary);color:#fff">Múltipla Escolha</button>
+            <button class="btn btn-sm btn-secondary" id="tipoSomatoria" onclick="setTipoQuestao('somatoria')">Somatória</button>
+            <button class="btn btn-sm btn-secondary" id="tipoDiscursiva" onclick="setTipoQuestao('discursiva')">Discursiva</button>
+          </div>
+        </div>
+
+        <!-- Colar questão -->
+        <div class="field">
+          <label>Cole a questão abaixo</label>
+          <textarea class="textarea" id="questaoColada" placeholder="Cole aqui o enunciado da questão com as alternativas (A, B, C, D, E). A IA irá analisar e extrair as informações automaticamente." style="min-height:160px"></textarea>
+          <div class="field__hint">A IA analisará o texto e preencherá os campos automaticamente. Você poderá editar antes de salvar.</div>
+        </div>
+
+        <button class="btn btn-ai btn-block" id="btnAnalisarIA" onclick="analisarQuestaoIA()">
+          🔍 Analisar com IA
+        </button>
+
+        <!-- Status IA -->
+        <div class="ia-status" id="iaStatus"></div>
+
+        <!-- Resultado da análise (escondido até analisar) -->
+        <div id="analiseResult" style="display:none">
+          <div class="section-divider" style="margin:20px 0"></div>
+          <h3 style="margin-bottom:14px">📋 Informações Extraídas pela IA</h3>
+
+          <div class="input-row">
+            <div class="field">
+              <label>Área de Conhecimento</label>
+              <select id="campoArea" class="select">
+                <option value="">Selecione...</option>
+                <option value="Linguagens e suas Tecnologias">Linguagens e suas Tecnologias</option>
+                <option value="Matemática e suas Tecnologias">Matemática e suas Tecnologias</option>
+                <option value="Ciências da Natureza e suas Tecnologias">Ciências da Natureza e suas Tecnologias</option>
+                <option value="Ciências Humanas e Sociais Aplicadas">Ciências Humanas e Sociais Aplicadas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Disciplina</label>
+              <select id="campoDisciplina" class="select">
+                <option value="">Selecione...</option>
+                <option value="Biologia">Biologia</option>
+                <option value="Física">Física</option>
+                <option value="Química">Química</option>
+                <option value="Matemática">Matemática</option>
+                <option value="Língua Portuguesa">Língua Portuguesa</option>
+                <option value="Língua Inglesa">Língua Inglesa</option>
+                <option value="História">História</option>
+                <option value="Geografia">Geografia</option>
+                <option value="Filosofia">Filosofia</option>
+                <option value="Sociologia">Sociologia</option>
+                <option value="Arte">Arte</option>
+                <option value="Educação Física">Educação Física</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="field">
+              <label>Habilidade BNCC</label>
+              <input type="text" id="campoHabilidade" class="input" placeholder="Ex: EF06BI01">
+            </div>
+            <div class="field">
+              <label>Nível de Dificuldade</label>
+              <select id="campoDificuldade" class="select">
+                <option value="">Selecione...</option>
+                <option value="facil">Fácil</option>
+                <option value="medio">Médio</option>
+                <option value="dificil">Difícil</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="field">
+              <label>Estilo da Questão</label>
+              <select id="campoEstilo" class="select">
+                <option value="">Selecione...</option>
+                <option value="escola">Escola</option>
+                <option value="enem">ENEM</option>
+                <option value="ufsc">UFSC</option>
+                <option value="udesc">UDESC</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Ano/Série</label>
+              <select id="campoAno" class="select">
+                <option value="">Selecione...</option>
+                <option value="1ano">1º Ano</option>
+                <option value="2ano">2º Ano</option>
+                <option value="3ano">3º Ano</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Descrição da Habilidade</label>
+            <textarea id="campoHabDesc" class="textarea" rows="2" placeholder="Descrição da habilidade BNCC identificada..."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Tema/Assunto</label>
+            <input type="text" id="campoTema" class="input" placeholder="Ex: Genética, Termodinâmica, Análise Sintática...">
+          </div>
+
+          <div class="section-divider" style="margin:20px 0"></div>
+          <h3 style="margin-bottom:14px">📝 Conteúdo da Questão</h3>
+
+          <div class="field">
+            <label>Enunciado</label>
+            <textarea id="campoEnunciado" class="textarea" rows="4" placeholder="Enunciado completo da questão..."></textarea>
+          </div>
+
+          <!-- Alternativas (apenas para múltipla escolha) -->
+          <div id="alternativasSection">
+            <div class="field">
+              <label>Alternativas</label>
+              <div id="alternativasList">
+                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-weight:700;color:var(--primary);width:18px">A</span>
+                  <input type="text" class="input alt-input" data-letra="A" placeholder="Texto da alternativa A">
+                  <input type="radio" name="gabarito" value="A" class="alt-radio" title="Marcar como correta">
+                </div>
+                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-weight:700;color:var(--primary);width:18px">B</span>
+                  <input type="text" class="input alt-input" data-letra="B" placeholder="Texto da alternativa B">
+                  <input type="radio" name="gabarito" value="B" class="alt-radio" title="Marcar como correta">
+                </div>
+                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-weight:700;color:var(--primary);width:18px">C</span>
+                  <input type="text" class="input alt-input" data-letra="C" placeholder="Texto da alternativa C">
+                  <input type="radio" name="gabarito" value="C" class="alt-radio" title="Marcar como correta">
+                </div>
+                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-weight:700;color:var(--primary);width:18px">D</span>
+                  <input type="text" class="input alt-input" data-letra="D" placeholder="Texto da alternativa D">
+                  <input type="radio" name="gabarito" value="D" class="alt-radio" title="Marcar como correta">
+                </div>
+                <div class="alt-input-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-weight:700;color:var(--primary);width:18px">E</span>
+                  <input type="text" class="input alt-input" data-letra="E" placeholder="Texto da alternativa E">
+                  <input type="radio" name="gabarito" value="E" class="alt-radio" title="Marcar como correta">
+                </div>
+              </div>
+              <div class="field__hint">Marque o radio ao lado da alternativa correta (gabarito).</div>
+            </div>
+          </div>
+
+          <!-- Somatória (escondida por padrão) -->
+          <div id="somatoriaSection" style="display:none">
+            <div class="field">
+              <label>Itens da Somatória</label>
+              <div id="somatoriaList"></div>
+              <div class="field__hint">Valores: 01, 02, 04, 08, 16, 32, 64. Marque os itens verdadeiros.</div>
+            </div>
+          </div>
+
+          <!-- Imagem -->
+          <div class="field">
+            <label>Imagem da Questão (opcional)</label>
+            <div class="img-drop" id="imgDrop" onclick="document.getElementById('imgInput').click()">
+              <input type="file" id="imgInput" accept="image/*" onchange="handleImagem(event)">
+              <p>Clique ou arraste uma imagem aqui</p>
+              <img id="imgPreview" style="display:none">
+            </div>
+            <button id="btnRemoverImg" class="btn btn-danger btn-sm" style="display:none;margin-top:6px" onclick="removerImagem()">Remover Imagem</button>
+          </div>
+
+          <div class="field">
+            <label>Observações (opcional)</label>
+            <textarea id="campoObs" class="textarea" rows="2" placeholder="Notas pessoais sobre a questão..."></textarea>
+          </div>
+
+          <!-- Botões -->
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="btn btn-primary" onclick="salvarQuestao()" id="btnSalvar">✅ Salvar no Banco</button>
+            <button class="btn btn-secondary" onclick="limparFormulario()">🗑 Limpar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: Buscar -->
+    <div class="aba-content" id="aba-buscar" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <h2>Questões Cadastradas</h2>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="exportarJSON()">📤 Exportar JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="importarJSON()">📥 Importar JSON</button>
+          </div>
+        </div>
+
+        <!-- Busca por texto -->
+        <div class="field">
+          <input type="text" class="input" id="buscaTexto" placeholder="🔍 Buscar por texto no enunciado, tema, habilidade..." oninput="aplicarFiltros()">
+        </div>
+
+        <!-- Contador -->
+        <div id="contadorResultados" style="font-size:.85rem;color:var(--ink-muted);margin-bottom:12px"></div>
+
+        <!-- Lista de questões -->
+        <div id="questoesLista"></div>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="empty-state">
+          <div class="empty-state__icon">📚</div>
+          <div class="empty-state__text">Nenhuma questão cadastrada ainda.<br>Cadastre a primeira questão na aba "Cadastrar".</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: Estatísticas -->
+    <div class="aba-content" id="aba-stats" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <h2>Estatísticas do Banco</h2>
+        </div>
+
+        <div class="stats-grid" id="statsCards"></div>
+
+        <h3 style="margin-bottom:12px">Por Disciplina</h3>
+        <div class="bar-chart" id="chartDisciplina"></div>
+
+        <h3 style="margin-bottom:12px">Por Dificuldade</h3>
+        <div class="bar-chart" id="chartDificuldade"></div>
+
+        <h3 style="margin-bottom:12px">Por Área de Conhecimento</h3>
+        <div class="bar-chart" id="chartArea"></div>
+
+        <h3 style="margin-bottom:12px">Por Estilo</h3>
+        <div class="bar-chart" id="chartEstilo"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ver Questão -->
+<div class="modal-overlay" id="modalVer">
+  <div class="modal">
+    <div class="modal__header">
+      <h2>Detalhes da Questão</h2>
+      <button class="btn btn-secondary btn-sm" onclick="fecharModal('modalVer')">Fechar</button>
+    </div>
+    <div class="modal__body" id="modalVerBody"></div>
+  </div>
+</div>
+
+<!-- Modal: Editar Questão -->
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal">
+    <div class="modal__header">
+      <h2>Editar Questão</h2>
+      <button class="btn btn-secondary btn-sm" onclick="fecharModal('modalEditar')">Fechar</button>
+    </div>
+    <div class="modal__body" id="modalEditarBody"></div>
+    <div class="modal__footer">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModal('modalEditar')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btnSalvarEdicao" onclick="salvarEdicao()">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- Input importação (escondido) -->
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="processarImportacao(event)">
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════════════════
+let supabase = null;
+let questoesDB = [];
+let questaoEditandoId = null;
+let imagemAtual = null; // base64 ou null
+let tipoQuestaoAtual = 'multipla_escolha';
+const SOMA_VALS = [1, 2, 4, 8, 16, 32, 64];
+
+// ══════════════════════════════════════════════════════════════
+// TEMA
+// ══════════════════════════════════════════════════════════════
+function toggleTheme(){
+  const h = document.documentElement;
+  const next = h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  h.setAttribute('data-theme', next);
+  localStorage.setItem('bq_theme', next);
+}
+(function(){
+  const saved = localStorage.getItem('bq_theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ══════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO
+// ══════════════════════════════════════════════════════════════
+function carregarConfig(){
+  document.getElementById('cfgGeminiKey').value = localStorage.getItem('gemini_api_key') || '';
+  document.getElementById('cfgSupaUrl').value = localStorage.getItem('bq_supa_url') || 'https://srrwkdlcyldsnbcwuu.supabase.co';
+  document.getElementById('cfgSupaKey').value = localStorage.getItem('bq_supa_key') || 'sb_publishable_xULDqHpl6P4btqRGsnkLTw_Lodq7Qhh';
+  initSupabase();
+}
+
+function salvarConfig(){
+  const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
+  const supaUrl = document.getElementById('cfgSupaUrl').value.trim();
+  const supaKey = document.getElementById('cfgSupaKey').value.trim();
+
+  if(geminiKey) localStorage.setItem('gemini_api_key', geminiKey);
+  if(supaUrl) localStorage.setItem('bq_supa_url', supaUrl);
+  if(supaKey) localStorage.setItem('bq_supa_key', supaKey);
+
+  initSupabase();
+  mostrarStatus('configStatus', '✅ Configuração salva!', 'ok');
+}
+
+function initSupabase(){
+  const url = localStorage.getItem('bq_supa_url');
+  const key = localStorage.getItem('bq_supa_key');
+  if(url && key && window.supabase){
+    supabase = window.supabase.createClient(url, key);
+    carregarQuestoes();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUPABASE CRUD
+// ══════════════════════════════════════════════════════════════
+async function carregarQuestoes(){
+  if(!supabase) return;
+  try{
+    const { data, error } = await supabase
+      .from('questoes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if(error) throw error;
+    questoesDB = data || [];
+    aplicarFiltros();
+    renderizarStats();
+  }catch(err){
+    console.error('Erro ao carregar questões:', err);
+  }
+}
+
+async function salvarQuestaoNoBanco(questao){
+  if(!supabase) throw new Error('Supabase não configurado.');
+  const { data, error } = await supabase
+    .from('questoes')
+    .insert(questao)
+    .select();
+  if(error) throw error;
+  return data[0];
+}
+
+async function atualizarQuestaoNoBanco(id, updates){
+  if(!supabase) throw new Error('Supabase não configurado.');
+  updates.updated_at = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('questoes')
+    .update(updates)
+    .eq('id', id)
+    .select();
+  if(error) throw error;
+  return data[0];
+}
+
+async function excluirQuestaoDoBanco(id){
+  if(!supabase) throw new Error('Supabase não configurado.');
+  const { error } = await supabase
+    .from('questoes')
+    .delete()
+    .eq('id', id);
+  if(error) throw error;
+}
+
+async function uploadImagem(file){
+  if(!supabase) throw new Error('Supabase não configurado.');
+  const ext = file.name.split('.').pop();
+  const path = `questoes/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const { data, error } = await supabase.storage
+    .from('questoes-imagens')
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+  if(error) throw error;
+  const { data: urlData } = supabase.storage
+    .from('questoes-imagens')
+    .getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
+// ══════════════════════════════════════════════════════════════
+// IA: ANALISAR QUESTÃO
+// ══════════════════════════════════════════════════════════════
+async function analisarQuestaoIA(){
+  const texto = document.getElementById('questaoColada').value.trim();
+  if(!texto){
+    mostrarStatus('iaStatus', '⚠️ Cole uma questão primeiro.', 'erro');
+    return;
+  }
+
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if(!apiKey){
+    mostrarStatus('iaStatus', '⚠️ Configure a chave da Gemini na sidebar.', 'erro');
+    return;
+  }
+
+  const btn = document.getElementById('btnAnalisarIA');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Analisando...';
+  mostrarStatus('iaStatus', '⏳ A IA está analisando a questão...', 'load');
+
+  try{
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: localStorage.getItem('gemini_model') || 'gemini-2.0-flash',
+        temperature: 0.3,
+        max_tokens: 1000,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `Você é um especialista em currículo brasileiro (BNCC) e avaliação educacional.
+Analise a questão de prova fornecida e extraia metadados pedagógicos.
+Responda SOMENTE com um objeto JSON válido, sem texto antes ou depois.
+
+Formato esperado:
+{
+  "area_conhecimento": "Linguagens e suas Tecnologias | Matemática e suas Tecnologias | Ciências da Natureza e suas Tecnologias | Ciências Humanas e Sociais Aplicadas",
+  "disciplina": "nome da disciplina (Biologia, Física, Química, Matemática, Língua Portuguesa, Língua Inglesa, História, Geografia, Filosofia, Sociologia, Arte, Educação Física)",
+  "habilidade_bncc": "código da habilidade BNCC (ex: EF06LI09, EM13CHS101) ou null se não identificável",
+  "habilidade_descricao": "descrição curta da habilidade BNCC identificada",
+  "nivel_dificuldade": "facil | medio | dificil",
+  "estilo_questao": "escola | enem | ufsc | udesc",
+  "ano_serie": "1ano | 2ano | 3ano",
+  "tema": "subtópico específico da questão",
+  "gabarito": "letra da alternativa correta (A-E) ou null para discursiva"
+}`
+          },
+          {
+            role: 'user',
+            content: `Analise a seguinte questão de prova e extraia as informações:\n\n${texto}`
+          }
+        ]
+      })
+    });
+
+    if(!resp.ok){
+      const errData = await resp.json().catch(()=>({error:{message:resp.statusText}}));
+      throw new Error(`Gemini API: ${errData?.error?.message || resp.statusText}`);
+    }
+
+    const data = await resp.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+    let jsonStr = raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+    let resultado;
+    try{ resultado = JSON.parse(jsonStr); }
+    catch(pe){
+      const match = jsonStr.match(/\{[\s\S]+\}/);
+      if(match) resultado = JSON.parse(match[0]);
+      else throw new Error('Resposta da IA não é JSON válido.');
+    }
+
+    // Preencher campos
+    if(resultado.area_conhecimento) document.getElementById('campoArea').value = resultado.area_conhecimento;
+    if(resultado.disciplina) document.getElementById('campoDisciplina').value = resultado.disciplina;
+    if(resultado.habilidade_bncc) document.getElementById('campoHabilidade').value = resultado.habilidade_bncc;
+    if(resultado.habilidade_descricao) document.getElementById('campoHabDesc').value = resultado.habilidade_descricao;
+    if(resultado.nivel_dificuldade) document.getElementById('campoDificuldade').value = resultado.nivel_dificuldade;
+    if(resultado.estilo_questao) document.getElementById('campoEstilo').value = resultado.estilo_questao;
+    if(resultado.ano_serie) document.getElementById('campoAno').value = resultado.ano_serie;
+    if(resultado.tema) document.getElementById('campoTema').value = resultado.tema;
+
+    // Preencher enunciado
+    document.getElementById('campoEnunciado').value = texto;
+
+    // Tentar marcar gabarito
+    if(resultado.gabarito){
+      const radios = document.querySelectorAll('input[name="gabarito"]');
+      radios.forEach(r => { r.checked = r.value === resultado.gabarito.toUpperCase(); });
+    }
+
+    // Mostrar resultado
+    document.getElementById('analiseResult').style.display = 'block';
+    mostrarStatus('iaStatus', `✅ Análise concluída! Área: <strong>${resultado.area_conhecimento||'?'}</strong>, Disciplina: <strong>${resultado.disciplina||'?'}</strong>, Dificuldade: <strong>${resultado.nivel_dificuldade||'?'}</strong>. Revise e edite os campos antes de salvar.`, 'ok');
+
+  }catch(err){
+    mostrarStatus('iaStatus', `❌ <strong>Erro:</strong> ${err.message}`, 'erro');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🔍 Analisar com IA';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SALVAR QUESTÃO
+// ══════════════════════════════════════════════════════════════
+async function salvarQuestao(){
+  const enunciado = document.getElementById('campoEnunciado').value.trim();
+  if(!enunciado){
+    alert('Preencha o enunciado da questão.');
+    return;
+  }
+
+  const disciplina = document.getElementById('campoDisciplina').value;
+  if(!disciplina){
+    alert('Selecione a disciplina.');
+    return;
+  }
+
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+  try{
+    // Upload da imagem se houver
+    let imagemUrl = null;
+    if(imagemAtual && imagemAtual.file){
+      imagemUrl = await uploadImagem(imagemAtual.file);
+    }
+
+    // Montar alternativas
+    let alternativas = null;
+    if(tipoQuestaoAtual === 'multipla_escolha'){
+      const altInputs = document.querySelectorAll('.alt-input');
+      const gabaritoRadio = document.querySelector('input[name="gabarito"]:checked');
+      alternativas = [];
+      altInputs.forEach(inp => {
+        alternativas.push({
+          letra: inp.dataset.letra,
+          texto: inp.value.trim(),
+          correta: gabaritoRadio && gabaritoRadio.value === inp.dataset.letra
+        });
+      });
+    }
+
+    // Gabarito
+    let gabarito = null;
+    if(tipoQuestaoAtual === 'multipla_escolha'){
+      const g = document.querySelector('input[name="gabarito"]:checked');
+      gabarito = g ? g.value : null;
+    }
+
+    const questao = {
+      enunciado,
+      alternativas,
+      gabarito,
+      tipo_questao: tipoQuestaoAtual,
+      area_conhecimento: document.getElementById('campoArea').value || null,
+      disciplina: document.getElementById('campoDisciplina').value,
+      habilidade_bncc: document.getElementById('campoHabilidade').value || null,
+      habilidade_descricao: document.getElementById('campoHabDesc').value || null,
+      nivel_dificuldade: document.getElementById('campoDificuldade').value || null,
+      estilo_questao: document.getElementById('campoEstilo').value || null,
+      ano_serie: document.getElementById('campoAno').value || null,
+      tema: document.getElementById('campoTema').value || null,
+      imagem_url: imagemUrl,
+      observacoes: document.getElementById('campoObs').value || null
+    };
+
+    await salvarQuestaoNoBanco(questao);
+    alert('✅ Questão salva com sucesso!');
+    limparFormulario();
+    await carregarQuestoes();
+  }catch(err){
+    alert(`❌ Erro ao salvar: ${err.message}`);
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '✅ Salvar no Banco';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILTROS E BUSCA
+// ══════════════════════════════════════════════════════════════
+function aplicarFiltros(){
+  const area = document.getElementById('fltArea').value.toLowerCase();
+  const disc = document.getElementById('fltDisciplina').value.toLowerCase();
+  const diff = document.getElementById('fltDificuldade').value;
+  const estilo = document.getElementById('fltEstilo').value;
+  const ano = document.getElementById('fltAno').value;
+  const tipo = document.getElementById('fltTipo').value;
+  const texto = (document.getElementById('buscaTexto')?.value || '').toLowerCase().trim();
+
+  let filtradas = questoesDB.filter(q => {
+    if(area && (q.area_conhecimento||'').toLowerCase() !== area) return false;
+    if(disc && (q.disciplina||'').toLowerCase() !== disc) return false;
+    if(diff && q.nivel_dificuldade !== diff) return false;
+    if(estilo && q.estilo_questao !== estilo) return false;
+    if(ano && q.ano_serie !== ano) return false;
+    if(tipo && q.tipo_questao !== tipo) return false;
+    if(texto){
+      const busca = `${q.enunciado||''} ${q.tema||''} ${q.habilidade_bncc||''} ${q.habilidade_descricao||''} ${q.disciplina||''}`.toLowerCase();
+      if(!busca.includes(texto)) return false;
+    }
+    return true;
+  });
+
+  renderizarLista(filtradas);
+}
+
+function limparFiltros(){
+  document.getElementById('fltArea').value = '';
+  document.getElementById('fltDisciplina').value = '';
+  document.getElementById('fltDificuldade').value = '';
+  document.getElementById('fltEstilo').value = '';
+  document.getElementById('fltAno').value = '';
+  document.getElementById('fltTipo').value = '';
+  document.getElementById('buscaTexto').value = '';
+  aplicarFiltros();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDERIZAÇÃO
+// ══════════════════════════════════════════════════════════════
+function renderizarLista(lista){
+  const container = document.getElementById('questoesLista');
+  const empty = document.getElementById('emptyState');
+  const counter = document.getElementById('contadorResultados');
+
+  counter.textContent = `${lista.length} questão(ões) encontrada(s)`;
+
+  if(lista.length === 0){
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  container.innerHTML = lista.map(q => {
+    const diffClass = q.nivel_dificuldade || '';
+    const diffLabel = {facil:'Fácil',medio:'Médio',dificil:'Difícil'}[q.nivel_dificuldade] || q.nivel_dificuldade || '-';
+    const tipoLabel = {multipla_escolha:'Múltipla Escolha',somatoria:'Somatória',discursiva:'Discursiva'}[q.tipo_questao] || q.tipo_questao;
+    const estiloLabel = (q.estilo_questao||'').toUpperCase();
+    const enunciadoShort = (q.enunciado||'').substring(0, 200) + ((q.enunciado||'').length > 200 ? '...' : '');
+    const dataFmt = q.created_at ? new Date(q.created_at).toLocaleDateString('pt-BR') : '-';
+
+    return `
+      <div class="q-card" id="qcard-${q.id}">
+        <div class="q-card__top">
+          <div class="q-card__badges">
+            <span class="badge badge-disc">${esc(q.disciplina||'?')}</span>
+            <span class="badge badge-diff ${diffClass}">${diffLabel}</span>
+            ${estiloLabel ? `<span class="badge badge-estilo">${estiloLabel}</span>` : ''}
+            <span class="badge badge-estilo">${tipoLabel}</span>
+            ${q.ano_serie ? `<span class="badge badge-estilo">${q.ano_serie.replace('ano','º Ano')}</span>` : ''}
+          </div>
+          <span style="font-size:.72rem;color:var(--ink-faint)">${dataFmt}</span>
+        </div>
+        ${q.habilidade_bncc ? `<div style="margin-bottom:6px"><span class="tag tag-hab">${esc(q.habilidade_bncc)}</span></div>` : ''}
+        <div class="q-card__enunciado">${esc(enunciadoShort)}</div>
+        ${q.tema ? `<div class="q-card__meta">📌 ${esc(q.tema)}</div>` : ''}
+        <div class="q-card__actions">
+          <button class="btn btn-secondary btn-sm" onclick="verQuestao('${q.id}')">👁 Ver</button>
+          <button class="btn btn-secondary btn-sm" onclick="editarQuestao('${q.id}')">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExclusao('${q.id}')">🗑 Excluir</button>
+          <button class="btn btn-ai btn-sm" onclick="enviarParaGerador('${q.id}')">📤 Usar em Prova</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function esc(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+// ══════════════════════════════════════════════════════════════
+// VER / EDITAR / EXCLUIR
+// ══════════════════════════════════════════════════════════════
+function verQuestao(id){
+  const q = questoesDB.find(x => x.id === id);
+  if(!q) return;
+  const diffLabel = {facil:'Fácil',medio:'Médio',dificil:'Difícil'}[q.nivel_dificuldade] || '-';
+  const tipoLabel = {multipla_escolha:'Múltipla Escolha',somatoria:'Somatória',discursiva:'Discursiva'}[q.tipo_questao];
+
+  let html = `
+    <div style="margin-bottom:12px">
+      <strong>Área:</strong> ${esc(q.area_conhecimento||'-')} |
+      <strong>Disciplina:</strong> ${esc(q.disciplina||'-')} |
+      <strong>Dificuldade:</strong> ${diffLabel} |
+      <strong>Estilo:</strong> ${(q.estilo_questao||'-').toUpperCase()} |
+      <strong>Ano:</strong> ${q.ano_serie||'-'}
+    </div>
+    ${q.habilidade_bncc ? `<div style="margin-bottom:8px"><span class="tag tag-hab">${esc(q.habilidade_bncc)}</span> <span style="font-size:.82rem;color:var(--ink-muted)">${esc(q.habilidade_descricao||'')}</span></div>` : ''}
+    ${q.tema ? `<div style="margin-bottom:8px"><strong>Tema:</strong> ${esc(q.tema)}</div>` : ''}
+    ${q.imagem_url ? `<div style="margin-bottom:12px"><img src="${q.imagem_url}" style="max-width:100%;max-height:300px;border-radius:8px"></div>` : ''}
+    <div style="background:var(--surface-alt);padding:14px;border-radius:8px;margin-bottom:12px;line-height:1.7;white-space:pre-wrap">${esc(q.enunciado||'')}</div>
+  `;
+
+  if(q.tipo_questao === 'multipla_escolha' && q.alternativas){
+    html += '<div class="alt-list">';
+    q.alternativas.forEach(a => {
+      const isCorr = a.correta ? ' alt-correct' : '';
+      html += `<div class="alt-item${isCorr}"><span class="alt-letra">${a.letra}</span><span class="alt-texto">${esc(a.texto)}</span>${a.correta ? ' ✅' : ''}</div>`;
+    });
+    html += '</div>';
+  }
+
+  if(q.observacoes){
+    html += `<div style="margin-top:10px"><strong>Observações:</strong> ${esc(q.observacoes)}</div>`;
+  }
+
+  document.getElementById('modalVerBody').innerHTML = html;
+  document.getElementById('modalVer').classList.add('show');
+}
+
+function editarQuestao(id){
+  const q = questoesDB.find(x => x.id === id);
+  if(!q) return;
+  questaoEditandoId = id;
+
+  let html = `
+    <div class="input-row">
+      <div class="field"><label>Área</label>
+        <select id="edArea" class="select">
+          <option value="">Selecione...</option>
+          <option value="Linguagens e suas Tecnologias" ${q.area_conhecimento==='Linguagens e suas Tecnologias'?'selected':''}>Linguagens e suas Tecnologias</option>
+          <option value="Matemática e suas Tecnologias" ${q.area_conhecimento==='Matemática e suas Tecnologias'?'selected':''}>Matemática e suas Tecnologias</option>
+          <option value="Ciências da Natureza e suas Tecnologias" ${q.area_conhecimento==='Ciências da Natureza e suas Tecnologias'?'selected':''}>Ciências da Natureza e suas Tecnologias</option>
+          <option value="Ciências Humanas e Sociais Aplicadas" ${q.area_conhecimento==='Ciências Humanas e Sociais Aplicadas'?'selected':''}>Ciências Humanas e Sociais Aplicadas</option>
+        </select>
+      </div>
+      <div class="field"><label>Disciplina</label>
+        <select id="edDisciplina" class="select">
+          <option value="">Selecione...</option>
+          ${['Biologia','Física','Química','Matemática','Língua Portuguesa','Língua Inglesa','História','Geografia','Filosofia','Sociologia','Arte','Educação Física'].map(d=>`<option value="${d}" ${q.disciplina===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="field"><label>Habilidade BNCC</label><input id="edHabilidade" class="input" value="${esc(q.habilidade_bncc||'')}"></div>
+      <div class="field"><label>Dificuldade</label>
+        <select id="edDificuldade" class="select">
+          <option value="">Selecione...</option>
+          <option value="facil" ${q.nivel_dificuldade==='facil'?'selected':''}>Fácil</option>
+          <option value="medio" ${q.nivel_dificuldade==='medio'?'selected':''}>Médio</option>
+          <option value="dificil" ${q.nivel_dificuldade==='dificil'?'selected':''}>Difícil</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="field"><label>Estilo</label>
+        <select id="edEstilo" class="select">
+          <option value="">Selecione...</option>
+          <option value="escola" ${q.estilo_questao==='escola'?'selected':''}>Escola</option>
+          <option value="enem" ${q.estilo_questao==='enem'?'selected':''}>ENEM</option>
+          <option value="ufsc" ${q.estilo_questao==='ufsc'?'selected':''}>UFSC</option>
+          <option value="udesc" ${q.estilo_questao==='udesc'?'selected':''}>UDESC</option>
+        </select>
+      </div>
+      <div class="field"><label>Ano</label>
+        <select id="edAno" class="select">
+          <option value="">Selecione...</option>
+          <option value="1ano" ${q.ano_serie==='1ano'?'selected':''}>1º Ano</option>
+          <option value="2ano" ${q.ano_serie==='2ano'?'selected':''}>2º Ano</option>
+          <option value="3ano" ${q.ano_serie==='3ano'?'selected':''}>3º Ano</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Habilidade (descrição)</label><textarea id="edHabDesc" class="textarea" rows="2">${esc(q.habilidade_descricao||'')}</textarea></div>
+    <div class="field"><label>Tema</label><input id="edTema" class="input" value="${esc(q.tema||'')}"></div>
+    <div class="field"><label>Enunciado</label><textarea id="edEnunciado" class="textarea" rows="4">${esc(q.enunciado||'')}</textarea></div>
+    <div class="field"><label>Gabarito</label><input id="edGabarito" class="input" value="${esc(q.gabarito||'')}" placeholder="A, B, C, D ou E"></div>
+    <div class="field"><label>Observações</label><textarea id="edObs" class="textarea" rows="2">${esc(q.observacoes||'')}</textarea></div>
+  `;
+
+  document.getElementById('modalEditarBody').innerHTML = html;
+  document.getElementById('modalEditar').classList.add('show');
+}
+
+async function salvarEdicao(){
+  if(!questaoEditandoId) return;
+  const btn = document.getElementById('btnSalvarEdicao');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+  try{
+    const updates = {
+      area_conhecimento: document.getElementById('edArea').value || null,
+      disciplina: document.getElementById('edDisciplina').value,
+      habilidade_bncc: document.getElementById('edHabilidade').value || null,
+      habilidade_descricao: document.getElementById('edHabDesc').value || null,
+      nivel_dificuldade: document.getElementById('edDificuldade').value || null,
+      estilo_questao: document.getElementById('edEstilo').value || null,
+      ano_serie: document.getElementById('edAno').value || null,
+      tema: document.getElementById('edTema').value || null,
+      enunciado: document.getElementById('edEnunciado').value,
+      gabarito: document.getElementById('edGabarito').value || null,
+      observacoes: document.getElementById('edObs').value || null
+    };
+
+    await atualizarQuestaoNoBanco(questaoEditandoId, updates);
+    fecharModal('modalEditar');
+    await carregarQuestoes();
+    alert('✅ Questão atualizada!');
+  }catch(err){
+    alert(`❌ Erro: ${err.message}`);
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = 'Salvar Alterações';
+    questaoEditandoId = null;
+  }
+}
+
+function confirmarExclusao(id){
+  if(!confirm('Tem certeza que deseja excluir esta questão?')) return;
+  excluirQuestao(id);
+}
+
+async function excluirQuestao(id){
+  try{
+    await excluirQuestaoDoBanco(id);
+    await carregarQuestoes();
+  }catch(err){
+    alert(`❌ Erro ao excluir: ${err.message}`);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// ENVIAR PARA GERADOR DE PROVAS
+// ══════════════════════════════════════════════════════════════
+function enviarParaGerador(id){
+  const q = questoesDB.find(x => x.id === id);
+  if(!q) return;
+  // Send via postMessage to parent/gerador-provas
+  if(window.opener){
+    window.opener.postMessage({ tipo: 'banco-questoes-importar', questao: q }, '*');
+    alert('✅ Questão enviada para o Gerador de Provas!');
+  } else {
+    // Copy to clipboard as fallback
+    const texto = `${q.enunciado}\n\nAlternativas:\n${(q.alternativas||[]).map(a=>`${a.letra}) ${a.texto}`).join('\n')}\n\nGabarito: ${q.gabarito||'-'}`;
+    navigator.clipboard.writeText(texto).then(()=>alert('📋 Questão copiada para a área de transferência. Cole no Gerador de Provas.'));
+  }
+}
+
+// Listen for messages from gerador-provas
+window.addEventListener('message', function(ev){
+  try{
+    const d = ev.data || {};
+    if(d.tipo === 'banco-questoes-solicitar'){
+      // Send all questions to gerador
+      if(window.opener){
+        window.opener.postMessage({ tipo: 'banco-questoes-dados', questoes: questoesDB }, '*');
+      }
+    }
+  }catch(e){}
+});
+
+// ══════════════════════════════════════════════════════════════
+// ESTATÍSTICAS
+// ══════════════════════════════════════════════════════════════
+function renderizarStats(){
+  const total = questoesDB.length;
+
+  // Cards
+  const disciplinas = [...new Set(questoesDB.map(q=>q.disciplina).filter(Boolean))];
+  const areas = [...new Set(questoesDB.map(q=>q.area_conhecimento).filter(Boolean))];
+  document.getElementById('statsCards').innerHTML = `
+    <div class="stat-card"><div class="stat-card__value">${total}</div><div class="stat-card__label">Total de Questões</div></div>
+    <div class="stat-card"><div class="stat-card__value">${disciplinas.length}</div><div class="stat-card__label">Disciplinas</div></div>
+    <div class="stat-card"><div class="stat-card__value">${areas.length}</div><div class="stat-card__label">Áreas</div></div>
+  `;
+
+  // Charts
+  renderBarChart('chartDisciplina', contar(questoesDB, 'disciplina'));
+  renderBarChart('chartDificuldade', contar(questoesDB, 'nivel_dificuldade', {facil:'Fácil',medio:'Médio',dificil:'Difícil'}));
+  renderBarChart('chartArea', contar(questoesDB, 'area_conhecimento'));
+  renderBarChart('chartEstilo', contar(questoesDB, 'estilo_questao', {escola:'Escola',enem:'ENEM',ufsc:'UFSC',udesc:'UDESC'}));
+}
+
+function contar(lista, campo, labels){
+  const map = {};
+  lista.forEach(q => {
+    const val = q[campo] || 'Não informado';
+    map[val] = (map[val]||0) + 1;
+  });
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  return entries.map(([k,v]) => ({ label: labels?.[k] || k, value: v }));
+}
+
+function renderBarChart(containerId, items){
+  const container = document.getElementById(containerId);
+  if(!items.length){ container.innerHTML = '<div style="color:var(--ink-faint);font-size:.85rem">Sem dados</div>'; return; }
+  const max = Math.max(...items.map(i=>i.value));
+  container.innerHTML = items.map(item => {
+    const pct = max > 0 ? (item.value / max * 100) : 0;
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${esc(item.label)}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%">${item.value}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// IMAGEM
+// ══════════════════════════════════════════════════════════════
+function handleImagem(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    imagemAtual = { file, dataUrl: ev.target.result };
+    document.getElementById('imgPreview').src = ev.target.result;
+    document.getElementById('imgPreview').style.display = 'block';
+    document.getElementById('btnRemoverImg').style.display = 'inline-flex';
+    document.querySelector('#imgDrop p').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removerImagem(){
+  imagemAtual = null;
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgPreview').src = '';
+  document.getElementById('btnRemoverImg').style.display = 'none';
+  document.querySelector('#imgDrop p').style.display = 'block';
+  document.getElementById('imgInput').value = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// TIPO DE QUESTÃO
+// ══════════════════════════════════════════════════════════════
+function setTipoQuestao(tipo){
+  tipoQuestaoAtual = tipo;
+  document.querySelectorAll('#tipoMultipla,#tipoSomatoria,#tipoDiscursiva').forEach(b=>{
+    b.className = 'btn btn-sm btn-secondary';
+  });
+  const active = {multipla_escolha:'tipoMultipla',somatoria:'tipoSomatoria',discursiva:'tipoDiscursiva'}[tipo];
+  document.getElementById(active).className = 'btn btn-sm';
+  document.getElementById(active).style.background = 'var(--primary)';
+  document.getElementById(active).style.color = '#fff';
+
+  document.getElementById('alternativasSection').style.display = tipo === 'multipla_escolha' ? 'block' : 'none';
+  document.getElementById('somatoriaSection').style.display = tipo === 'somatoria' ? 'block' : 'none';
+
+  if(tipo === 'somatoria') renderSomatoria();
+}
+
+function renderSomatoria(){
+  const container = document.getElementById('somatoriaList');
+  container.innerHTML = SOMA_VALS.map(v => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--warning);width:28px;text-align:right">${String(v).padStart(2,'0')}</span>
+      <input type="text" class="input soma-txt" data-valor="${v}" placeholder="Texto da afirmação (valor ${v})" style="font-size:12px">
+      <input type="checkbox" class="soma-ok" data-valor="${v}" title="Marcar como verdadeira">
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// ABRAS
+// ══════════════════════════════════════════════════════════════
+function mudarAba(aba){
+  document.querySelectorAll('.aba-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('is-active'));
+  document.getElementById('aba-' + aba).style.display = 'block';
+  event.target.classList.add('is-active');
+
+  if(aba === 'buscar') aplicarFiltros();
+  if(aba === 'stats') renderizarStats();
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAIS
+// ══════════════════════════════════════════════════════════════
+function fecharModal(id){
+  document.getElementById(id).classList.remove('show');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', function(e){
+    if(e.target === this) this.classList.remove('show');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════
+// IMPORTAR / EXPORTAR
+// ══════════════════════════════════════════════════════════════
+function exportarJSON(){
+  const blob = new Blob([JSON.stringify(questoesDB, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `banco-questoes-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarJSON(){
+  document.getElementById('importInput').click();
+}
+
+async function processarImportacao(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(!Array.isArray(data)){ alert('Formato inválido.'); return; }
+    if(!confirm(`Importar ${data.length} questão(ões)?`)) return;
+
+    for(const q of data){
+      delete q.id;
+      delete q.created_at;
+      delete q.updated_at;
+      await salvarQuestaoNoBanco(q);
+    }
+    await carregarQuestoes();
+    alert(`✅ ${data.length} questão(ões) importada(s)!`);
+  }catch(err){
+    alert(`❌ Erro na importação: ${err.message}`);
+  }
+  e.target.value = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ══════════════════════════════════════════════════════════════
+function mostrarStatus(id, msg, tipo){
+  const el = document.getElementById(id);
+  el.innerHTML = msg;
+  el.className = `ia-status show ${tipo}`;
+}
+
+function limparFormulario(){
+  document.getElementById('questaoColada').value = '';
+  document.getElementById('campoArea').value = '';
+  document.getElementById('campoDisciplina').value = '';
+  document.getElementById('campoHabilidade').value = '';
+  document.getElementById('campoHabDesc').value = '';
+  document.getElementById('campoDificuldade').value = '';
+  document.getElementById('campoEstilo').value = '';
+  document.getElementById('campoAno').value = '';
+  document.getElementById('campoTema').value = '';
+  document.getElementById('campoEnunciado').value = '';
+  document.getElementById('campoObs').value = '';
+  document.querySelectorAll('.alt-input').forEach(i => i.value = '');
+  document.querySelectorAll('input[name="gabarito"]').forEach(r => r.checked = false);
+  removerImagem();
+  document.getElementById('analiseResult').style.display = 'none';
+  document.getElementById('iaStatus').className = 'ia-status';
+  document.getElementById('iaStatus').innerHTML = '';
+  setTipoQuestao('multipla_escolha');
+}
+
+// ══════════════════════════════════════════════════════════════
+// INICIALIZAÇÃO
+// ══════════════════════════════════════════════════════════════
+carregarConfig();
+</script>
+</body>
+</html>

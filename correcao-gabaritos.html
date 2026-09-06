@@ -134,6 +134,22 @@ main.content{width:100%;max-width:880px;margin:0 auto;padding:24px 20px 120px;}
 
     <div class="section-divider"></div>
     <h4 style="margin-bottom:12px;">Gabarito da Prova</h4>
+
+    <!-- Selecionar prova salva -->
+    <div id="provas-salvas-section" style="display:none;margin-bottom:14px;">
+      <label style="font-size:.82rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">📚 Provas salvas no Gerador</label>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <select id="selectProvaSalva" class="select" style="flex:1;" onchange="carregarProvaSelecionada()">
+          <option value="">Selecione uma prova...</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="excluirProvaSalva()" title="Excluir prova selecionada">🗑</button>
+      </div>
+      <div id="provaSalvaInfo" style="font-size:.8rem;color:var(--ink-muted);margin-bottom:8px;"></div>
+      <button class="btn btn-ai btn-sm btn-block" onclick="usarProvaSelecionada()">✅ Usar Esta Prova</button>
+      <div class="section-divider" style="margin:14px 0;"></div>
+      <p style="font-size:.82rem;color:var(--ink-faint);text-align:center;">— ou preencha manualmente abaixo —</p>
+    </div>
+
     <div id="gab-info"></div>
     <p class="text-sm" style="margin-bottom:8px;">Se gerou a prova pelo Gerador de Provas, o gabarito será importado automaticamente. Caso contrário, preencha manualmente.</p>
     <div class="gab-input" id="gab-inputs"></div>
@@ -196,7 +212,7 @@ main.content{width:100%;max-width:880px;margin:0 auto;padding:24px 20px 120px;}
 // ============================================================================
 // Configuração e estado
 // ============================================================================
-const GEMINI_KEY_STORAGE = 'sesi_gemini_key';
+const GEMINI_KEY_STORAGE = 'gemini_api_key';
 const GABARITO_STORAGE = 'sesi_gabarito';
 const QUESTOES_GERADAS_KEY = 'sesi_gabarito_gerado';
 const ALTERNATIVAS = ['A','B','C','D','E'];
@@ -276,9 +292,102 @@ function aplicarGabaritoGerado(gab) {
   // Atualizar info
   const infoDiv = document.getElementById('gab-info');
   if (infoDiv) {
-    infoDiv.innerHTML = `<div class="alert alert-success">Gabarito importado do Gerador de Provas: <strong>${total} questões</strong> — ${gab._disciplina || ''} ${gab._turma ? '· Turma ' + gab._turma : ''} ${gab._titulo ? '· ' + gab._titulo : ''}</div>`;
+    infoDiv.innerHTML = `<div class="alert alert-success">Gabarito importado do Gerador de Provas: <strong>${total} questões</strong> — ${gab._disciplina || ''} ${gab._turma ? '· Turma ' + gab._turma : ''} ${gab._titulo ? '· ' + gab._titulo : ''} ${gab._data ? '· 📅 ' + new Date(gab._data + 'T12:00:00').toLocaleDateString('pt-BR') : ''}</div>`;
   }
 }
+
+// ============================================================================
+// Histórico de provas salvas (nome + data)
+// ============================================================================
+const HISTORICO_KEY = 'sesi_historico_provas';
+let historicoProvas = [];
+let provaSelecionadaIdx = -1;
+
+function carregarHistorico() {
+  try {
+    historicoProvas = JSON.parse(localStorage.getItem(HISTORICO_KEY) || '[]');
+  } catch(e) { historicoProvas = []; }
+  renderizarSelectProvas();
+}
+
+function renderizarSelectProvas() {
+  const section = document.getElementById('provas-salvas-section');
+  const select = document.getElementById('selectProvaSalva');
+  if (!section || !select) return;
+
+  if (historicoProvas.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  select.innerHTML = '<option value="">Selecione uma prova...</option>';
+
+  // Ordenar por data decrescente
+  const ordenado = historicoProvas
+    .map((p, i) => ({ ...p, _idx: i }))
+    .sort((a, b) => (b._timestamp || 0) - (a._timestamp || 0));
+
+  ordenado.forEach(p => {
+    const dataFmt = p._data ? new Date(p._data + 'T12:00:00').toLocaleDateString('pt-BR') : 's/ data';
+    const label = `${p._titulo || 'Sem título'} — ${dataFmt} · ${p._disciplina || ''} ${p._turma ? '(' + p._turma + ')' : ''} · ${p._total || '?'} questões`;
+    const opt = document.createElement('option');
+    opt.value = p._idx;
+    opt.textContent = label;
+    select.appendChild(opt);
+  });
+}
+
+function carregarProvaSelecionada() {
+  const select = document.getElementById('selectProvaSalva');
+  const infoDiv = document.getElementById('provaSalvaInfo');
+  const idx = parseInt(select.value);
+  if (isNaN(idx) || !historicoProvas[idx]) {
+    infoDiv.innerHTML = '';
+    provaSelecionadaIdx = -1;
+    return;
+  }
+  const p = historicoProvas[idx];
+  provaSelecionadaIdx = idx;
+  const dataFmt = p._data ? new Date(p._data + 'T12:00:00').toLocaleDateString('pt-BR') : 's/ data';
+  infoDiv.innerHTML = `
+    <div style="padding:8px 12px;background:var(--primary-soft);border:1px solid var(--primary-soft-border);border-radius:6px;">
+      <strong>${esc(p._titulo || 'Sem título')}</strong><br>
+      📅 ${dataFmt} &nbsp;·&nbsp; 📚 ${esc(p._disciplina || '—')} &nbsp;·&nbsp; 👥 Turma ${esc(p._turma || '—')}<br>
+      📝 ${p._total || 0} questões &nbsp;·&nbsp; ${esc(p._letras || 'ABCDE')}
+    </div>
+  `;
+}
+
+function usarProvaSelecionada() {
+  if (provaSelecionadaIdx < 0 || !historicoProvas[provaSelecionadaIdx]) {
+    alert('Selecione uma prova primeiro.');
+    return;
+  }
+  const gab = historicoProvas[provaSelecionadaIdx];
+  questoesGeradas = gab;
+  aplicarGabaritoGerado(gab);
+  showToast(`Prova "${gab._titulo || 'sem título'}" carregada!`, 'success');
+}
+
+function excluirProvaSalva() {
+  const select = document.getElementById('selectProvaSalva');
+  const idx = parseInt(select.value);
+  if (isNaN(idx) || !historicoProvas[idx]) {
+    alert('Selecione uma prova para excluir.');
+    return;
+  }
+  const p = historicoProvas[idx];
+  if (!confirm(`Excluir "${p._titulo || 'sem título'}" (${p._data || 's/ data'})?`)) return;
+  historicoProvas.splice(idx, 1);
+  localStorage.setItem(HISTORICO_KEY, JSON.stringify(historicoProvas));
+  renderizarSelectProvas();
+  document.getElementById('provaSalvaInfo').innerHTML = '';
+  provaSelecionadaIdx = -1;
+  showToast('Prova excluída do histórico.', 'success');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 // ============================================================================
 // Tema
@@ -348,6 +457,7 @@ function renderGabInputs() {
 }
 renderGabInputs();
 tentarCarregarGabaritoGerado();
+carregarHistorico();
 
 // ============================================================================
 // API Key

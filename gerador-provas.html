@@ -11,19 +11,21 @@
 <script>
 (function(){
   try{
-    var k=localStorage.getItem('groqApiKey');
-    if(!k){k=localStorage.getItem('groq_api_key');if(k)localStorage.setItem('groqApiKey',k);}
+    var k=localStorage.getItem('gemini_api_key');
   }catch(e){}
   window.addEventListener('message',function(ev){
     try{
       var d=ev.data||{};
-      if(d&&d.tipo==='sesigeral-chave'&&d.chave){localStorage.setItem('groqApiKey',d.chave);}
+      if(d&&d.tipo==='sesigeral-chave'&&d.chave){localStorage.setItem('gemini_api_key',d.chave);}
       if(d&&d.tipo==='sesigeral-planos'&&Array.isArray(d.planos)){
         window.SESIGERAL_PLANOS=d.planos;
         if(typeof renderPlanoSelect==='function')renderPlanoSelect();
       }
       if(d&&d.tipo==='sesigeral-habilidades'&&Array.isArray(d.habilidades)){
         window.SESI_HABILIDADES=d.habilidades;
+      }
+      if(d&&d.tipo==='banco-questoes-importar'&&d.questao){
+        importarQuestaoDoBanco(d.questao);
       }
     }catch(e){}
   });
@@ -213,6 +215,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     <button class="tbtn" id="btnShuffle" onclick="openShuffleModal()" title="Gerar versões embaralhadas para evitar cola">🔀 Embaralhar Prova</button>
     <button class="tbtn" onclick="salvarAvaliacao()" title="Salvar avaliação em arquivo .gprova para editar depois">💾 Salvar</button>
     <button class="tbtn" onclick="document.getElementById('inputCarregar').click()" title="Carregar avaliação salva">📂 Carregar<input type="file" id="inputCarregar" accept=".gprova" style="display:none" onchange="carregarAvaliacao(this)"></button>
+    <button class="tbtn" onclick="window.open('banco-questoes.html','bancoQuestoes')" title="Abrir Banco de Questões" style="background:linear-gradient(135deg,rgba(16,185,129,.9),rgba(6,182,212,.9));border-color:rgba(16,185,129,.5);">📚 Banco de Questões</button>
     <button class="tbtn prime" id="btnExport" onclick="exportPDF()">📄 Exportar PDF</button>
     <button class="tbtn prime" id="btnDocx" onclick="exportDOCX()">📝 Exportar DOCX</button>
     <button class="tbtn" onclick="window.print()">🖨️ Imprimir</button>
@@ -343,22 +346,22 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 </main>
 </div>
 
-<!-- MODAL IA GROQ -->
+<!-- MODAL IA GEMINI -->
 <div id="modalIA" class="modal-ov hidden">
   <div class="modal-box" style="max-width:620px;">
     <div class="modal-hd">
-      <h2>🤖 Gerar Questão com IA (Groq)</h2>
+      <h2>🤖 Gerar Questão com IA (Gemini)</h2>
       <button onclick="closeModalIA()">✕ Fechar</button>
     </div>
     <div class="modal-bd" style="font-family:'IBM Plex Sans',sans-serif;display:flex;flex-direction:column;gap:14px;">
 
       <!-- API KEY -->
       <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:7px;padding:10px 13px;font-size:11.5px;color:#78350f;">
-        🔑 <strong>Chave de API Groq:</strong> necessária para gerar questões. Gratuita em <a href="https://console.groq.com" target="_blank" style="color:#1d4ed8;">console.groq.com</a>
+        🔑 <strong>Chave de API Gemini:</strong> necessária para gerar questões. Gratuita em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1d4ed8;">aistudio.google.com/apikey</a>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <input type="password" id="groqApiKey" placeholder="gsk_…" style="flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;">
-        <button onclick="salvarChaveGroq()" style="background:var(--ac);color:#fff;border:none;font-size:11px;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;">💾 Salvar</button>
+        <input type="password" id="geminiApiKey" placeholder="AIza…" style="flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;">
+        <button onclick="salvarChaveGemini()" style="background:var(--ac);color:#fff;border:none;font-size:11px;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;">💾 Salvar</button>
       </div>
 
       <!-- NIVEL -->
@@ -666,10 +669,10 @@ function setNeeStatus(msg, tipo){
 }
 
 async function gerarAdaptacaoNEE(){
-  const apiKey = (localStorage.getItem('groqApiKey')||'').trim()
-    || (document.getElementById('groqApiKey')?.value||'').trim();
+  const apiKey = (localStorage.getItem('gemini_api_key')||'').trim()
+    || (document.getElementById('geminiApiKey')?.value||'').trim();
   if(!apiKey){
-    alert('⚠ Informe a chave da API Groq no modal "Gerar com IA" primeiro.');
+    alert('⚠ Informe a chave da API Gemini no modal "Gerar com IA" primeiro.');
     return;
   }
 
@@ -740,11 +743,11 @@ Adapte esta questão conforme as necessidades indicadas.
 Se for discursiva, adapte apenas o enunciado (sem "alternativas_adaptadas").
 JSON de resposta:`;
 
-      const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
         headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
         body: JSON.stringify({
-          model: 'openai/gpt-oss-120b',
+          model: localStorage.getItem('gemini_model') || 'gemini-2.0-flash',
           temperature: 0.5,
           max_tokens: 900,
           messages: [
@@ -753,7 +756,7 @@ JSON de resposta:`;
           ]
         })
       });
-      if(!resp.ok) throw new Error(`Groq HTTP ${resp.status}`);
+      if(!resp.ok) throw new Error(`Gemini HTTP ${resp.status}`);
       const data = await resp.json();
       const raw = (data.choices?.[0]?.message?.content||'').trim()
         .replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
@@ -908,6 +911,34 @@ function dupQ(id){ const q=questoes.find(q=>q.id===id); if(!q)return; const nq=J
 function setTipoQ(id,tipo){ const q=questoes.find(q=>q.id===id); if(!q)return; q.tipo=tipo; if(tipo==='multipla'){const letras=tipoProva==='em'?[...LEM]:[...LEF]; q.alternativas=letras.map((l,i)=>({letra:l,texto:q.alternativas[i]?q.alternativas[i].texto:'',correta:i===0}));} renderAll(); }
 function addSomatItem(id){ const q=questoes.find(q=>q.id===id); if(!q)return; const used=q.somatoria.map(s=>s.v),next=SOMA_SEQ.find(v=>!used.includes(v)); if(!next){alert('Todos os valores já foram adicionados.');return;} q.somatoria.push({v:next,txt:'',ok:false}); q.somatoria.sort((a,b)=>SOMA_SEQ.indexOf(a.v)-SOMA_SEQ.indexOf(b.v)); renderAll(); }
 function remSomatItem(id){ const q=questoes.find(q=>q.id===id); if(!q||q.somatoria.length<=1){alert('Mínimo de 1 item.');return;} q.somatoria.pop(); renderAll(); }
+
+function importarQuestaoDoBanco(qBanco){
+  const tipo = qBanco.tipo_questao === 'somatoria' ? 'somatoria' : qBanco.tipo_questao === 'discursiva' ? 'discursiva' : 'multipla';
+  const letras = tipoProva==='em' ? [...LEM] : [...LEF];
+  let novaQ = {
+    id: ++qId,
+    tipo: tipo,
+    distrator: '',
+    imagem: qBanco.imagem_url || null,
+    consigna: '',
+    enunciado: qBanco.enunciado || '',
+    alternativas: letras.map((l,i) => {
+      const altBanco = (qBanco.alternativas||[]).find(a => a.letra === l);
+      return { letra: l, texto: altBanco ? altBanco.texto : '', correta: altBanco ? altBanco.correta : (i===0) };
+    }),
+    somatoria: SOMA_SEQ.map(v => {
+      const itemBanco = (qBanco.alternativas||[]).find(a => parseInt(a.valor) === v || parseInt(a.v) === v);
+      return { v, txt: itemBanco ? itemBanco.texto : '', ok: itemBanco ? itemBanco.correta || itemBanco.ok : false };
+    }),
+    linhas: 4
+  };
+  if(!novaQ.alternativas.some(a => a.correta)) novaQ.alternativas[0].correta = true;
+  questoes.push(novaQ);
+  renderAll();
+  alert('✅ Questão importada do Banco!');
+  const el = document.getElementById('qw-'+novaQ.id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+}
 
 function renderAll(){ document.getElementById('qContainer').innerHTML=''; questoes.forEach(q=>renderQ(q)); }
 function renderQ(q){
@@ -1643,13 +1674,38 @@ function extrairESalvarGabarito(){
     }
     gabarito['tipo_' + num] = q.tipo;
   });
+  const titulo = document.getElementById('tituloAval')?.value || '';
+  const turma = document.getElementById('selTurma')?.value || '';
+  const disciplina = document.getElementById('selDisc')?.value || '';
+  const dataAval = selectedDate ? selectedDate.toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
   gabarito._total = questoes.length;
   gabarito._tipo = tipo;
   gabarito._letras = tipo === 'em' ? LEM.join('') : LEF.join('');
-  gabarito._turma = document.getElementById('selTurma')?.value || '';
-  gabarito._disciplina = document.getElementById('selDisc')?.value || '';
-  gabarito._titulo = document.getElementById('tituloAval')?.value || '';
+  gabarito._turma = turma;
+  gabarito._disciplina = disciplina;
+  gabarito._titulo = titulo;
+  gabarito._data = dataAval;
+  gabarito._escola = document.getElementById('nomeEscola')?.value || '';
+  gabarito._serie = document.getElementById('selSerie')?.value || '';
+  gabarito._trim = document.getElementById('selTrim')?.value || '';
   localStorage.setItem('sesi_gabarito_gerado', JSON.stringify(gabarito));
+
+  // Salvar no histórico de provas (lista索引 por nome+data)
+  try {
+    let historico = JSON.parse(localStorage.getItem('sesi_historico_provas') || '[]');
+    // Verificar se já existe uma prova com mesmo título e data — atualizar
+    const idxExistente = historico.findIndex(h => h._titulo === titulo && h._data === dataAval);
+    const registro = { ...gabarito, _timestamp: Date.now() };
+    if(idxExistente >= 0){
+      historico[idxExistente] = registro;
+    } else {
+      historico.push(registro);
+    }
+    // Manter apenas os últimos 50 registros
+    if(historico.length > 50) historico = historico.slice(-50);
+    localStorage.setItem('sesi_historico_provas', JSON.stringify(historico));
+  } catch(e){ console.warn('Erro ao salvar histórico:', e); }
+
   // Envia para o parent (index.html) repassar para correção
   if(window.parent && window.parent !== window){
     window.parent.postMessage({ tipo: 'sesi-gabarito-gerado', gabarito }, '*');
@@ -1823,7 +1879,7 @@ function contextoPlanoVinculado(){
 }
 
 // ══════════════════════════════════════════════════════════════
-// IA GROQ — GERAÇÃO DE QUESTÕES COM BNCC
+// IA GEMINI — GERAÇÃO DE QUESTÕES COM BNCC
 // ══════════════════════════════════════════════════════════════
 let iaNivel = 'fundamental';
 let iaTipoQ = 'multipla';
@@ -2113,9 +2169,8 @@ function selecionarHabilidadeBncc(codigo, desc){
 
 function openModalIA(){
   document.getElementById('modalIA').classList.remove('hidden');
-  // Carregar chave salva
-  const chave = localStorage.getItem('groqApiKey')||'';
-  if(chave) document.getElementById('groqApiKey').value = chave;
+  const chave = localStorage.getItem('gemini_api_key')||'';
+  if(chave) document.getElementById('geminiApiKey').value = chave;
   // Sincronizar nível com tipoProva atual
   const nivelAuto = tipoProva === 'em' ? 'medio' : 'fundamental';
   setNivelIA(nivelAuto, null);
@@ -2163,10 +2218,10 @@ function clearBnccDesc(){
   document.getElementById('bnccErro').style.display='none';
   bnccDescCache = null;
 }
-function salvarChaveGroq(){
-  const v = document.getElementById('groqApiKey').value.trim();
-  if(!v){ alert('Digite a chave Groq primeiro.'); return; }
-  localStorage.setItem('groqApiKey', v);
+function salvarChaveGemini(){
+  const v = document.getElementById('geminiApiKey').value.trim();
+  if(!v){ alert('Digite a chave Gemini primeiro.'); return; }
+  localStorage.setItem('gemini_api_key', v);
   alert('✅ Chave salva no navegador!');
 }
 function resetIAStatus(){
@@ -2275,8 +2330,8 @@ async function buscarBncc(){
 }
 
 async function gerarQuestaoIA(){
-  const apiKey = (document.getElementById('groqApiKey').value||'').trim();
-  if(!apiKey){ alert('Informe a chave da API Groq.'); return; }
+  const apiKey = (document.getElementById('geminiApiKey').value||'').trim();
+  if(!apiKey){ alert('Informe a chave da API Gemini.'); return; }
   const objeto = document.getElementById('iaObjeto').value.trim();
   if(!objeto){ alert('Informe o objeto de aprendizagem.'); return; }
   const codigoBncc = document.getElementById('iaBnccCodigo').value.trim().toUpperCase();
@@ -2404,11 +2459,11 @@ Responda EXCLUSIVAMENTE em JSON puro, sem markdown:
   setIAStatus(`⏳ Gerando questão de <strong>${iaTipoQ}</strong> estilo <strong>${iaFormato.toUpperCase()}</strong>…`, 'load');
 
   try{
-    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
+        model: localStorage.getItem('gemini_model') || 'gemini-2.0-flash',
         temperature: 0.78,
         max_tokens: 1800,
         messages: [
@@ -2420,7 +2475,7 @@ Responda EXCLUSIVAMENTE em JSON puro, sem markdown:
 
     if(!resp.ok){
       const errData = await resp.json().catch(()=>({error:{message:resp.statusText}}));
-      throw new Error(`Groq API: ${errData?.error?.message || resp.statusText}`);
+      throw new Error(`Gemini API: ${errData?.error?.message || resp.statusText}`);
     }
 
     const data   = await resp.json();

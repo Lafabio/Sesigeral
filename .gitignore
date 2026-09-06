@@ -1,0 +1,16 @@
+# Documentos internos
+*.docx
+*.docx.pdf
+*.pdf
+*.zip
+
+# Pasta de livros
+livros sesi/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
