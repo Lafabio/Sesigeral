@@ -1213,8 +1213,11 @@ function removerImagem(){
 // ══════════════════════════════════════════════════════════════
 function setTipoQuestao(tipo){
   tipoQuestaoAtual = tipo;
-  document.querySelectorAll('#tipoMultipla,#tipoSomatoria,#tipoDiscursiva').forEach(b=>{
+  ['tipoMultipla','tipoSomatoria','tipoDiscursiva'].forEach(id=>{
+    const b = document.getElementById(id);
     b.className = 'btn btn-sm btn-secondary';
+    b.style.background = '';
+    b.style.color = '';
   });
   const active = {multipla_escolha:'tipoMultipla',somatoria:'tipoSomatoria',discursiva:'tipoDiscursiva'}[tipo];
   document.getElementById(active).className = 'btn btn-sm';
