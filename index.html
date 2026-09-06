@@ -4233,10 +4233,11 @@ function getProfessorGrade(nomeProfessor) {
 }
 
 // ============================================================================
-// Espaço por professor — entrada apenas pelo nome, sem senha
-// (cada professor(a) tem dados, planos e grade próprios, isolados por nome)
+// Sistema de Autenticação e Espaço do Usuário
 // ============================================================================
 const SESSION_KEY = 'susi_sessao';
+const AUTH_USERS_KEY = 'sesigeral_users';
+const AUTH_CURRENT_KEY = 'sesigeral_current_user';
 var USER_NOME = null;
 
 function normKey(s) {
@@ -4249,18 +4250,15 @@ function gerarEmailPorNome(nome) {
   return parts.join('.') + '@edu.sesisc.org.br';
 }
 
+// --- Sessão ---
 function getSession() {
   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
 }
-function setSession(nome) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ nome }));
-}
-function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
-}
+function setSession(nome) { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ nome })); }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 function getCurrentUser() { return getSession(); }
 
-// Chaves de dados por nome do professor — cada nome tem seu próprio espaço
+// --- Chaves por usuário ---
 function getDataKey(nome) { return 'planoaula_dados_' + normKey(nome); }
 function getSchedKey(nome) { return 'susi_grade_' + normKey(nome); }
 
@@ -4287,7 +4285,6 @@ function carregarGradeUsuario(nome) {
 }
 function salvarGradeUsuario(nome, grade) { localStorage.setItem(getSchedKey(nome), JSON.stringify(grade)); }
 
-// Disciplinas do professor(a), extraídas da base oficial
 function nomeParaDisciplinas(nome) {
   const alvo = normKey(nome);
   const prof = (PROFESSORES_DATA?.professores || []).find(p => normKey(p.nome) === alvo);
@@ -4295,10 +4292,31 @@ function nomeParaDisciplinas(nome) {
   return [...new Set(prof.aulas.map(a => a.componente.replace(/ - 2026$/, '').replace(/ 2026$/, '').trim()))];
 }
 
+// --- Hash e validação ---
+async function hashSenha(senha) {
+  const buf = new TextEncoder().encode(senha + '_sesigeral_salt_2026');
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '{}'); } catch { return {}; }
+}
+function saveUsers(users) { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users)); }
+
+function validateEmail(email) {
+  return /^[a-zA-Z0-9._-]+@edu\.sesisc\.org\.br$/.test(email);
+}
+
+function getCurrentAuthUser() {
+  try { return JSON.parse(sessionStorage.getItem(AUTH_CURRENT_KEY)); } catch { return null; }
+}
+function setCurrentAuthUser(user) { sessionStorage.setItem(AUTH_CURRENT_KEY, JSON.stringify(user)); }
+function clearCurrentAuthUser() { sessionStorage.removeItem(AUTH_CURRENT_KEY); }
+
+// --- Login/Logout ---
 function aoLogar(nome) {
   let dados = carregarDadosUsuario(nome);
-
-  // Migração: versões anteriores guardavam os dados por email (nome@edu.sesisc.org.br)
   if (!dados.professor && !dados.planos?.length) {
     const legacy = carregarDadosPorKey(getDataKey(gerarEmailPorNome(nome)));
     if (legacy.professor || legacy.planos?.length) {
@@ -4306,23 +4324,18 @@ function aoLogar(nome) {
       dados = legacy;
     }
   }
-
-  // Garante o cadastro básico do professor(a) a partir da base oficial
   if (!dados.professor) {
     dados.professor = { nome, disciplinas: nomeParaDisciplinas(nome), unidadeEducacional: PROFESSORES_DATA?.instituicao || '' };
     salvarDadosUsuario(nome, dados);
   }
-
   state.dados = dados;
   USER_NOME = nome;
-
   let grade = carregarGradeUsuario(nome);
   if (!grade) {
     grade = getProfessorGrade(nome);
     if (grade) salvarGradeUsuario(nome, grade);
   }
   if (grade) window.SCHEDULE_DATA = grade;
-
   setState({ plano: null, etapa: 1 });
 }
 
@@ -4338,43 +4351,11 @@ function logoutUsuario() {
   renderAuth();
 }
 
-// ---- Autenticação: cadastro, login, recuperação de senha ----
-const AUTH_USERS_KEY = 'sesigeral_users';
-const AUTH_CURRENT_KEY = 'sesigeral_current_user';
-
-async function hashSenha(senha) {
-  const buf = new TextEncoder().encode(senha + '_sesigeral_salt_2026');
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function getUsers() {
-  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '{}'); } catch { return {}; }
-}
-
-function saveUsers(users) {
-  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
-}
-
-function validateEmail(email) {
-  return /^[a-zA-Z0-9._-]+@edu\.sesisc\.org\.br$/.test(email);
-}
-
-function getCurrentAuthUser() {
-  try { return JSON.parse(sessionStorage.getItem(AUTH_CURRENT_KEY)); } catch { return null; }
-}
-
-function setCurrentAuthUser(user) {
-  sessionStorage.setItem(AUTH_CURRENT_KEY, JSON.stringify(user));
-}
-
-function clearCurrentAuthUser() {
-  sessionStorage.removeItem(AUTH_CURRENT_KEY);
-}
-
+// ============================================================================
+// Tela de Autenticação
+// ============================================================================
 function renderAuth() {
-  appRoot.innerHTML = '';
-  appRoot.appendChild(el(`
+  appRoot.innerHTML = `
     <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;">
       <div style="width:100%;max-width:440px;">
         <div id="auth-card" class="page-card" style="text-align:center;">
@@ -4386,16 +4367,15 @@ function renderAuth() {
           <p style="margin-bottom:20px;font-size:.9rem;color:var(--ink-muted);">Acesse seu espaço individual de planejamento.</p>
           <div id="auth-form"></div>
         </div>
+        <p style="text-align:center;margin-top:16px;font-size:.75rem;color:var(--ink-faint);">Sistema exclusivo para professores SESI/SC</p>
       </div>
     </div>
-  `));
+  `;
   renderLoginForm();
 }
 
 function renderLoginForm() {
-  const container = document.getElementById('auth-form');
-  container.innerHTML = '';
-  container.appendChild(el(`
+  document.getElementById('auth-form').innerHTML = `
     <form id="auth-login-form">
       <div class="field" style="text-align:left;">
         <label for="auth-email">Email SESI</label>
@@ -4415,14 +4395,12 @@ function renderLoginForm() {
       <span style="color:var(--border-strong);margin:0 6px;">|</span>
       <a href="#" id="link-cadastrar" style="color:var(--primary);">Criar conta</a>
     </div>
-  `));
-
-  document.getElementById('btn-toggle-senha').addEventListener('click', () => {
+  `;
+  document.getElementById('btn-toggle-senha')?.addEventListener('click', () => {
     const inp = document.getElementById('auth-senha');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
   });
-
-  document.getElementById('auth-login-form').addEventListener('submit', async (e) => {
+  document.getElementById('auth-login-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('auth-email').value.trim().toLowerCase();
     const senha = document.getElementById('auth-senha').value;
@@ -4447,16 +4425,13 @@ function renderLoginForm() {
     }
     showDashboard();
   });
-
-  document.getElementById('link-esqueci').addEventListener('click', (e) => { e.preventDefault(); renderRecoverForm(); });
-  document.getElementById('link-cadastrar').addEventListener('click', (e) => { e.preventDefault(); renderRegisterForm(); });
+  document.getElementById('link-esqueci')?.addEventListener('click', (e) => { e.preventDefault(); renderRecoverForm(); });
+  document.getElementById('link-cadastrar')?.addEventListener('click', (e) => { e.preventDefault(); renderRegisterForm(); });
 }
 
 function renderRegisterForm() {
-  const container = document.getElementById('auth-form');
-  container.innerHTML = '';
   let regDisciplinas = [];
-  container.appendChild(el(`
+  document.getElementById('auth-form').innerHTML = `
     <form id="auth-register-form">
       <div class="field" style="text-align:left;">
         <label for="reg-email">Email SESI</label>
@@ -4489,7 +4464,7 @@ function renderRegisterForm() {
         <input class="input" id="reg-senha2" type="password" placeholder="Repita a senha" required minlength="6" autocomplete="new-password" />
       </div>
       <div class="field" style="text-align:left;">
-        <label for="reg-pergunta">Pergunta secreta (para recuperação)</label>
+        <label for="reg-pergunta">Pergunta secreta (recuperação)</label>
         <select class="input" id="reg-pergunta" required>
           <option value="">— Selecione —</option>
           <option value="nome_pet">Qual o nome do seu primeiro animal de estimação?</option>
@@ -4508,33 +4483,27 @@ function renderRegisterForm() {
     <div style="margin-top:14px;text-align:center;font-size:.82rem;">
       <a href="#" id="link-voltar-login" style="color:var(--primary);">← Voltar ao login</a>
     </div>
-  `));
-
+  `;
   function renderRegChips() {
     const chips = document.getElementById('reg-disciplinas-chips');
+    if (!chips) return;
     chips.innerHTML = regDisciplinas.map((d, i) => `<span class="chip is-active" data-idx="${i}">${escapeHtml(d)} ✕</span>`).join('');
     chips.querySelectorAll('.chip').forEach(chip => {
       chip.addEventListener('click', () => { regDisciplinas.splice(parseInt(chip.dataset.idx), 1); renderRegChips(); });
     });
   }
-
-  document.getElementById('btn-reg-add-disc').addEventListener('click', () => {
+  document.getElementById('btn-reg-add-disc')?.addEventListener('click', () => {
     const input = document.getElementById('reg-disciplina-input');
     const val = input.value.trim();
     if (val && !regDisciplinas.some(d => d.toLowerCase() === val.toLowerCase())) {
-      regDisciplinas.push(val);
-      renderRegChips();
-      input.value = '';
+      regDisciplinas.push(val); renderRegChips(); input.value = '';
     }
   });
-
-  document.getElementById('reg-disciplina-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-reg-add-disc').click(); }
+  document.getElementById('reg-disciplina-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-reg-add-disc')?.click(); }
   });
-
-  document.getElementById('link-voltar-login').addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
-
-  document.getElementById('auth-register-form').addEventListener('submit', async (e) => {
+  document.getElementById('link-voltar-login')?.addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
+  document.getElementById('auth-register-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('reg-email').value.trim().toLowerCase();
     const nome = document.getElementById('reg-nome').value.trim();
@@ -4543,7 +4512,6 @@ function renderRegisterForm() {
     const senha2 = document.getElementById('reg-senha2').value;
     const pergunta = document.getElementById('reg-pergunta').value;
     const resposta = document.getElementById('reg-resposta').value.trim();
-
     if (!validateEmail(email)) return showToast('Use o email no formato: nome@edu.sesisc.org.br', 'error');
     if (!nome) return showToast('Informe seu nome completo.', 'error');
     if (!unidade) return showToast('Informe a unidade educacional.', 'error');
@@ -4551,21 +4519,11 @@ function renderRegisterForm() {
     if (senha.length < 6) return showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
     if (senha !== senha2) return showToast('As senhas não conferem.', 'error');
     if (!pergunta || !resposta) return showToast('Escolha uma pergunta e responda.', 'error');
-
     const users = getUsers();
     if (users[email]) return showToast('Este email já está cadastrado. Faça login.', 'error');
-
     const hash = await hashSenha(senha);
     const hashResposta = await hashSenha(resposta.toLowerCase());
-    users[email] = {
-      senhaHash: hash,
-      pergunta,
-      respostaHash: hashResposta,
-      nome,
-      unidadeEducacional: unidade,
-      disciplinas: regDisciplinas,
-      criadoEm: new Date().toISOString()
-    };
+    users[email] = { senhaHash: hash, pergunta, respostaHash: hashResposta, nome, unidadeEducacional: unidade, disciplinas: regDisciplinas, criadoEm: new Date().toISOString() };
     saveUsers(users);
     showToast('Conta criada com sucesso! Faça login.', 'success');
     renderLoginForm();
@@ -4573,9 +4531,16 @@ function renderRegisterForm() {
 }
 
 function renderRecoverForm() {
-  const container = document.getElementById('auth-form');
-  container.innerHTML = '';
-  container.appendChild(el(`
+  const PERGUNTAS = {
+    nome_pet: 'Qual o nome do seu primeiro animal de estimação?',
+    cidade_nasc: 'Em qual cidade você nasceu?',
+    mae: 'Qual o primeiro nome da sua mãe?',
+    escola: 'Qual o nome da sua primeira escola?',
+    cor: 'Qual sua cor favorita?'
+  };
+  let recoverStep = 1;
+  let recoverEmail = '';
+  document.getElementById('auth-form').innerHTML = `
     <form id="auth-recover-form">
       <div class="field" style="text-align:left;">
         <label for="rec-email">Email SESI</label>
@@ -4604,20 +4569,8 @@ function renderRecoverForm() {
     <div style="margin-top:14px;text-align:center;font-size:.82rem;">
       <a href="#" id="link-voltar-login2" style="color:var(--primary);">← Voltar ao login</a>
     </div>
-  `));
-
-  const PERGUNTAS = {
-    nome_pet: 'Qual o nome do seu primeiro animal de estimação?',
-    cidade_nasc: 'Em qual cidade você nasceu?',
-    mae: 'Qual o primeiro nome da sua mãe?',
-    escola: 'Qual o nome da sua primeira escola?',
-    cor: 'Qual sua cor favorita?'
-  };
-
-  let recoverStep = 1;
-  let recoverEmail = '';
-
-  document.getElementById('rec-email').addEventListener('blur', async () => {
+  `;
+  document.getElementById('rec-email')?.addEventListener('blur', () => {
     const email = document.getElementById('rec-email').value.trim().toLowerCase();
     const users = getUsers();
     const user = users[email];
@@ -4630,16 +4583,13 @@ function renderRecoverForm() {
       recoverEmail = '';
     }
   });
-
-  document.getElementById('link-voltar-login2').addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
-
-  document.getElementById('auth-recover-form').addEventListener('submit', async (e) => {
+  document.getElementById('link-voltar-login2')?.addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
+  document.getElementById('auth-recover-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('rec-email').value.trim().toLowerCase();
     const users = getUsers();
     const user = users[email];
     if (!user) return showToast('Email não encontrado.', 'error');
-
     if (recoverStep === 1) {
       const resposta = document.getElementById('rec-resposta').value.trim();
       if (!resposta) return showToast('Digite sua resposta.', 'error');
@@ -4662,7 +4612,9 @@ function renderRecoverForm() {
   });
 }
 
-// ---- Minha Conta: perfil, senha, exclusão ----
+// ============================================================================
+// Minha Conta — perfil, configurações, senha, exclusão
+// ============================================================================
 function renderMinhaConta() {
   const authUser = getCurrentAuthUser();
   if (!authUser) { renderAuth(); return; }
@@ -4672,9 +4624,9 @@ function renderMinhaConta() {
   const planos = state.dados.planos || [];
   const criado = user.criadoEm ? new Date(user.criadoEm).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
   const disciplinas = Array.isArray(professor.disciplinas) ? professor.disciplinas : (professor.disciplina ? [professor.disciplina] : []);
+  const apiKey = localStorage.getItem('gemini_api_key') || '';
 
-  appRoot.innerHTML = '';
-  appRoot.appendChild(el(`
+  appRoot.innerHTML = `
     <div style="min-height:100vh;background:var(--bg);padding:20px;">
       <div style="width:100%;max-width:600px;margin:0 auto;">
         <div class="page-card" style="margin-bottom:16px;">
@@ -4717,6 +4669,20 @@ function renderMinhaConta() {
           </form>
 
           <div class="section-divider"></div>
+          <h3 style="margin-bottom:12px;">Chave da API (Gemini)</h3>
+          <form id="form-api-key">
+            <div class="field" style="text-align:left;">
+              <label for="edit-api-key">Chave da API</label>
+              <div style="display:flex;gap:6px;">
+                <input class="input" id="edit-api-key" type="password" value="${escapeHtml(apiKey)}" placeholder="Cole sua chave da API Gemini" style="flex:1;" />
+                <button type="button" id="btn-toggle-api" class="btn btn-secondary" style="width:42px;font-size:.8rem;padding:0;" title="Mostrar/ocultar">👁</button>
+              </div>
+              <p class="field__hint">Obtida em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary);">aistudio.google.com/apikey</a>. Gratuita. Fica salva apenas neste navegador.</p>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:4px;">Salvar chave</button>
+          </form>
+
+          <div class="section-divider"></div>
           <h3 style="margin-bottom:12px;">Alterar Senha</h3>
           <form id="form-mudar-senha">
             <div class="field" style="text-align:left;">
@@ -4741,39 +4707,34 @@ function renderMinhaConta() {
         </div>
       </div>
     </div>
-  `));
+  `;
 
   let disciplinasEdit = [...disciplinas];
 
-  document.getElementById('conta-voltar').addEventListener('click', () => { showDashboard(); });
+  document.getElementById('conta-voltar')?.addEventListener('click', () => showDashboard());
 
-  document.getElementById('btn-add-disciplina').addEventListener('click', () => {
+  document.getElementById('btn-add-disciplina')?.addEventListener('click', () => {
     const input = document.getElementById('edit-disciplina-input');
     const val = input.value.trim();
     if (val && !disciplinasEdit.some(d => d.toLowerCase() === val.toLowerCase())) {
-      disciplinasEdit.push(val);
-      renderDisciplinasChips();
-      input.value = '';
+      disciplinasEdit.push(val); renderDisciplinasChips(); input.value = '';
     }
   });
-
-  document.getElementById('edit-disciplina-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-disciplina').click(); }
+  document.getElementById('edit-disciplina-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-disciplina')?.click(); }
   });
 
   function renderDisciplinasChips() {
     const list = document.getElementById('edit-disciplinas-list');
+    if (!list) return;
     list.innerHTML = disciplinasEdit.map((d, i) => `<span class="chip is-active" data-idx="${i}">${escapeHtml(d)} ✕</span>`).join('');
     list.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        disciplinasEdit.splice(parseInt(chip.dataset.idx), 1);
-        renderDisciplinasChips();
-      });
+      chip.addEventListener('click', () => { disciplinasEdit.splice(parseInt(chip.dataset.idx), 1); renderDisciplinasChips(); });
     });
   }
   renderDisciplinasChips();
 
-  document.getElementById('form-editar-perfil').addEventListener('submit', (e) => {
+  document.getElementById('form-editar-perfil')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const nome = document.getElementById('edit-nome').value.trim();
     const unidade = document.getElementById('edit-unidade').value.trim();
@@ -4786,7 +4747,20 @@ function renderMinhaConta() {
     showToast('Perfil salvo com sucesso!', 'success');
   });
 
-  document.getElementById('form-mudar-senha').addEventListener('submit', async (e) => {
+  document.getElementById('btn-toggle-api')?.addEventListener('click', () => {
+    const inp = document.getElementById('edit-api-key');
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+  document.getElementById('form-api-key')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const key = document.getElementById('edit-api-key').value.trim();
+    if (!key) return showToast('Informe uma chave válida.', 'error');
+    localStorage.setItem('gemini_api_key', key);
+    window.GEMINI_API_KEY = key;
+    showToast('Chave da API salva com sucesso!', 'success');
+  });
+
+  document.getElementById('form-mudar-senha')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const atual = document.getElementById('senha-atual').value;
     const nova = document.getElementById('senha-nova').value;
@@ -4804,11 +4778,9 @@ function renderMinhaConta() {
     showToast('Senha alterada com sucesso!', 'success');
   });
 
-  document.getElementById('btn-excluir-conta').addEventListener('click', async () => {
-    const confirm1 = confirm('Tem certeza que deseja excluir sua conta? Todos os seus planos e dados serão perdidos permanentemente.');
-    if (!confirm1) return;
-    const confirm2 = confirm('Esta ação é IRREVERSÍVEL. Confirma a exclusão da conta?');
-    if (!confirm2) return;
+  document.getElementById('btn-excluir-conta')?.addEventListener('click', async () => {
+    if (!confirm('Tem certeza que deseja excluir sua conta? Todos os seus planos e dados serão perdidos permanentemente.')) return;
+    if (!confirm('Esta ação é IRREVERSÍVEL. Confirma a exclusão da conta?')) return;
     const senha = prompt('Digite sua senha para confirmar a exclusão:');
     if (!senha) return;
     const hash = await hashSenha(senha);
@@ -4825,7 +4797,7 @@ function renderMinhaConta() {
 }
 
 // ============================================================================
-// Controlador principal — roteamento entre configuração, dashboard e wizard
+// Controlador principal
 // ============================================================================
 const appRoot = document.getElementById('app');
 let currentStepController = null;
@@ -4857,8 +4829,7 @@ function showDashboard() {
 
 function renderShell() {
   const professor = state.dados.professor || {};
-  appRoot.innerHTML = '';
-  appRoot.appendChild(el(`
+  appRoot.innerHTML = `
     <div>
       <header class="topbar">
         <div class="topbar__brand">
@@ -4890,20 +4861,18 @@ function renderShell() {
         </div>
       </footer>
     </div>
-  `));
-
-  document.getElementById('btn-dashboard').addEventListener('click', showDashboard);
-  document.getElementById('btn-minha-conta').addEventListener('click', renderMinhaConta);
-  document.getElementById('btn-grade').addEventListener('click', showScheduleView);
-  document.getElementById('btn-provas').addEventListener('click', showGeradorView);
-  document.getElementById('btn-correcao').addEventListener('click', showCorrecaoView);
-  document.getElementById('btn-config').addEventListener('click', showConfigProfessor);
-  document.getElementById('btn-tema').addEventListener('click', (e) => {
+  `;
+  document.getElementById('btn-dashboard')?.addEventListener('click', showDashboard);
+  document.getElementById('btn-minha-conta')?.addEventListener('click', renderMinhaConta);
+  document.getElementById('btn-grade')?.addEventListener('click', showScheduleView);
+  document.getElementById('btn-provas')?.addEventListener('click', showGeradorView);
+  document.getElementById('btn-correcao')?.addEventListener('click', showCorrecaoView);
+  document.getElementById('btn-config')?.addEventListener('click', showConfigProfessor);
+  document.getElementById('btn-tema')?.addEventListener('click', (e) => {
     const novoTema = alternarTema();
     e.target.textContent = novoTema === 'dark' ? '☀' : '☾';
   });
-  const btnSair = document.getElementById('btn-sair');
-  if (btnSair) btnSair.addEventListener('click', logoutUsuario);
+  document.getElementById('btn-sair')?.addEventListener('click', logoutUsuario);
 }
 
 function renderStepper() {
