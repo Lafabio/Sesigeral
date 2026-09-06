@@ -4329,14 +4329,47 @@ function logoutUsuario() {
     salvarDadosUsuario(USER_NOME, state.dados);
     salvarGradeUsuario(USER_NOME, window.SCHEDULE_DATA);
   }
-  clearSession();
+  clearCurrentAuthUser();
   USER_NOME = null;
   state.dados = carregarStorage();
   setState({ plano: null, etapa: 1 });
-  location.reload();
+  renderAuth();
 }
 
-// ---- Entrada do professor(a): seleciona o nome (sem senha) ----
+// ---- Autenticação: cadastro, login, recuperação de senha ----
+const AUTH_USERS_KEY = 'sesigeral_users';
+const AUTH_CURRENT_KEY = 'sesigeral_current_user';
+
+async function hashSenha(senha) {
+  const buf = new TextEncoder().encode(senha + '_sesigeral_salt_2026');
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveUsers(users) {
+  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+}
+
+function validateEmail(email) {
+  return /^[a-zA-Z0-9._-]+@edu\.sesisc\.org\.br$/.test(email);
+}
+
+function getCurrentAuthUser() {
+  try { return JSON.parse(sessionStorage.getItem(AUTH_CURRENT_KEY)); } catch { return null; }
+}
+
+function setCurrentAuthUser(user) {
+  sessionStorage.setItem(AUTH_CURRENT_KEY, JSON.stringify(user));
+}
+
+function clearCurrentAuthUser() {
+  sessionStorage.removeItem(AUTH_CURRENT_KEY);
+}
+
 function renderAuth() {
   appRoot.innerHTML = '';
   appRoot.appendChild(el(`
@@ -4347,54 +4380,226 @@ function renderAuth() {
             <div class="sesi-brand__icon"><div class="bars"><span></span><span></span><span></span></div><span class="word">SESI</span></div>
             <div class="sesi-brand__text">Escola<br/>de Referência</div>
           </div>
-          <h2 style="margin-bottom:4px;">Planejamento de Aula</h2>
-          <p style="margin-bottom:20px;font-size:.9rem;color:var(--ink-muted);">Escolha o seu nome para entrar no seu espaço de planejamento.</p>
+          <h2 style="margin-bottom:4px;">Entrar no SESIGERAL</h2>
+          <p style="margin-bottom:20px;font-size:.9rem;color:var(--ink-muted);">Acesse seu espaço individual de planejamento.</p>
           <div id="auth-form"></div>
         </div>
       </div>
     </div>
   `));
-  renderSelectProfessor();
+  renderLoginForm();
 }
 
-function renderSelectProfessor() {
+function renderLoginForm() {
   const container = document.getElementById('auth-form');
-  if (!container) return;
-  const profNomes = (PROFESSORES_DATA?.professores || [])
-    .map(p => p.nome).filter(Boolean)
-    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  const optionsHtml = profNomes.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
-  const ultimoSelecionado = getSession()?.nome || '';
-
   container.innerHTML = '';
   container.appendChild(el(`
-    <div>
+    <form id="auth-login-form">
       <div class="field" style="text-align:left;">
-        <label for="select-professor">Professor(a)</label>
-        <select class="input" id="select-professor" required style="font-size:.95rem;">
-          <option value="">— Selecione o seu nome —</option>
-          ${optionsHtml}
-        </select>
+        <label for="auth-email">Email SESI</label>
+        <input class="input" id="auth-email" type="email" placeholder="seu.nome@edu.sesisc.org.br" required autocomplete="username" />
       </div>
-      <button class="btn btn-primary btn-block" id="btn-entrar" type="button" style="margin-top:4px;">Entrar no meu espaço</button>
-      <p class="text-faint text-sm mt-16" style="text-align:center;">Não é necessário senha. Os dados ficam salvos apenas neste navegador.</p>
+      <div class="field" style="text-align:left;">
+        <label for="auth-senha">Senha</label>
+        <div style="display:flex;gap:6px;">
+          <input class="input" id="auth-senha" type="password" placeholder="Sua senha" required autocomplete="current-password" style="flex:1;" />
+          <button type="button" id="btn-toggle-senha" class="btn btn-secondary" style="width:42px;font-size:.8rem;padding:0;" title="Mostrar/ocultar">👁</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px;">Entrar</button>
+    </form>
+    <div style="margin-top:16px;text-align:center;font-size:.82rem;">
+      <a href="#" id="link-esqueci" style="color:var(--primary);">Esqueci minha senha</a>
+      <span style="color:var(--border-strong);margin:0 6px;">|</span>
+      <a href="#" id="link-cadastrar" style="color:var(--primary);">Criar conta</a>
     </div>
   `));
 
-  const sel = container.querySelector('#select-professor');
-  if (ultimoSelecionado && profNomes.includes(ultimoSelecionado)) sel.value = ultimoSelecionado;
-  container.querySelector('#btn-entrar').addEventListener('click', entrarComoProfessor);
-  sel.addEventListener('change', () => { if (sel.value) document.getElementById('btn-entrar').focus(); });
-  sel.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); entrarComoProfessor(); } });
+  document.getElementById('btn-toggle-senha').addEventListener('click', () => {
+    const inp = document.getElementById('auth-senha');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+
+  document.getElementById('auth-login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('auth-email').value.trim().toLowerCase();
+    const senha = document.getElementById('auth-senha').value;
+    if (!email || !senha) return showToast('Preencha email e senha.', 'error');
+    const users = getUsers();
+    const user = users[email];
+    if (!user) return showToast('Email não encontrado. Crie uma conta.', 'error');
+    const hash = await hashSenha(senha);
+    if (hash !== user.senhaHash) return showToast('Senha incorreta.', 'error');
+    const nome = email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    setCurrentAuthUser({ email, nome, criadoEm: user.criadoEm });
+    aoLogar(nome);
+    showDashboard();
+  });
+
+  document.getElementById('link-esqueci').addEventListener('click', (e) => { e.preventDefault(); renderRecoverForm(); });
+  document.getElementById('link-cadastrar').addEventListener('click', (e) => { e.preventDefault(); renderRegisterForm(); });
 }
 
-function entrarComoProfessor() {
-  const sel = document.getElementById('select-professor');
-  const nome = sel ? sel.value : '';
-  if (!nome) return showToast('Selecione o seu nome para entrar.', 'error');
-  setSession(nome);
-  aoLogar(nome);
-  showDashboard();
+function renderRegisterForm() {
+  const container = document.getElementById('auth-form');
+  container.innerHTML = '';
+  container.appendChild(el(`
+    <form id="auth-register-form">
+      <div class="field" style="text-align:left;">
+        <label for="reg-email">Email SESI</label>
+        <input class="input" id="reg-email" type="email" placeholder="seu.nome@edu.sesisc.org.br" required />
+        <p class="field__hint">Use o email institucional SESI no formato: nome@edu.sesisc.org.br</p>
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="reg-senha">Crie uma senha</label>
+        <input class="input" id="reg-senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="reg-senha2">Confirme a senha</label>
+        <input class="input" id="reg-senha2" type="password" placeholder="Repita a senha" required minlength="6" />
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="reg-pergunta">Pergunta secreta (para recuperação)</label>
+        <select class="input" id="reg-pergunta" required>
+          <option value="">— Selecione —</option>
+          <option value="nome_pet">Qual o nome do seu primeiro animal de estimação?</option>
+          <option value="cidade_nasc">Em qual cidade você nasceu?</option>
+          <option value="mae">Qual o primeiro nome da sua mãe?</option>
+          <option value="escola">Qual o nome da sua primeira escola?</option>
+          <option value="cor">Qual sua cor favorita?</option>
+        </select>
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="reg-resposta">Resposta da pergunta secreta</label>
+        <input class="input" id="reg-resposta" type="text" placeholder="Sua resposta" required />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px;">Criar minha conta</button>
+    </form>
+    <div style="margin-top:14px;text-align:center;font-size:.82rem;">
+      <a href="#" id="link-voltar-login" style="color:var(--primary);">← Voltar ao login</a>
+    </div>
+  `));
+
+  document.getElementById('link-voltar-login').addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
+
+  document.getElementById('auth-register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    const senha = document.getElementById('reg-senha').value;
+    const senha2 = document.getElementById('reg-senha2').value;
+    const pergunta = document.getElementById('reg-pergunta').value;
+    const resposta = document.getElementById('reg-resposta').value.trim();
+
+    if (!validateEmail(email)) return showToast('Use o email no formato: nome@edu.sesisc.org.br', 'error');
+    if (senha.length < 6) return showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
+    if (senha !== senha2) return showToast('As senhas não conferem.', 'error');
+    if (!pergunta || !resposta) return showToast('Escolha uma pergunta e responda.', 'error');
+
+    const users = getUsers();
+    if (users[email]) return showToast('Este email já está cadastrado. Faça login.', 'error');
+
+    const hash = await hashSenha(senha);
+    const hashResposta = await hashSenha(resposta.toLowerCase());
+    users[email] = {
+      senhaHash: hash,
+      pergunta,
+      respostaHash: hashResposta,
+      criadoEm: new Date().toISOString()
+    };
+    saveUsers(users);
+    showToast('Conta criada com sucesso! Faça login.', 'success');
+    renderLoginForm();
+  });
+}
+
+function renderRecoverForm() {
+  const container = document.getElementById('auth-form');
+  container.innerHTML = '';
+  container.appendChild(el(`
+    <form id="auth-recover-form">
+      <div class="field" style="text-align:left;">
+        <label for="rec-email">Email SESI</label>
+        <input class="input" id="rec-email" type="email" placeholder="seu.nome@edu.sesisc.org.br" required />
+      </div>
+      <div class="field" style="text-align:left;">
+        <label>Pergunta secreta</label>
+        <p id="rec-pergunta-texto" style="font-size:.85rem;color:var(--ink-muted);padding:8px;background:var(--surface-alt);border-radius:6px;min-height:36px;">Digite o email acima para ver a pergunta.</p>
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="rec-resposta">Resposta da pergunta secreta</label>
+        <input class="input" id="rec-resposta" type="text" placeholder="Sua resposta" required />
+      </div>
+      <div id="rec-nova-senha-fields" style="display:none;">
+        <div class="field" style="text-align:left;">
+          <label for="rec-nova-senha">Nova senha</label>
+          <input class="input" id="rec-nova-senha" type="password" placeholder="Mínimo 6 caracteres" minlength="6" />
+        </div>
+        <div class="field" style="text-align:left;">
+          <label for="rec-nova-senha2">Confirme a nova senha</label>
+          <input class="input" id="rec-nova-senha2" type="password" placeholder="Repita a nova senha" minlength="6" />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px;">Verificar e redefinir senha</button>
+    </form>
+    <div style="margin-top:14px;text-align:center;font-size:.82rem;">
+      <a href="#" id="link-voltar-login2" style="color:var(--primary);">← Voltar ao login</a>
+    </div>
+  `));
+
+  const PERGUNTAS = {
+    nome_pet: 'Qual o nome do seu primeiro animal de estimação?',
+    cidade_nasc: 'Em qual cidade você nasceu?',
+    mae: 'Qual o primeiro nome da sua mãe?',
+    escola: 'Qual o nome da sua primeira escola?',
+    cor: 'Qual sua cor favorita?'
+  };
+
+  let recoverStep = 1;
+  let recoverEmail = '';
+
+  document.getElementById('rec-email').addEventListener('blur', async () => {
+    const email = document.getElementById('rec-email').value.trim().toLowerCase();
+    const users = getUsers();
+    const user = users[email];
+    const perguntaEl = document.getElementById('rec-pergunta-texto');
+    if (user && PERGUNTAS[user.pergunta]) {
+      perguntaEl.textContent = PERGUNTAS[user.pergunta];
+      recoverEmail = email;
+    } else {
+      perguntaEl.textContent = 'Email não encontrado ou sem pergunta secreta.';
+      recoverEmail = '';
+    }
+  });
+
+  document.getElementById('link-voltar-login2').addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
+
+  document.getElementById('auth-recover-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('rec-email').value.trim().toLowerCase();
+    const users = getUsers();
+    const user = users[email];
+    if (!user) return showToast('Email não encontrado.', 'error');
+
+    if (recoverStep === 1) {
+      const resposta = document.getElementById('rec-resposta').value.trim();
+      if (!resposta) return showToast('Digite sua resposta.', 'error');
+      const hashResposta = await hashSenha(resposta.toLowerCase());
+      if (hashResposta !== user.respostaHash) return showToast('Resposta incorreta.', 'error');
+      recoverStep = 2;
+      document.getElementById('rec-nova-senha-fields').style.display = 'block';
+      document.querySelector('#auth-recover-form button[type="submit"]').textContent = 'Salvar nova senha';
+      showToast('Resposta correta! Defina uma nova senha.', 'success');
+    } else {
+      const nova = document.getElementById('rec-nova-senha').value;
+      const nova2 = document.getElementById('rec-nova-senha2').value;
+      if (nova.length < 6) return showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
+      if (nova !== nova2) return showToast('As senhas não conferem.', 'error');
+      user.senhaHash = await hashSenha(nova);
+      saveUsers(users);
+      showToast('Senha redefinida com sucesso! Faça login.', 'success');
+      renderLoginForm();
+    }
+  });
 }
 
 // ============================================================================
@@ -4404,9 +4609,9 @@ const appRoot = document.getElementById('app');
 let currentStepController = null;
 
 function init() {
-  const session = getSession();
-  if (session && session.nome) {
-    aoLogar(session.nome);
+  const authUser = getCurrentAuthUser();
+  if (authUser && authUser.nome) {
+    aoLogar(authUser.nome);
     if (!state.dados.professor) return showConfigProfessor();
     return showDashboard();
   }
@@ -4442,7 +4647,7 @@ function renderShell() {
           <span class="sesi-logo__produto" style="margin-left:10px;padding-left:10px;border-left:1px solid var(--border-strong);color:var(--ink-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">Planejamento de Aula</span>
         </div>
         <div class="topbar__user">
-          <span>${escapeHtml((professor.nome || '').split(' ')[0] || '')}</span>
+          <span style="font-size:.78rem;color:var(--ink-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(getCurrentAuthUser()?.email || '')}">${escapeHtml((professor.nome || '').split(' ')[0] || '')}</span>
           <button class="theme-toggle" id="btn-tema" title="Alternar tema claro/escuro">${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀' : '☾'}</button>
           <button class="btn-icon" id="btn-dashboard" title="Meus planos">Planos</button>
           <button class="btn-icon" id="btn-grade" title="Grade horária">Grade</button>
@@ -4450,7 +4655,7 @@ function renderShell() {
           <button class="btn-icon" id="btn-banco-questoes" title="Banco de Questões" onclick="window.open('banco-questoes.html','bancoQuestoes')" style="color:var(--success);">📚 Banco</button>
           <button class="btn-icon" id="btn-correcao" title="Correção de Gabaritos">Correção</button>
           <button class="btn-icon" id="btn-config" title="Configurações">Config</button>
-          ${USER_NOME ? '<button class="btn-icon" id="btn-sair" title="Sair" style="color:var(--danger);">Sair</button>' : ''}
+          ${USER_NOME ? '<button class="btn-icon" id="btn-sair" title="Sair da conta" style="color:var(--danger);">Sair</button>' : ''}
         </div>
       </header>
       <nav class="stepper" id="stepper"></nav>
