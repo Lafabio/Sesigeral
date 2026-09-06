@@ -4438,6 +4438,10 @@ function renderLoginForm() {
     if (hash !== user.senhaHash) return showToast('Senha incorreta.', 'error');
     const nome = user.nome || email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     setCurrentAuthUser({ email, nome, criadoEm: user.criadoEm });
+    if (user.geminiApiKey) {
+      localStorage.setItem('gemini_api_key', user.geminiApiKey);
+      window.GEMINI_API_KEY = user.geminiApiKey;
+    }
     aoLogar(nome);
     if (user.nome || user.unidadeEducacional || user.disciplinas) {
       state.dados.professor = {
@@ -4504,6 +4508,14 @@ function renderRegisterForm() {
         <label for="reg-resposta">Resposta da pergunta secreta</label>
         <input class="input" id="reg-resposta" type="text" placeholder="Sua resposta" required />
       </div>
+      <div class="field" style="text-align:left;">
+        <label for="reg-apikey">Chave da API Gemini</label>
+        <div style="display:flex;gap:6px;">
+          <input class="input" id="reg-apikey" type="password" placeholder="Cole sua chave da API" required style="flex:1;" />
+          <button type="button" id="btn-toggle-reg-api" class="btn btn-secondary" style="width:42px;font-size:.8rem;padding:0;" title="Mostrar/ocultar">👁</button>
+        </div>
+        <p class="field__hint">Obtida em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary);">aistudio.google.com/apikey</a>. Gratuita. Usada em todas as funcionalidades (planos, provas, banco, correção).</p>
+      </div>
       <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px;">Criar minha conta</button>
     </form>
     <div style="margin-top:14px;text-align:center;font-size:.82rem;">
@@ -4529,6 +4541,10 @@ function renderRegisterForm() {
     if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-reg-add-disc')?.click(); }
   });
   document.getElementById('link-voltar-login')?.addEventListener('click', (e) => { e.preventDefault(); renderLoginForm(); });
+  document.getElementById('btn-toggle-reg-api')?.addEventListener('click', () => {
+    const inp = document.getElementById('reg-apikey');
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
   document.getElementById('auth-register-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('reg-email').value.trim().toLowerCase();
@@ -4538,6 +4554,7 @@ function renderRegisterForm() {
     const senha2 = document.getElementById('reg-senha2').value;
     const pergunta = document.getElementById('reg-pergunta').value;
     const resposta = document.getElementById('reg-resposta').value.trim();
+    const apikey = document.getElementById('reg-apikey').value.trim();
     if (!validateEmail(email)) return showToast('Use o email no formato: nome@edu.sesisc.org.br', 'error');
     if (!nome) return showToast('Informe seu nome completo.', 'error');
     if (!unidade) return showToast('Informe a unidade educacional.', 'error');
@@ -4545,12 +4562,14 @@ function renderRegisterForm() {
     if (senha.length < 6) return showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
     if (senha !== senha2) return showToast('As senhas não conferem.', 'error');
     if (!pergunta || !resposta) return showToast('Escolha uma pergunta e responda.', 'error');
+    if (!apikey) return showToast('Informe sua chave da API Gemini.', 'error');
     const users = getUsers();
     if (users[email]) return showToast('Este email já está cadastrado. Faça login.', 'error');
     const hash = await hashSenha(senha);
     const hashResposta = await hashSenha(resposta.toLowerCase());
-    users[email] = { senhaHash: hash, pergunta, respostaHash: hashResposta, nome, unidadeEducacional: unidade, disciplinas: regDisciplinas, criadoEm: new Date().toISOString() };
+    users[email] = { senhaHash: hash, pergunta, respostaHash: hashResposta, nome, unidadeEducacional: unidade, disciplinas: regDisciplinas, geminiApiKey: apikey, criadoEm: new Date().toISOString() };
     saveUsers(users);
+    localStorage.setItem('gemini_api_key', apikey);
     showToast('Conta criada com sucesso! Faça login.', 'success');
     renderLoginForm();
   });
@@ -4650,7 +4669,7 @@ function renderMinhaConta() {
   const planos = state.dados.planos || [];
   const criado = user.criadoEm ? new Date(user.criadoEm).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
   const disciplinas = Array.isArray(professor.disciplinas) ? professor.disciplinas : (professor.disciplina ? [professor.disciplina] : []);
-  const apiKey = localStorage.getItem('gemini_api_key') || '';
+  const apiKey = user.geminiApiKey || localStorage.getItem('gemini_api_key') || '';
 
   appRoot.innerHTML = `
     <div style="min-height:100vh;background:var(--bg);padding:20px;">
@@ -4783,6 +4802,11 @@ function renderMinhaConta() {
     if (!key) return showToast('Informe uma chave válida.', 'error');
     localStorage.setItem('gemini_api_key', key);
     window.GEMINI_API_KEY = key;
+    const users = getUsers();
+    if (users[authUser.email]) {
+      users[authUser.email].geminiApiKey = key;
+      saveUsers(users);
+    }
     showToast('Chave da API salva com sucesso!', 'success');
   });
 
