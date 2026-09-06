@@ -386,15 +386,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     </div>
     <div class="modal-bd" style="font-family:'IBM Plex Sans',sans-serif;display:flex;flex-direction:column;gap:14px;">
 
-      <!-- API KEY -->
-      <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:7px;padding:10px 13px;font-size:11.5px;color:#78350f;">
-        🔑 <strong>Chave de API Gemini:</strong> necessária para gerar questões. Gratuita em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1d4ed8;">aistudio.google.com/apikey</a>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="password" id="geminiApiKey" placeholder="AIza…" style="flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;">
-        <button onclick="salvarChaveGemini()" style="background:var(--ac);color:#fff;border:none;font-size:11px;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;">💾 Salvar</button>
-      </div>
-
       <!-- NIVEL -->
       <div>
         <label style="font-size:10.5px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;">Nível de ensino</label>
@@ -700,10 +691,9 @@ function setNeeStatus(msg, tipo){
 }
 
 async function gerarAdaptacaoNEE(){
-  const apiKey = (localStorage.getItem('gemini_api_key')||'').trim()
-    || (document.getElementById('geminiApiKey')?.value||'').trim();
+  const apiKey = (localStorage.getItem('gemini_api_key')||'').trim();
   if(!apiKey){
-    alert('⚠ Informe a chave da API Gemini no modal "Gerar com IA" primeiro.');
+    alert('⚠ Chave da API Gemini não encontrada. Faça login novamente.');
     return;
   }
 
@@ -2200,8 +2190,6 @@ function selecionarHabilidadeBncc(codigo, desc){
 
 function openModalIA(){
   document.getElementById('modalIA').classList.remove('hidden');
-  const chave = localStorage.getItem('gemini_api_key')||'';
-  if(chave) document.getElementById('geminiApiKey').value = chave;
   // Sincronizar nível com tipoProva atual
   const nivelAuto = tipoProva === 'em' ? 'medio' : 'fundamental';
   setNivelIA(nivelAuto, null);
@@ -2248,12 +2236,6 @@ function clearBnccDesc(){
   document.getElementById('bnccDesc').style.display='none';
   document.getElementById('bnccErro').style.display='none';
   bnccDescCache = null;
-}
-function salvarChaveGemini(){
-  const v = document.getElementById('geminiApiKey').value.trim();
-  if(!v){ alert('Digite a chave Gemini primeiro.'); return; }
-  localStorage.setItem('gemini_api_key', v);
-  alert('✅ Chave salva no navegador!');
 }
 function resetIAStatus(){
   const s = document.getElementById('iaStatus');
@@ -2361,8 +2343,8 @@ async function buscarBncc(){
 }
 
 async function gerarQuestaoIA(){
-  const apiKey = (document.getElementById('geminiApiKey').value||'').trim();
-  if(!apiKey){ alert('Informe a chave da API Gemini.'); return; }
+  const apiKey = (localStorage.getItem('gemini_api_key')||'').trim();
+  if(!apiKey){ alert('Chave da API Gemini não encontrada. Faça login novamente.'); return; }
   const objeto = document.getElementById('iaObjeto').value.trim();
   if(!objeto){ alert('Informe o objeto de aprendizagem.'); return; }
   const codigoBncc = document.getElementById('iaBnccCodigo').value.trim().toUpperCase();
