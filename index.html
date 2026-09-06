@@ -4304,8 +4304,34 @@ function getUsers() {
 }
 function saveUsers(users) { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users)); }
 
+const ADMIN_EMAILS = ['lafaietep@gmail.com'];
+
+function isAdmin(email) {
+  return ADMIN_EMAILS.includes(String(email).toLowerCase());
+}
+
 function validateEmail(email) {
-  return /^[a-zA-Z0-9._-]+@edu\.sesisc\.org\.br$/.test(email);
+  return /^[a-zA-Z0-9._-]+@edu\.sesisc\.org\.br$/.test(email) || isAdmin(email);
+}
+
+async function seedAdminAccounts() {
+  const users = getUsers();
+  for (const email of ADMIN_EMAILS) {
+    if (!users[email]) {
+      const hash = await hashSenha('lilica10');
+      users[email] = {
+        senhaHash: hash,
+        pergunta: 'nome_pet',
+        respostaHash: await hashSenha('admin'),
+        nome: email.split('@')[0],
+        unidadeEducacional: 'Admin SESIGERAL',
+        disciplinas: ['Admin'],
+        isAdmin: true,
+        criadoEm: new Date().toISOString()
+      };
+    }
+  }
+  saveUsers(users);
 }
 
 function getCurrentAuthUser() {
@@ -4802,7 +4828,8 @@ function renderMinhaConta() {
 const appRoot = document.getElementById('app');
 let currentStepController = null;
 
-function init() {
+async function init() {
+  await seedAdminAccounts();
   const authUser = getCurrentAuthUser();
   if (authUser && authUser.nome) {
     aoLogar(authUser.nome);
