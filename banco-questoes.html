@@ -781,6 +781,8 @@ async function salvarQuestao(){
     return;
   }
 
+  if(!confirm('Deseja salvar esta questão no banco?')) return;
+
   const btn = document.getElementById('btnSalvar');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Salvando...';
