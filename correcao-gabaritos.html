@@ -97,6 +97,9 @@ main.content{width:100%;max-width:880px;margin:0 auto;padding:24px 20px 120px;}
 
 .toast-host{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 </head>
 <body>
 
@@ -120,18 +123,34 @@ main.content{width:100%;max-width:880px;margin:0 auto;padding:24px 20px 120px;}
         <div class="sesi-brand__text">Escola de Referência</div>
       </div>
       <h2>Correção Automática de Gabaritos</h2>
-      <p class="page-header__desc">Configure a chave da API Gemini e o gabarito da prova.</p>
+      <p class="page-header__desc">Correção offline com pdf.js + Tesseract.js. IA como fallback opcional.</p>
     </div>
 
     <div class="section-divider"></div>
-    <h4 style="margin-bottom:12px;">Configuração da IA</h4>
-    <div class="field">
-      <label for="geminiKey">Chave da API (Google Gemini)</label>
-      <div style="display:flex;gap:6px;">
-        <input class="input" id="geminiKey" type="password" placeholder="AIza..." style="flex:1;font-family:var(--font-mono);font-size:.78rem;"/>
-        <button type="button" id="btn-toggle-key" class="btn btn-secondary" style="width:42px;padding:0;" title="Mostrar/ocultar">👁</button>
+    <h4 style="margin-bottom:12px;">Modo de Correção</h4>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <label style="flex:1;padding:12px;border:2px solid var(--border-strong);border-radius:var(--radius-md);cursor:pointer;background:${useAI?'var(--primary-soft)':'var(--surface)'};border-color:${useAI?'var(--primary)':'var(--border-strong)'};text-align:center;transition:all .15s;">
+        <input type="radio" name="mode" value="local" ${!useAI?'checked':''} style="display:none;" onchange="useAI=false;updateModeUI();">
+        <div style="font-weight:600;font-size:.9rem;">🖥️ Offline</div>
+        <div style="font-size:.78rem;color:var(--ink-muted);">pdf.js + Tesseract.js</div>
+      </label>
+      <label style="flex:1;padding:12px;border:2px solid var(--border-strong);border-radius:var(--radius-md);cursor:pointer;background:${useAI?'var(--primary-soft)':'var(--surface)'};border-color:${useAI?'var(--primary)':'var(--border-strong)'};text-align:center;transition:all .15s;">
+        <input type="radio" name="mode" value="ai" ${useAI?'checked':''} style="display:none;" onchange="useAI=true;updateModeUI();">
+        <div style="font-weight:600;font-size:.9rem;">🤖 IA (Fallback)</div>
+        <div style="font-size:.78rem;color:var(--ink-muted);">Gemini quando confiança < 30%</div>
+      </label>
+    </div>
+
+    <div id="ai-config-section" style="display:${useAI?'':'none'};">
+      <h4 style="margin-bottom:12px;">Chave da API Gemini (opcional)</h4>
+      <div class="field">
+        <label for="geminiKey">Chave da API</label>
+        <div style="display:flex;gap:6px;">
+          <input class="input" id="geminiKey" type="password" placeholder="AIza..." style="flex:1;font-family:var(--font-mono);font-size:.78rem;"/>
+          <button type="button" id="btn-toggle-key" class="btn btn-secondary" style="width:42px;padding:0;" title="Mostrar/ocultar">👁</button>
+        </div>
+        <div class="field__hint">Obtida em <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>. Fica salva apenas neste navegador.</div>
       </div>
-      <div class="field__hint">Obtida em <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>. Fica salva apenas neste navegador.</div>
     </div>
 
     <div class="section-divider"></div>
@@ -224,6 +243,7 @@ let resultados = [];
 let geminiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
 let gabarito = JSON.parse(localStorage.getItem(GABARITO_STORAGE) || '{}');
 let questoesGeradas = null;
+let useAI = false;
 
 // ============================================================================
 // Receber gabarito do gerador de provas (via postMessage)
@@ -474,6 +494,22 @@ document.getElementById('btn-toggle-key').addEventListener('click', () => {
   inp.type = inp.type === 'password' ? 'text' : 'password';
 });
 
+function updateModeUI() {
+  document.querySelectorAll('input[name="mode"]').forEach(r => {
+    const lbl = r.closest('label');
+    if (r.value === 'ai') {
+      lbl.style.background = useAI ? 'var(--primary-soft)' : 'var(--surface)';
+      lbl.style.borderColor = useAI ? 'var(--primary)' : 'var(--border-strong)';
+    } else {
+      lbl.style.background = !useAI ? 'var(--primary-soft)' : 'var(--surface)';
+      lbl.style.borderColor = !useAI ? 'var(--primary)' : 'var(--border-strong)';
+    }
+  });
+  const aiSec = document.getElementById('ai-config-section');
+  if (aiSec) aiSec.style.display = useAI ? '' : 'none';
+}
+updateModeUI();
+
 // ============================================================================
 // Navegação entre steps
 // ============================================================================
@@ -484,7 +520,7 @@ function showStep(step) {
   document.getElementById(step).style.display = '';
 }
 document.getElementById('btn-start').addEventListener('click', () => {
-  if (!geminiKey) { showToast('Configure a chave da API Gemini primeiro.', 'error'); return; }
+  if (useAI && !geminiKey) { showToast('Configure a chave da API Gemini ou mude para modo Offline.', 'error'); return; }
   showStep('step-upload');
 });
 document.getElementById('btn-back-config').addEventListener('click', () => showStep('step-config'));
@@ -542,29 +578,10 @@ function renderFileList() {
 }
 
 // ============================================================================
-// Gemini API
+// Gemini API (fallback apenas)
 // ============================================================================
-async function resizeImage(file, maxSize = 1600) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      if (w > maxSize || h > maxSize) {
-        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-        else { w = Math.round(w * maxSize / h); h = maxSize; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      canvas.toBlob((blob) => { URL.revokeObjectURL(url); resolve(blob); }, 'image/jpeg', 0.9);
-    };
-    img.src = url;
-  });
-}
-
 async function callGemini(base64Data, mimeType, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
   const body = {
     contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64Data } }] }],
     generationConfig: { temperature: 0.0, responseMimeType: 'application/json' }
@@ -578,32 +595,139 @@ async function callGemini(base64Data, mimeType, prompt) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-function buildPrompt() {
-  const totalQuestoes = questoesGeradas ? questoesGeradas._total : Object.keys(gabarito).filter(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_')).length || 10;
-  const discursivas = [];
-  const objetivas = [];
-  for (let i = 1; i <= totalQuestoes; i++) {
-    const tipo = questoesGeradas ? (questoesGeradas['tipo_' + i] || 'multipla') : (gabarito['tipo_' + i] || 'multipla');
-    if (tipo === 'discursiva') discursivas.push(i);
-    else objetivas.push(i);
+// ============================================================================
+// pdf.js → Canvas
+// ============================================================================
+async function pdfToCanvases(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const canvases = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({ scale: 2.0 });
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    canvases.push({ canvas, pageNum: i, totalPages: pdf.numPages });
   }
-  const discText = discursivas.length ? `As questões ${discursivas.map(q => 'Q' + String(q).padStart(2,'0')).join(', ')} são DISCURSIVAS, ignore.` : '';
-  const objText = objetivas.length ? `As questões ${objetivas.map(q => 'Q' + String(q).padStart(2,'0')).join(', ')} são OBJETIVAS.` : '';
-  const opts = (questoesGeradas?._letras || 'ABCDE').split(' ').join(' ');
+  return canvases;
+}
 
-  return `Você é um sistema especializado em leitura óptica de gabaritos escolares SESI. Analise a imagem com MÁXIMA ATENÇÃO.
-ESTRUTURA DA FOLHA SESI (de cima para baixo):
-[CABECALHO] "SESI — Escola de Referência" + campos: Área do conhecimento, Professor(a), Turma, Data, Estudante.
-[ORIENTAÇÕES] Tabela de habilidades.
-[RUBRICAS] Tabela de rubricas A/B/C.
-[DESCRIÇÃO] "Sua avaliação será corrigida conforme as opções marcadas. Não rasure! Pinte a alternativa com caneta preta ou azul."
-[QUESTÕES] A prova tem ${totalQuestoes} questões no total. ${discText} ${objText}
-[GABARITO] Tabela na lateral direita da página com números e alternativas.
-COMO IDENTIFICAR BOLHA PINTADA: ela aparece PREENCHIDA/SÓLIDA/ESCURA em contraste com as bolhas vizinhas que são VAZIAS (só tem contorno e letra). Em fotos pode aparecer azul escuro ou roxo escuro.
-PROCESSO: 1) Leia nome do aluno no campo Estudante. 2) Para cada questão objetiva, olhe as alternativas e identifique qual está preenchida.
-REGRA ABSOLUTA: sua resposta deve conter APENAS o JSON abaixo, sem nenhum texto antes ou depois:
-{"nome":"NOME","obj":{"1":"A","2":"B",...},"obs":"Q01:A(pintada) Q02:B(pintada) etc — descreva cada questão"}
-Use os números das questões começando de 1. Se questão estiver em branco use null. Se imagem ilegível: {"erro":"motivo"}.`;
+// ============================================================================
+// Tesseract.js OCR
+// ============================================================================
+let tesseractReady = null;
+function getTesseractScheduler() {
+  if (tesseractReady) return tesseractReady;
+  tesseractReady = (async () => {
+    const scheduler = Tesseract.createScheduler();
+    const worker = await Tesseract.createWorker('por+eng', 1, {
+      logger: () => {}
+    });
+    scheduler.addWorker(worker);
+    return scheduler;
+  })();
+  return tesseractReady;
+}
+
+async function ocrCanvas(canvas) {
+  const scheduler = await getTesseractScheduler();
+  const result = await scheduler.addJob('recognize', canvas);
+  return result.data;
+}
+
+// ============================================================================
+// Análise de imagem: detectar bolhas pintadas
+// ============================================================================
+function detectarRespostasPorImagem(canvas) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const px = imgData.data;
+
+  const totalQ = questoesGeradas ? questoesGeradas._total || 10
+    : Object.keys(gabarito).filter(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_')).length || 10;
+
+  const letras = (questoesGeradas?._letras || 'ABCDE').split('');
+  const numLetras = letras.length;
+
+  const resp = {};
+
+  const rowH = h / (totalQ + 4);
+  const colW = w / (numLetras + 2);
+
+  for (let q = 0; q < totalQ; q++) {
+    let bestLetra = null;
+    let bestScore = 0;
+    for (let l = 0; l < numLetras; l++) {
+      const cx = Math.round(colW * (l + 1.5));
+      const cy = Math.round(rowH * (q + 2.5));
+      const r = Math.round(Math.min(colW, rowH) * 0.3);
+      const score = medirEscuridao(px, w, h, cx, cy, r);
+      if (score > bestScore) {
+        bestScore = score;
+        bestLetra = letras[l];
+      }
+    }
+    if (bestScore > 30) {
+      resp[String(q + 1)] = bestLetra;
+    }
+  }
+  return resp;
+}
+
+function medirEscuridao(px, w, h, cx, cy, r) {
+  let total = 0, dark = 0;
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy > r * r) continue;
+      const x = cx + dx, y = cy + dy;
+      if (x < 0 || x >= w || y < 0 || y >= h) continue;
+      const i = (y * w + x) * 4;
+      const gray = px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114;
+      total++;
+      if (gray < 128) dark++;
+    }
+  }
+  return total > 0 ? (dark / total) * 100 : 0;
+}
+
+// ============================================================================
+// Extrair nome do aluno via OCR
+// ============================================================================
+function extrairNomeAluno(ocrData) {
+  const text = ocrData.text || '';
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    const m = line.match(/(?:estudante|aluno|nome)\s*[:\-]?\s*(.+)/i);
+    if (m && m[1].trim().length > 1) return m[1].trim();
+  }
+  for (const line of lines) {
+    if (line.length > 3 && line.length < 80 && !/^\d/.test(line) && !/área|turma|data|sesi|escola/i.test(line)) {
+      return line;
+    }
+  }
+  return '';
+}
+
+// ============================================================================
+// Detectar respostas por OCR (texto)
+// ============================================================================
+function detectarRespostasPorOCR(ocrData) {
+  const text = ocrData.text || '';
+  const resp = {};
+  const totalQ = questoesGeradas ? questoesGeradas._total || 10
+    : Object.keys(gabarito).filter(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_')).length || 10;
+
+  const pattern = /(\d{1,2})\s*[.\):\-]?\s*([A-Ea-e])/g;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    const qNum = parseInt(match[1]);
+    if (qNum >= 1 && qNum <= totalQ) {
+      resp[String(qNum)] = match[2].toUpperCase();
+    }
+  }
+  return resp;
 }
 
 async function processFile(file, idx, total) {
@@ -611,62 +735,119 @@ async function processFile(file, idx, total) {
   status.textContent = `Processando ${idx}/${total}: ${file.name}...`;
 
   const isPdf = file.name.toLowerCase().endsWith('.pdf');
+  const results = [];
 
   if (isPdf) {
-    const pages = await extractPdfPages(file);
-    const results = [];
-    for (let i = 0; i < pages.length; i++) {
-      const r = await processImageBlob(pages[i].blob, `${file.name} — pág. ${i+1}`, idx, total);
+    const canvases = await pdfToCanvases(file);
+    for (const c of canvases) {
+      const nome = `${file.name} — pág. ${c.pageNum}/${c.totalPages}`;
+      const r = await processarCanvas(c.canvas, nome);
       results.push(r);
     }
-    return results;
   } else {
-    return [await processImageBlob(file, file.name, idx, total)];
+    const canvas = await fileToCanvas(file);
+    const r = await processarCanvas(canvas, file.name);
+    results.push(r);
   }
+  return results;
 }
 
-async function extractPdfPages(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const uint8 = new Uint8Array(arrayBuffer);
-
-  // Simple PDF page extraction using canvas
-  // For a full implementation, we'd use pdf.js, but here we send the raw PDF to Gemini
-  // Gemini supports PDF directly
-  const pages = [];
-  const base64 = btoa(String.fromCharCode(...uint8));
-  pages.push({ blob: file, base64, mime: 'application/pdf' });
-  return pages;
+function fileToCanvas(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      const max = 2000;
+      if (w > max || h > max) {
+        if (w > h) { h = Math.round(h * max / w); w = max; }
+        else { w = Math.round(w * max / h); h = max; }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(c);
+    };
+    img.src = url;
+  });
 }
 
-async function processImageBlob(blob, fileName, idx, total) {
+async function processarCanvas(canvas, fileName) {
   const status = document.getElementById('result-desc');
-  status.textContent = `Processando ${idx}/${total}: ${fileName}...`;
+  status.textContent = `Analisando: ${fileName}...`;
 
-  try {
-    let base64, mimeType;
+  let ocrData = null;
+  try { ocrData = await ocrCanvas(canvas); } catch(e) {}
 
-    if (blob.type === 'application/pdf') {
-      const ab = await blob.arrayBuffer();
-      base64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
-      mimeType = 'application/pdf';
-    } else {
-      const resized = await resizeImage(blob);
-      const ab = await resized.arrayBuffer();
-      base64 = btoa(String.fromCharCode(...new Uint8Array(ab)));
-      mimeType = 'image/jpeg';
-    }
+  const nomeAluno = ocrData ? extrairNomeAluno(ocrData) : '';
 
-    const response = await callGemini(base64, mimeType, buildPrompt());
-    let jsonStr = response.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-    let dados;
-    try { dados = JSON.parse(jsonStr); }
-    catch { dados = { erro: 'Resposta fora do padrão JSON pela IA.' }; }
+  let respPorImagem = detectarRespostasPorImagem(canvas);
+  let respPorOCR = ocrData ? detectarRespostasPorOCR(ocrData) : {};
 
-    dados.arquivo = fileName;
-    return dados;
-  } catch (e) {
-    return { arquivo: fileName, erro: e.message };
+  const totalQ = questoesGeradas ? questoesGeradas._total || 10
+    : Object.keys(gabarito).filter(k => !k.startsWith('soma_') && !k.startsWith('tipo_') && !k.startsWith('_')).length || 10;
+
+  let objFinal = {};
+  let metodo = 'detectar_bolhas';
+  let confianca = 0;
+
+  let matchImagem = 0, matchOCR = 0;
+  for (let i = 1; i <= totalQ; i++) {
+    const qi = String(i);
+    if (respPorImagem[qi] && respPorOCR[qi] && respPorImagem[qi] === respPorOCR[qi]) matchImagem++;
+    if (respPorOCR[qi]) matchOCR++;
   }
+
+  if (matchImagem > 0 && matchOCR > 0 && matchImagem === matchOCR) {
+    objFinal = respPorImagem;
+    metodo = 'imagem_ocr_consistente';
+    confianca = Math.min(100, 50 + matchImagem * 5);
+  } else if (matchImagem >= matchOCR) {
+    objFinal = respPorImagem;
+    metodo = 'detectar_bolhas';
+    confianca = matchImagem > 0 ? Math.min(95, 40 + matchImagem * 8) : 20;
+  } else {
+    objFinal = respPorOCR;
+    metodo = 'ocr_texto';
+    confianca = matchOCR > 0 ? Math.min(85, 30 + matchOCR * 7) : 10;
+  }
+
+  if (confianca < 30 && geminiKey) {
+    try {
+      status.textContent = `Fallback IA: ${fileName}...`;
+      const ab = canvasToBase64(canvas);
+      const prompt = buildFallbackPrompt(totalQ);
+      const response = await callGemini(ab.data, ab.mime, prompt);
+      let jsonStr = response.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const dados = JSON.parse(jsonStr);
+      if (dados.obj && Object.keys(dados.obj).length > 0) {
+        objFinal = dados.obj;
+        metodo = 'gemini_fallback';
+        confianca = 90;
+        if (dados.nome && !nomeAluno) { Object.assign(dados, { arquivo: fileName, metodo, confianca }); return dados; }
+      }
+    } catch(e) {}
+  }
+
+  return { nome: nomeAluno, obj: objFinal, arquivo: fileName, metodo, confianca };
+}
+
+function canvasToBase64(canvas) {
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  const base64 = dataUrl.split(',')[1];
+  return { data: base64, mime: 'image/jpeg' };
+}
+
+function buildFallbackPrompt(totalQ) {
+  const objNums = [];
+  for (let i = 1; i <= totalQ; i++) {
+    const tipo = questoesGeradas ? (questoesGeradas['tipo_' + i] || 'multipla') : (gabarito['tipo_' + i] || 'multipla');
+    if (tipo !== 'discursiva') objNums.push(i);
+  }
+  return `Analise esta imagem de folha de resposta SESI. Identifique o nome do aluno e as alternativas marcadas (bolhas pintadas/preenchidas).
+A prova tem ${objNums.length} questões objetivas numeradas de 1 a ${objNums[totalQ-1] || totalQ}.
+Responda APENAS com JSON: {"nome":"NOME","obj":{"1":"A","2":"B",...}}. Se questão em branco use null.`;
 }
 
 // ============================================================================
@@ -717,7 +898,6 @@ function renderResults() {
     ? Array.from({length: questoesGeradas._total || 10}, (_, i) => String(i + 1)).filter(q => (questoesGeradas['tipo_' + q] || 'multipla') !== 'discursiva')
     : getQuestoesObjetivasFromGabarito();
 
-  // Stats
   const totalAlunos = resultados.filter(r => !r.erro).length;
   const totalErros = resultados.filter(r => r.erro).length;
   let acertosTotal = 0, questoesCorrigidas = 0;
@@ -735,26 +915,28 @@ function renderResults() {
   }
 
   const mediaAcertos = questoesCorrigidas > 0 ? ((acertosTotal / questoesCorrigidas) * 100).toFixed(1) : '—';
+  const metodos = {};
+  resultados.forEach(r => { if (r.metodo) metodos[r.metodo] = (metodos[r.metodo] || 0) + 1; });
+  const metodoLabel = metodos['gemini_fallback'] ? '🤖 IA Fallback' : metodos['imagem_ocr_consistente'] ? '🔍 Imagem+OCR' : metodos['detectar_bolhas'] ? '🎯 Detecção Visual' : '📝 OCR Texto';
 
   document.getElementById('stat-cards').innerHTML = `
     <div class="stat-card"><div class="stat-card__value">${totalAlunos}</div><div class="stat-card__label">Alunos lidos</div></div>
     <div class="stat-card"><div class="stat-card__value">${totalErros}</div><div class="stat-card__label">Erros</div></div>
     ${temGab ? `<div class="stat-card"><div class="stat-card__value">${acertosTotal}/${questoesCorrigidas}</div><div class="stat-card__label">Acertos</div></div>
     <div class="stat-card"><div class="stat-card__value">${mediaAcertos}%</div><div class="stat-card__label">Média</div></div>` : ''}
+    <div class="stat-card"><div class="stat-card__value" style="font-size:1rem;">${metodoLabel}</div><div class="stat-card__label">Método</div></div>
   `;
 
-  // Table header
   let thead = '<tr><th>Aluno</th>';
   questoesObj.forEach(q => { thead += `<th>Q${q.padStart(2,'0')}</th>`; });
   if (temGab) thead += '<th>Acertos</th>';
-  thead += '</tr>';
+  thead += '<th>Modo</th></tr>';
   document.getElementById('result-thead').innerHTML = thead;
 
-  // Table body
   let tbody = '';
   resultados.forEach(r => {
     if (r.erro) {
-      tbody += `<tr><td>${escapeHtml(r.arquivo)}</td><td colspan="${questoesObj.length + (temGab?1:0)}" style="color:var(--danger);">❌ ${escapeHtml(r.erro)}</td></tr>`;
+      tbody += `<tr><td>${escapeHtml(r.arquivo)}</td><td colspan="${questoesObj.length + (temGab?1:0) + 1}" style="color:var(--danger);">❌ ${escapeHtml(r.erro)}</td></tr>`;
       return;
     }
     let acertos = 0;
@@ -770,6 +952,9 @@ function renderResults() {
       }
     });
     if (temGab) row += `<td><strong>${acertos}/${questoesObj.length}</strong></td>`;
+    const mIcon = r.metodo === 'gemini_fallback' ? '🤖' : r.metodo === 'imagem_ocr_consistente' ? '🔍' : r.metodo === 'detectar_bolhas' ? '🎯' : '📝';
+    const cColor = r.confianca >= 70 ? 'var(--success)' : r.confianca >= 40 ? 'var(--warning)' : 'var(--danger)';
+    row += `<td title="${r.metodo} — confiança ${r.confianca}%">${mIcon} <span style="color:${cColor};font-size:.78rem;">${r.confianca}%</span></td>`;
     tbody += `<tr>${row}</tr>`;
   });
   document.getElementById('result-tbody').innerHTML = tbody;
@@ -788,6 +973,7 @@ document.getElementById('btn-download-csv').addEventListener('click', () => {
     : getQuestoesObjetivasFromGabarito();
   const headers = ['Arquivo','NomeAluno', ...questoesObjCsv.map(q => 'Q'+q.padStart(2,'0'))];
   if (temGab) headers.push('Acertos');
+  headers.push('Metodo','Confianca');
 
   let csv = headers.join(';') + '\n';
   resultados.forEach(r => {
@@ -799,6 +985,7 @@ document.getElementById('btn-download-csv').addEventListener('click', () => {
       if (temGab && gabarito[q] && resp === gabarito[q]) acertos++;
     });
     if (temGab) row.push(acertos);
+    row.push(r.metodo||'', r.confianca||'');
     csv += row.join(';') + '\n';
   });
 
