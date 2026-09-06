@@ -197,25 +197,6 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
   <!-- Sidebar Config -->
   <div class="sidebar" id="sidebar">
     <div class="sb-section">
-      <div class="sb-label">Configuração</div>
-      <div class="sb-field">
-        <label>Chave Gemini (IA)</label>
-        <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:.7rem;color:var(--primary);">Criar chave gratuita →</a>
-        <input type="password" id="cfgGeminiKey" placeholder="AIza..." value="">
-      </div>
-      <div class="sb-field">
-        <label>URL Supabase</label>
-        <input type="text" id="cfgSupaUrl" placeholder="https://xxx.supabase.co" value="">
-      </div>
-      <div class="sb-field">
-        <label>Anon Key Supabase</label>
-        <input type="password" id="cfgSupaKey" placeholder="eyJ..." value="">
-      </div>
-      <button class="btn btn-primary btn-sm btn-block" onclick="salvarConfig()">Salvar Configuração</button>
-      <div id="configStatus" class="ia-status" style="margin-top:8px"></div>
-    </div>
-
-    <div class="sb-section">
       <div class="sb-label">Filtros Rápidos</div>
       <div class="sb-field">
         <label>Área de Conhecimento</label>
@@ -600,29 +581,13 @@ function toggleTheme(){
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════════════════════
 function carregarConfig(){
-  document.getElementById('cfgGeminiKey').value = localStorage.getItem('gemini_api_key') || '';
-  document.getElementById('cfgSupaUrl').value = localStorage.getItem('bq_supa_url') || 'https://srrwkdlcyldsnbcwuu.supabase.co';
-  document.getElementById('cfgSupaKey').value = localStorage.getItem('bq_supa_key') || 'sb_publishable_xULDqHpl6P4btqRGsnkLTw_Lodq7Qhh';
   initSupabase();
-}
-
-function salvarConfig(){
-  const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
-  const supaUrl = document.getElementById('cfgSupaUrl').value.trim();
-  const supaKey = document.getElementById('cfgSupaKey').value.trim();
-
-  if(geminiKey) localStorage.setItem('gemini_api_key', geminiKey);
-  if(supaUrl) localStorage.setItem('bq_supa_url', supaUrl);
-  if(supaKey) localStorage.setItem('bq_supa_key', supaKey);
-
-  initSupabase();
-  mostrarStatus('configStatus', '✅ Configuração salva!', 'ok');
 }
 
 function initSupabase(){
-  const url = localStorage.getItem('bq_supa_url');
-  const key = localStorage.getItem('bq_supa_key');
-  if(url && key && window.supabase){
+  const url = localStorage.getItem('bq_supa_url') || 'https://srrwkdlcyldsnbcwuu.supabase.co';
+  const key = localStorage.getItem('bq_supa_key') || 'sb_publishable_xULDqHpl6P4btqRGsnkLTw_Lodq7Qhh';
+  if(window.supabase){
     supabase = window.supabase.createClient(url, key);
     carregarQuestoes();
   }
