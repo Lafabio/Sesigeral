@@ -631,8 +631,8 @@ function carregarConfig(){
 }
 
 function initSupabase(){
-  const url = localStorage.getItem('bq_supa_url');
-  const key = localStorage.getItem('bq_supa_key');
+  const url = localStorage.getItem('bq_supa_url') || 'https://jjmjqlvpxafxpebvrb.supabase.co';
+  const key = localStorage.getItem('bq_supa_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqbWpqbHZwYXhhZnhwZWJ2cndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1ODEzODUsImV4cCI6MjEwMjE1NzM4NX0.-uCFZjREoE1RRxufDFyymYSgodhp3CZXWQjSIEeEW7A';
   if(url && key && key.startsWith('eyJ') && window.supabase){
     sb = window.supabase.createClient(url, key);
   }
