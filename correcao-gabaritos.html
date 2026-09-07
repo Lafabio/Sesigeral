@@ -581,7 +581,7 @@ function renderFileList() {
 // Gemini API (fallback apenas)
 // ============================================================================
 async function callGemini(base64Data, mimeType, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
   const body = {
     contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64Data } }] }],
     generationConfig: { temperature: 0.0, responseMimeType: 'application/json' }
