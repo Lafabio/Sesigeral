@@ -1492,79 +1492,18 @@ async function parseQuestoesIA(){
   const btn = document.getElementById('btnParseIA');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Detectando questões...';
-  mostrarStatus('parseStatus', '⏳ A IA está analisando o texto e detectando questões...', 'load');
+  mostrarStatus('parseStatus', '⏳ A IA está analisando o texto...', 'load');
 
   try{
-    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: 'gemini-3.5-flash-lite',
-        temperature: 0.2,
-        max_tokens: 8000,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: `Você é um especialista em avaliação educacional brasileira.
-Analise o texto extraído de um documento de provas e detecte TODAS as questões presentes.
-Responda SOMENTE com um JSON válido no formato:
-{
-  "questoes": [
-    {
-      "enunciado": "texto completo do enunciado da questão",
-      "alternativas": {"A":"texto","B":"texto","C":"texto","D":"texto","E":"texto"} ou null,
-      "gabarito": "letra (A-E) ou null",
-      "tipo_questao": "multipla_escolha | somatoria | discursiva",
-      "area_conhecimento": "Linguagens... | Matemática... | Ciências da Natureza... | Ciências Humanas...",
-      "disciplina": "nome da disciplina",
-      "habilidade_bncc": "código ou null",
-      "nivel_dificuldade": "facil | medio | dificil",
-      "estilo_questao": "escola | enem | ufsc | udesc",
-      "ano_serie": "1ano | 2ano | 3ano",
-      "tema": "subtópico"
-    }
-  ]
-}
-Se não identificar alguma informação, use null. Extraia TODAS as questões encontradas, mesmo que incompletas.
-IMPORTANTE: mantenha o JSON válido. Não trunque campos. Se o texto for muito longo, resuma o enunciado mas mantenha as alternativas completas.` },
-          { role: 'user', content: 'Analise este texto de provas e extraia todas as questões:\n\n' + importedText.substring(0, 15000) }
-        ]
-      })
-    });
+    const chunks = splitTextIntoChunks(importedText, 4000);
+    parsedQuestoes = [];
 
-    if(!resp.ok){
-      const errBody = await resp.json().catch(()=>({}));
-      throw new Error('API (' + resp.status + '): ' + (errBody?.error?.message || resp.statusText));
+    for(let c = 0; c < chunks.length; c++){
+      mostrarStatus('parseStatus', '⏳ Processando bloco ' + (c+1) + ' de ' + chunks.length + '...', 'load');
+      const result = await callGeminiForChunk(apiKey, chunks[c]);
+      parsedQuestoes = parsedQuestoes.concat(result);
     }
 
-    const data = await resp.json();
-    const raw = data.choices?.[0]?.message?.content || '';
-    let jsonStr = raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
-    let resultado;
-    try{ resultado = JSON.parse(jsonStr); }
-    catch(pe){
-      const match = jsonStr.match(/\{[\s\S]*\}/);
-      if(match){
-        let candidate = match[0];
-        try{ resultado = JSON.parse(candidate); }
-        catch(pe2){
-          const lastClose = candidate.lastIndexOf('}');
-          const lastComma = candidate.lastIndexOf(',');
-          if(lastComma > lastClose){
-            candidate = candidate.substring(0, lastComma) + ']}';
-          } else {
-            candidate = candidate + ']}';
-          }
-          try{ resultado = JSON.parse(candidate); }
-          catch(pe3){
-            throw new Error('Resposta da IA não é JSON válido. Tente com menos questões.');
-          }
-        }
-      } else {
-        throw new Error('Resposta da IA não é JSON válido.');
-      }
-    }
-
-    parsedQuestoes = resultado.questoes || [];
     if(parsedQuestoes.length === 0) throw new Error('Nenhuma questão detectada no texto.');
 
     renderParsedQuestions();
@@ -1574,6 +1513,68 @@ IMPORTANTE: mantenha o JSON válido. Não trunque campos. Se o texto for muito l
   }finally{
     btn.disabled = false;
     btn.innerHTML = '🤖 Detectar Questões com IA';
+  }
+}
+
+function splitTextIntoChunks(text, maxLen){
+  const chunks = [];
+  const parts = text.split(/\n\s*\n/);
+  let current = '';
+  for(const part of parts){
+    if((current + '\n\n' + part).length > maxLen && current.length > 0){
+      chunks.push(current.trim());
+      current = part;
+    } else {
+      current = current ? current + '\n\n' + part : part;
+    }
+  }
+  if(current.trim()) chunks.push(current.trim());
+  if(chunks.length === 0) chunks.push(text.substring(0, maxLen));
+  return chunks;
+}
+
+async function callGeminiForChunk(apiKey, textChunk){
+  const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'gemini-3.5-flash-lite',
+      temperature: 0.2,
+      max_tokens: 4000,
+      messages: [
+        { role: 'system', content: `Extraia questões de prova do texto abaixo. Retorne SOMENTE JSON válido:
+{"questoes":[{"enunciado":"...","alternativas":{"A":"...","B":"...","C":"...","D":"...","E":"..."},"gabarito":"A-E ou null","tipo_questao":"multipla_escolha|discursiva","disciplina":"nome","nivel_dificuldade":"facil|medio|dificil","tema":"subtópico"}]}
+Se não souber algo, use null. Se não houver questões, retorne {"questoes":[]}.` },
+        { role: 'user', content: textChunk }
+      ]
+    })
+  });
+
+  if(!resp.ok){
+    const errBody = await resp.json().catch(()=>({}));
+    throw new Error('API (' + resp.status + '): ' + (errBody?.error?.message || resp.statusText));
+  }
+
+  const data = await resp.json();
+  const raw = data.choices?.[0]?.message?.content || '';
+  let jsonStr = raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+
+  try{ return JSON.parse(jsonStr).questoes || []; }
+  catch(pe){
+    const match = jsonStr.match(/\{[\s\S]*\}/);
+    if(match){
+      let candidate = match[0];
+      try{ return JSON.parse(candidate).questoes || []; }
+      catch(pe2){
+        const lastClose = candidate.lastIndexOf('}');
+        const lastComma = candidate.lastIndexOf(',');
+        if(lastComma > lastClose) candidate = candidate.substring(0, lastComma) + ']}';
+        else candidate = candidate + ']}';
+        try{ return JSON.parse(candidate).questoes || []; }
+        catch(pe3){ return []; }
+      }
+    }
+    return [];
   }
 }
 
