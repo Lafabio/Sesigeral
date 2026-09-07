@@ -6,6 +6,8 @@
 <title>Banco de Questões — SESI/SC</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <style>
 :root{--bg:#F5F7FA;--surface:#FFFFFF;--surface-alt:#EAF1F8;--ink:#1D1D1B;--ink-muted:#54657A;--ink-faint:#8C99A8;--border:#DCE4ED;--border-strong:#C2CEDC;--primary:#0047B6;--primary-hover:#003485;--primary-soft:#E5ECF8;--primary-soft-border:#BBCBEA;--sesi-blue:#0047B6;--sesi-blue-light:#47B9BB;--success:#2E7A22;--success-soft:#E7F4E2;--success-border:#A8D89C;--danger:#AE2C20;--danger-soft:#FBE7E4;--danger-border:#E7AA9F;--warning:#A6740C;--warning-soft:#FCF1DC;--warning-border:#EBC77E;--font-display:'Fraunces',Georgia,serif;--font-body:'IBM Plex Sans',-apple-system,sans-serif;--font-mono:'IBM Plex Mono','Courier New',monospace;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--shadow-sm:0 1px 2px rgba(20,36,54,.07);--shadow-md:0 4px 16px rgba(20,36,54,.12);--shadow-lg:0 12px 32px rgba(20,36,54,.18)}
 html[data-theme="dark"]{--bg:#0F1620;--surface:#161F2C;--surface-alt:#1D2836;--ink:#E8EDF4;--ink-muted:#A6B3C2;--ink-faint:#71808F;--border:#2A3645;--border-strong:#3B4A5C;--primary:#5C8FE0;--primary-hover:#7BA5E8;--primary-soft:#1E2C44;--primary-soft-border:#344B6E;--sesi-blue:#5C8FE0;--sesi-blue-light:#5FC3C5;--success:#5FB86C;--success-soft:#19301F;--success-border:#2F6B3C;--danger:#E27358;--danger-soft:#32201C;--danger-border:#6B3A2C;--warning:#E0AC52;--warning-soft:#332712;--warning-border:#6B5226;--shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 16px rgba(0,0,0,.4);--shadow-lg:0 12px 32px rgba(0,0,0,.5)}
@@ -273,6 +275,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
     <!-- Tabs -->
     <div class="tabs">
       <button class="tab-btn is-active" onclick="mudarAba('cadastrar')">📝 Cadastrar</button>
+      <button class="tab-btn" onclick="mudarAba('importar')">📄 Importar</button>
       <button class="tab-btn" onclick="mudarAba('buscar')">🔍 Buscar</button>
       <button class="tab-btn" onclick="mudarAba('stats')">📊 Estatísticas</button>
     </div>
@@ -465,6 +468,48 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
         <div style="display:flex;gap:8px;margin-top:16px">
           <button class="btn btn-primary" onclick="salvarQuestao()" id="btnSalvar">✅ Salvar no Banco</button>
           <button class="btn btn-secondary" onclick="limparFormulario()">🗑 Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: Importar -->
+    <div class="aba-content" id="aba-importar" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <h2>Importar de PDF ou Word</h2>
+        </div>
+
+        <div class="field">
+          <label>Selecione o arquivo</label>
+          <div class="img-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".pdf,.docx" onchange="handleFileImport(event)">
+            <p>📄 Clique ou arraste um arquivo PDF ou DOCX aqui</p>
+          </div>
+          <div id="fileInfo" style="display:none;margin-top:8px;font-size:.85rem;color:var(--ink-muted)"></div>
+        </div>
+
+        <div id="importProgress" style="display:none">
+          <div class="ia-status load show" id="importStatus">⏳ Processando arquivo...</div>
+        </div>
+
+        <div id="importResult" style="display:none">
+          <div class="section-divider" style="margin:20px 0"></div>
+          <h3 style="margin-bottom:6px">📋 Texto Extraído</h3>
+          <div id="extractedPreview" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:.85rem;max-height:200px;overflow-y:auto;white-space:pre-wrap;margin-bottom:14px"></div>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button class="btn btn-ai btn-block" id="btnParseIA" onclick="parseQuestoesIA()">🤖 Detectar Questões com IA</button>
+          </div>
+          <div class="ia-status" id="parseStatus"></div>
+        </div>
+
+        <div id="parsedQuestions" style="display:none">
+          <div class="section-divider" style="margin:20px 0"></div>
+          <h3 style="margin-bottom:10px">✏️ Questões Detectadas <span id="parsedCount"></span></h3>
+          <div id="parsedList"></div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn btn-primary btn-block" id="btnSalvarTodas" onclick="salvarTodasParsed()">✅ Salvar Todas no Banco</button>
+            <button class="btn btn-secondary" onclick="limparImportacao()">🗑 Limpar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1369,6 +1414,239 @@ function limparFormulario(){
   document.getElementById('iaStatus').className = 'ia-status';
   document.getElementById('iaStatus').innerHTML = '';
   setTipoQuestao('multipla_escolha');
+}
+
+// ══════════════════════════════════════════════════════════════
+// IMPORTAÇÃO: PDF / DOCX
+// ══════════════════════════════════════════════════════════════
+let importedText = '';
+let parsedQuestoes = [];
+
+async function handleFileImport(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const info = document.getElementById('fileInfo');
+  info.style.display = '';
+  info.innerHTML = '📎 <strong>' + file.name + '</strong> (' + (file.size/1024).toFixed(1) + ' KB)';
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext !== 'pdf' && ext !== 'docx'){
+    alert('Formato não suportado. Use PDF ou DOCX.');
+    return;
+  }
+
+  document.getElementById('importProgress').style.display = '';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('parsedQuestions').style.display = 'none';
+  mostrarStatus('importStatus', '⏳ Extraindo texto do arquivo...', 'load');
+
+  try{
+    if(ext === 'pdf'){
+      importedText = await extractTextFromPDF(file);
+    } else {
+      importedText = await extractTextFromDOCX(file);
+    }
+
+    if(!importedText.trim()) throw new Error('Nenhum texto extraído do arquivo.');
+
+    document.getElementById('extractedPreview').textContent = importedText;
+    document.getElementById('importResult').style.display = '';
+    mostrarStatus('importStatus', '✅ Texto extraído com sucesso! (' + importedText.length + ' caracteres). Clique em "Detectar Questões com IA".', 'ok');
+  }catch(err){
+    mostrarStatus('importStatus', '❌ Erro: ' + err.message, 'erro');
+  }
+}
+
+async function extractTextFromPDF(file){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  let text = '';
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strings = content.items.map(item => item.str);
+    text += strings.join(' ') + '\n\n';
+  }
+  return text;
+}
+
+async function extractTextFromDOCX(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({arrayBuffer});
+  return result.value;
+}
+
+async function parseQuestoesIA(){
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if(!apiKey){
+    mostrarStatus('parseStatus', '⚠️ Chave da API não encontrada.', 'erro');
+    return;
+  }
+  if(!importedText.trim()){
+    mostrarStatus('parseStatus', '⚠️ Nenhum texto importado.', 'erro');
+    return;
+  }
+
+  const btn = document.getElementById('btnParseIA');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Detectando questões...';
+  mostrarStatus('parseStatus', '⏳ A IA está analisando o texto e detectando questões...', 'load');
+
+  try{
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: 'gemini-3.5-flash-lite',
+        temperature: 0.2,
+        max_tokens: 4000,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: `Você é um especialista em avaliação educacional brasileira.
+Analise o texto extraído de um documento de provas e detecte TODAS as questões presentes.
+Responda SOMENTE com um JSON válido no formato:
+{
+  "questoes": [
+    {
+      "enunciado": "texto completo do enunciado da questão",
+      "alternativas": {"A":"texto","B":"texto","C":"texto","D":"texto","E":"texto"} ou null,
+      "gabarito": "letra (A-E) ou null",
+      "tipo_questao": "multipla_escolha | somatoria | discursiva",
+      "area_conhecimento": "Linguagens... | Matemática... | Ciências da Natureza... | Ciências Humanas...",
+      "disciplina": "nome da disciplina",
+      "habilidade_bncc": "código ou null",
+      "nivel_dificuldade": "facil | medio | dificil",
+      "estilo_questao": "escola | enem | ufsc | udesc",
+      "ano_serie": "1ano | 2ano | 3ano",
+      "tema": "subtópico"
+    }
+  ]
+}
+Se não identificar alguma informação, use null. Extraia TODAS as questões encontradas, mesmo que incompletas.` },
+          { role: 'user', content: 'Analise este texto de provas e extraia todas as questões:\n\n' + importedText.substring(0, 12000) }
+        ]
+      })
+    });
+
+    if(!resp.ok){
+      const errBody = await resp.json().catch(()=>({}));
+      throw new Error('API (' + resp.status + '): ' + (errBody?.error?.message || resp.statusText));
+    }
+
+    const data = await resp.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+    let jsonStr = raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+    let resultado;
+    try{ resultado = JSON.parse(jsonStr); }
+    catch(pe){
+      const match = jsonStr.match(/\{[\s\S]+\}/);
+      if(match) resultado = JSON.parse(match[0]);
+      else throw new Error('Resposta da IA não é JSON válido.');
+    }
+
+    parsedQuestoes = resultado.questoes || [];
+    if(parsedQuestoes.length === 0) throw new Error('Nenhuma questão detectada no texto.');
+
+    renderParsedQuestions();
+    mostrarStatus('parseStatus', '✅ ' + parsedQuestoes.length + ' questão(ões) detectada(s)! Revise antes de salvar.', 'ok');
+  }catch(err){
+    mostrarStatus('parseStatus', '❌ Erro: ' + err.message, 'erro');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🤖 Detectar Questões com IA';
+  }
+}
+
+function renderParsedQuestions(){
+  const container = document.getElementById('parsedList');
+  document.getElementById('parsedCount').textContent = '(' + parsedQuestoes.length + ')';
+  container.innerHTML = parsedQuestoes.map((q, i) => {
+    const altHtml = q.alternativas ? Object.entries(q.alternativas).map(([l,t]) =>
+      '<div style="font-size:.82rem;margin:2px 0"><strong>' + l + ':</strong> ' + escHtml(t) + '</div>'
+    ).join('') : '<em style="font-size:.82rem;color:var(--ink-faint)">Sem alternativas</em>';
+
+    return '<div class="card" style="margin-bottom:10px;padding:12px;border-left:3px solid var(--primary)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:.75rem;color:var(--ink-muted);margin-bottom:4px">Questão ' + (i+1) +
+            (q.disciplina ? ' · ' + escHtml(q.disciplina) : '') +
+            (q.nivel_dificuldade ? ' · ' + escHtml(q.nivel_dificuldade) : '') +
+            (q.gabarito ? ' · Gabarito: <strong>' + escHtml(q.gabarito) + '</strong>' : '') +
+          '</div>' +
+          '<div style="font-size:.9rem;margin-bottom:6px">' + escHtml(q.enunciado || '') + '</div>' +
+          altHtml +
+        '</div>' +
+        '<button class="btn btn-danger btn-sm" onclick="removerParsed(' + i + ')" title="Remover">✕</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('parsedQuestions').style.display = '';
+}
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function removerParsed(i){
+  parsedQuestoes.splice(i, 1);
+  if(parsedQuestoes.length === 0){
+    document.getElementById('parsedQuestions').style.display = 'none';
+  } else {
+    renderParsedQuestions();
+  }
+}
+
+async function salvarTodasParsed(){
+  if(parsedQuestoes.length === 0) return;
+  if(!confirm('Deseja salvar ' + parsedQuestoes.length + ' questão(ões) no banco?')) return;
+
+  const btn = document.getElementById('btnSalvarTodas');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+  let salvas = 0;
+  for(const q of parsedQuestoes){
+    try{
+      const questao = {
+        enunciado: q.enunciado || '',
+        alternativas: q.alternativas || null,
+        gabarito: q.gabarito || null,
+        tipo_questao: q.tipo_questao || 'multipla_escolha',
+        area_conhecimento: q.area_conhecimento || null,
+        disciplina: q.disciplina || null,
+        habilidade_bncc: q.habilidade_bncc || null,
+        habilidade_descricao: q.habilidade_descricao || null,
+        nivel_dificuldade: q.nivel_dificuldade || null,
+        estilo_questao: q.estilo_questao || null,
+        ano_serie: q.ano_serie || null,
+        tema: q.tema || null,
+        imagem_url: null,
+        observacoes: null
+      };
+      await salvarQuestaoNoBanco(questao);
+      salvas++;
+    }catch(err){
+      console.error('Erro ao salvar questão:', err);
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✅ Salvar Todas no Banco';
+  alert('✅ ' + salvas + ' questão(ões) salva(s) com sucesso!');
+  limparImportacao();
+  await carregarQuestoes();
+}
+
+function limparImportacao(){
+  importedText = '';
+  parsedQuestoes = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('importProgress').style.display = 'none';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('parsedQuestions').style.display = 'none';
+  document.getElementById('parseStatus').className = 'ia-status';
+  document.getElementById('parseStatus').innerHTML = '';
 }
 
 // ══════════════════════════════════════════════════════════════
