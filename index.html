@@ -247,12 +247,10 @@ main.content{flex:1;width:100%;max-width:880px;margin:0 auto;padding:24px 20px 1
 <div id="app"></div>
 <script>
 // As credenciais abaixo podem ser sobrescritas via Config → Chave da API
-if(!localStorage.getItem('gemini_api_key')){
-  window._defaultGeminiKey = atob('QVEuQWI4Uk42SU5hR1YzbEN2dXV4UTFRSndyVEk2amtNaEo3TktGUDVBbEVCMyM3TDVMUQ==');
-  localStorage.setItem('gemini_api_key', window._defaultGeminiKey);
-}
+window._defaultGeminiKey = atob('QVEuQWI4Uk42S0c5NmtiMHlwOU9mLVpHSjM0V1J1U0Y0R3gzaDZMLUpfNEhONndXUk1PZ2c=');
+localStorage.setItem('gemini_api_key', window._defaultGeminiKey);
 window.GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || "";
-window.GEMINI_MODEL = localStorage.getItem('gemini_model') || "gemini-2.5-flash";
+window.GEMINI_MODEL = localStorage.getItem('gemini_model') || "gemini-3.5-flash-lite";
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 </script>
 <script>
@@ -891,7 +889,7 @@ async function callGeminiJSON({ system, user, temperature = 0.4, maxTokens = 120
       Authorization: `Bearer ${key}`
     },
     body: JSON.stringify({
-      model: localStorage.getItem('gemini_model') || window.GEMINI_MODEL || 'gemini-2.5-flash',
+      model: localStorage.getItem('gemini_model') || window.GEMINI_MODEL || 'gemini-3.5-flash-lite',
       temperature,
       max_tokens: maxTokens,
       response_format: { type: 'json_object' },
@@ -1822,7 +1820,7 @@ function renderConfigProfessor(root, onPronto) {
           </div>
           <div class="field">
             <label for="geminiModel">Modelo</label>
-            <input class="input" id="geminiModel" value="${escapeHtml(localStorage.getItem('gemini_model') || window.GEMINI_MODEL || 'gemini-2.5-flash')}" placeholder="Ex: gemini-2.5-flash" style="font-family:var(--font-mono);font-size:.82rem;" />
+            <input class="input" id="geminiModel" value="${escapeHtml(localStorage.getItem('gemini_model') || window.GEMINI_MODEL || 'gemini-3.5-flash-lite')}" placeholder="Ex: gemini-3.5-flash-lite" style="font-family:var(--font-mono);font-size:.82rem;" />
           </div>
           <button type="submit" class="btn btn-secondary btn-block">Salvar credenciais</button>
         </form>
