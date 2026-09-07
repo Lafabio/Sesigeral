@@ -669,13 +669,8 @@ async function analisarQuestaoIA(){
 
   let apiKey = localStorage.getItem('gemini_api_key');
   if(!apiKey){
-    const chave = prompt('Cole sua chave da API Gemini (obtida em aistudio.google.com/apikey):');
-    if(!chave || !chave.trim()){
-      mostrarStatus('iaStatus', '⚠️ Chave não informada. Acesse <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary);font-weight:700;">aistudio.google.com/apikey</a> para obter uma chave gratuita.', 'erro');
-      return;
-    }
-    localStorage.setItem('gemini_api_key', chave.trim());
-    apiKey = chave.trim();
+    mostrarStatus('iaStatus', '⚠️ Chave da API não encontrada. Acesse o <a href="index.html" style="color:var(--primary);font-weight:700;">Sesigeral</a> e configure sua chave em "Minha Conta" antes de usar a IA.', 'erro');
+    return;
   }
 
   const btn = document.getElementById('btnAnalisarIA');

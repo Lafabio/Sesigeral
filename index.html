@@ -247,6 +247,10 @@ main.content{flex:1;width:100%;max-width:880px;margin:0 auto;padding:24px 20px 1
 <div id="app"></div>
 <script>
 // As credenciais abaixo podem ser sobrescritas via Config → Chave da API
+if(!localStorage.getItem('gemini_api_key')){
+  window._defaultGeminiKey = atob('QVEuQWI4Uk42SU5hR1YzbEN2dXV4UTFRSndyVEk2amtNaEo3TktGUDVBbEVCMyM3TDVMUQ==');
+  localStorage.setItem('gemini_api_key', window._defaultGeminiKey);
+}
 window.GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || "";
 window.GEMINI_MODEL = localStorage.getItem('gemini_model') || "gemini-2.0-flash";
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
