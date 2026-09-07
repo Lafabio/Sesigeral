@@ -1189,15 +1189,18 @@ async function excluirQuestao(id){
 function enviarParaGerador(id){
   const q = questoesDB.find(x => x.id === id);
   if(!q) return;
-  // Send via postMessage to parent/gerador-provas
+
+  // Salvar na fila de importação do gerador via localStorage
+  const fila = JSON.parse(localStorage.getItem('bq_import_queue') || '[]');
+  fila.push(q);
+  localStorage.setItem('bq_import_queue', JSON.stringify(fila));
+
+  // Também tentar postMessage se popup
   if(window.opener){
     window.opener.postMessage({ tipo: 'banco-questoes-importar', questao: q }, '*');
-    alert('✅ Questão enviada para o Gerador de Provas!');
-  } else {
-    // Copy to clipboard as fallback
-    const texto = `${q.enunciado}\n\nAlternativas:\n${(q.alternativas||[]).map(a=>`${a.letra}) ${a.texto}`).join('\n')}\n\nGabarito: ${q.gabarito||'-'}`;
-    navigator.clipboard.writeText(texto).then(()=>alert('📋 Questão copiada para a área de transferência. Cole no Gerador de Provas.'));
   }
+
+  alert('✅ Questão enviada para o Gerador de Provas!\nAbra o Gerador e ela será importada automaticamente.');
 }
 
 // Listen for messages from gerador-provas

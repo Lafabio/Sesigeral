@@ -29,6 +29,18 @@
       }
     }catch(e){}
   });
+
+  // Importar questões da fila do banco (localStorage)
+  try{
+    var fila=JSON.parse(localStorage.getItem('bq_import_queue')||'[]');
+    if(fila.length>0){
+      localStorage.removeItem('bq_import_queue');
+      setTimeout(function(){
+        fila.forEach(function(q){ importarQuestaoDoBanco(q); });
+        if(fila.length>0) alert(fila.length+' questão(ões) importada(s) do Banco de Questões!');
+      },1000);
+    }
+  }catch(e){}
 })();
 </script>
 <style>
