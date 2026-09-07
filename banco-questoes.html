@@ -194,19 +194,6 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 
 <!-- App -->
 <div class="app">
-  <!-- Banner API Key -->
-  <div id="apiKeyBanner" style="display:none;background:linear-gradient(135deg,#fef9c3,#fde68a);border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;margin:12px 16px 0;font-size:.85rem;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span>🔑</span>
-      <span style="font-weight:600;color:#92400e;">Chave da API Gemini necessária para analisar questões com IA.</span>
-    </div>
-    <div style="display:flex;gap:6px;margin-top:8px;">
-      <input type="password" id="inputApiKey" placeholder="Cole sua chave (AIza...)" style="flex:1;font-size:.82rem;padding:6px 10px;border:1px solid #d97706;border-radius:6px;">
-      <button onclick="salvarApiKeyDireto()" style="background:#d97706;color:#fff;border:none;font-size:.8rem;font-weight:700;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;">Salvar</button>
-    </div>
-    <div style="margin-top:6px;font-size:.75rem;color:#92400e;">Obtida em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1d4ed8;">aistudio.google.com/apikey</a> · Gratuita · Salva neste navegador</div>
-  </div>
-
   <!-- Sidebar Config -->
   <div class="sidebar" id="sidebar">
     <div class="sb-section">
@@ -682,7 +669,7 @@ async function analisarQuestaoIA(){
 
   const apiKey = localStorage.getItem('gemini_api_key');
   if(!apiKey){
-    mostrarStatus('iaStatus', '⚠️ Cole sua chave Gemini no banner acima ou faça login pelo <a href="index.html" style="color:var(--primary);font-weight:700;">Sesigeral</a>.', 'erro');
+    mostrarStatus('iaStatus', '⚠️ Chave da API Gemini não encontrada. Faça login pelo <a href="index.html" style="color:var(--primary);font-weight:700;">Sesigeral</a> primeiro.', 'erro');
     return;
   }
 
@@ -1337,31 +1324,9 @@ function limparFormulario(){
 }
 
 // ══════════════════════════════════════════════════════════════
-// BANNER API KEY
-// ══════════════════════════════════════════════════════════════
-function checarApiKeyBanner(){
-  const banner = document.getElementById('apiKeyBanner');
-  if(!banner) return;
-  if(localStorage.getItem('gemini_api_key')){
-    banner.style.display = 'none';
-  } else {
-    banner.style.display = '';
-  }
-}
-
-function salvarApiKeyDireto(){
-  const v = document.getElementById('inputApiKey').value.trim();
-  if(!v){ alert('Cole a chave da API Gemini.'); return; }
-  localStorage.setItem('gemini_api_key', v);
-  checarApiKeyBanner();
-  mostrarStatus('iaStatus', '✅ Chave salva! Agora pode analisar questões com IA.', 'ok');
-}
-
-// ══════════════════════════════════════════════════════════════
 // INICIALIZAÇÃO
 // ══════════════════════════════════════════════════════════════
 carregarConfig();
-checarApiKeyBanner();
 </script>
 </body>
 </html>
