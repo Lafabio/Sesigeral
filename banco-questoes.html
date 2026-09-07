@@ -707,7 +707,9 @@ Formato esperado:
   "estilo_questao": "escola | enem | ufsc | udesc",
   "ano_serie": "1ano | 2ano | 3ano",
   "tema": "subtópico específico da questão",
-  "gabarito": "letra da alternativa correta (A-E) ou null para discursiva"
+  "gabarito": "letra da alternativa correta (A-E) ou null para discursiva",
+  "enunciado": "enunciado da questão sem as alternativas",
+  "alternativas": {"A": "texto da alternativa A", "B": "texto da alternativa B", "C": "texto da alternativa C", "D": "texto da alternativa D", "E": "texto da alternativa E"} ou null se não for múltipla escolha
 }`
           },
           {
@@ -745,7 +747,15 @@ Formato esperado:
     if(resultado.tema) document.getElementById('campoTema').value = resultado.tema;
 
     // Preencher enunciado
-    document.getElementById('campoEnunciado').value = texto;
+    document.getElementById('campoEnunciado').value = resultado.enunciado || texto;
+
+    // Preencher alternativas
+    if(resultado.alternativas && typeof resultado.alternativas === 'object'){
+      document.querySelectorAll('.alt-input').forEach(inp => {
+        const letra = inp.dataset.letra;
+        if(resultado.alternativas[letra]) inp.value = resultado.alternativas[letra];
+      });
+    }
 
     // Tentar marcar gabarito
     if(resultado.gabarito){
