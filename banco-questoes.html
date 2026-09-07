@@ -569,7 +569,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 // ══════════════════════════════════════════════════════════════
 // ESTADO GLOBAL
 // ══════════════════════════════════════════════════════════════
-let supabase = null;
+let sb = null;
 let questoesDB = [];
 let questaoEditandoId = null;
 let imagemAtual = null; // base64 ou null
@@ -601,7 +601,7 @@ function initSupabase(){
   const url = localStorage.getItem('bq_supa_url') || 'https://srrwkdlcyldsnbcwuu.supabase.co';
   const key = localStorage.getItem('bq_supa_key') || 'sb_publishable_xULDqHpl6P4btqRGsnkLTw_Lodq7Qhh';
   if(window.supabase){
-    supabase = window.supabase.createClient(url, key);
+    sb = window.supabase.createClient(url, key);
     carregarQuestoes();
   }
 }
@@ -610,9 +610,9 @@ function initSupabase(){
 // SUPABASE CRUD
 // ══════════════════════════════════════════════════════════════
 async function carregarQuestoes(){
-  if(!supabase) return;
+  if(!sb) return;
   try{
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('questoes')
       .select('*')
       .order('created_at', { ascending: false });
@@ -626,8 +626,8 @@ async function carregarQuestoes(){
 }
 
 async function salvarQuestaoNoBanco(questao){
-  if(!supabase) throw new Error('Supabase não configurado.');
-  const { data, error } = await supabase
+  if(!sb) throw new Error('Supabase não configurado.');
+  const { data, error } = await sb
     .from('questoes')
     .insert(questao)
     .select();
@@ -636,9 +636,9 @@ async function salvarQuestaoNoBanco(questao){
 }
 
 async function atualizarQuestaoNoBanco(id, updates){
-  if(!supabase) throw new Error('Supabase não configurado.');
+  if(!sb) throw new Error('Supabase não configurado.');
   updates.updated_at = new Date().toISOString();
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('questoes')
     .update(updates)
     .eq('id', id)
@@ -648,8 +648,8 @@ async function atualizarQuestaoNoBanco(id, updates){
 }
 
 async function excluirQuestaoDoBanco(id){
-  if(!supabase) throw new Error('Supabase não configurado.');
-  const { error } = await supabase
+  if(!sb) throw new Error('Supabase não configurado.');
+  const { error } = await sb
     .from('questoes')
     .delete()
     .eq('id', id);
@@ -657,14 +657,14 @@ async function excluirQuestaoDoBanco(id){
 }
 
 async function uploadImagem(file){
-  if(!supabase) throw new Error('Supabase não configurado.');
+  if(!sb) throw new Error('Supabase não configurado.');
   const ext = file.name.split('.').pop();
   const path = `questoes/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-  const { data, error } = await supabase.storage
+  const { data, error } = await sb.storage
     .from('questoes-imagens')
     .upload(path, file, { cacheControl: '3600', upsert: false });
   if(error) throw error;
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = sb.storage
     .from('questoes-imagens')
     .getPublicUrl(path);
   return urlData.publicUrl;
@@ -674,18 +674,13 @@ async function uploadImagem(file){
 // IA: ANALISAR QUESTÃO
 // ══════════════════════════════════════════════════════════════
 async function analisarQuestaoIA(){
-  console.log('[BQ-IA] analisarQuestaoIA chamada');
-  // DEBUG: remover esta linha depois do teste
-  alert('[DEBUG] analisarQuestaoIA foi chamada! Texto: ' + (document.getElementById('questaoColada').value.trim().substring(0,50) || '(vazio)') + ' | Key: ' + (localStorage.getItem('gemini_api_key') ? 'SIM' : 'NAO'));
   const texto = document.getElementById('questaoColada').value.trim();
   if(!texto){
-    console.log('[BQ-IA] Texto vazio');
     mostrarStatus('iaStatus', '⚠️ Cole uma questão primeiro.', 'erro');
     return;
   }
 
   const apiKey = localStorage.getItem('gemini_api_key');
-  console.log('[BQ-IA] API key found:', !!apiKey, apiKey ? apiKey.substring(0,6)+'...' : 'null');
   if(!apiKey){
     mostrarStatus('iaStatus', '⚠️ Cole sua chave Gemini no banner acima ou faça login pelo <a href="index.html" style="color:var(--primary);font-weight:700;">Sesigeral</a>.', 'erro');
     return;
@@ -697,7 +692,6 @@ async function analisarQuestaoIA(){
   mostrarStatus('iaStatus', '⏳ A IA está analisando a questão...', 'load');
 
   try{
-    console.log('[BQ-IA] Fetching Gemini API...');
     const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
@@ -737,27 +731,21 @@ Formato esperado:
       })
     });
 
-    console.log('[BQ-IA] Response status:', resp.status, resp.ok ? 'OK' : 'FAIL');
     if(!resp.ok){
       const errBody = await resp.json().catch(()=>({error:{message:resp.statusText}}));
-      console.error('[BQ-IA] API error:', errBody);
       throw new Error(`Gemini API (${resp.status}): ${errBody?.error?.message || resp.statusText}`);
     }
 
     const data = await resp.json();
-    console.log('[BQ-IA] Raw response:', data);
     const raw = data.choices?.[0]?.message?.content || '';
-    console.log('[BQ-IA] Content:', raw.substring(0,200));
     let jsonStr = raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
     let resultado;
     try{ resultado = JSON.parse(jsonStr); }
     catch(pe){
-      console.warn('[BQ-IA] JSON parse failed, trying regex extraction');
       const match = jsonStr.match(/\{[\s\S]+\}/);
       if(match) resultado = JSON.parse(match[0]);
-      else throw new Error('Resposta da IA não é JSON válido: ' + raw.substring(0,300));
+      else throw new Error('Resposta da IA não é JSON válido.');
     }
-    console.log('[BQ-IA] Parsed result:', resultado);
 
     // Preencher campos
     if(resultado.area_conhecimento) document.getElementById('campoArea').value = resultado.area_conhecimento;
@@ -783,7 +771,6 @@ Formato esperado:
     mostrarStatus('iaStatus', `✅ Análise concluída! Área: <strong>${resultado.area_conhecimento||'?'}</strong>, Disciplina: <strong>${resultado.disciplina||'?'}</strong>, Dificuldade: <strong>${resultado.nivel_dificuldade||'?'}</strong>. Revise e edite os campos antes de salvar.`, 'ok');
 
   }catch(err){
-    console.error('[BQ-IA] Erro:', err);
     mostrarStatus('iaStatus', `❌ <strong>Erro:</strong> ${err.message}`, 'erro');
   }finally{
     btn.disabled = false;
