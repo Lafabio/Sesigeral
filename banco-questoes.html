@@ -594,67 +594,92 @@ function initSupabase(){
 }
 
 // ══════════════════════════════════════════════════════════════
-// SUPABASE CRUD
+// CRUD — Supabase ou localStorage fallback
 // ══════════════════════════════════════════════════════════════
+const LS_KEY = 'bq_questoes_local';
+
+function lsLoad(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+  catch(e){ return []; }
+}
+function lsSave(data){ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+
 async function carregarQuestoes(){
-  if(!sb) return;
-  try{
-    const { data, error } = await sb
-      .from('questoes')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if(error) throw error;
-    questoesDB = data || [];
-    aplicarFiltros();
-    renderizarStats();
-  }catch(err){
-    console.error('Erro ao carregar questões:', err);
+  if(sb){
+    try{
+      const { data, error } = await sb.from('questoes').select('*').order('created_at', { ascending: false });
+      if(error) throw error;
+      questoesDB = data || [];
+    }catch(err){
+      console.warn('Supabase falhou, usando localStorage:', err.message);
+      questoesDB = lsLoad();
+    }
+  } else {
+    questoesDB = lsLoad();
   }
+  aplicarFiltros();
+  renderizarStats();
 }
 
 async function salvarQuestaoNoBanco(questao){
-  if(!sb) throw new Error('Supabase não configurado.');
-  const { data, error } = await sb
-    .from('questoes')
-    .insert(questao)
-    .select();
-  if(error) throw error;
-  return data[0];
+  if(sb){
+    try{
+      const { data, error } = await sb.from('questoes').insert(questao).select();
+      if(error) throw error;
+      return data[0];
+    }catch(err){
+      console.warn('Supabase falhou, salvando local:', err.message);
+    }
+  }
+  const local = { ...questao, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+  const all = lsLoad(); all.unshift(local); lsSave(all);
+  return local;
 }
 
 async function atualizarQuestaoNoBanco(id, updates){
-  if(!sb) throw new Error('Supabase não configurado.');
-  updates.updated_at = new Date().toISOString();
-  const { data, error } = await sb
-    .from('questoes')
-    .update(updates)
-    .eq('id', id)
-    .select();
-  if(error) throw error;
-  return data[0];
+  if(sb){
+    try{
+      updates.updated_at = new Date().toISOString();
+      const { data, error } = await sb.from('questoes').update(updates).eq('id', id).select();
+      if(error) throw error;
+      return data[0];
+    }catch(err){
+      console.warn('Supabase falhou, atualizando local:', err.message);
+    }
+  }
+  const all = lsLoad();
+  const idx = all.findIndex(q => q.id === id);
+  if(idx >= 0){ Object.assign(all[idx], updates, {updated_at: new Date().toISOString()}); lsSave(all); return all[idx]; }
+  return null;
 }
 
 async function excluirQuestaoDoBanco(id){
-  if(!sb) throw new Error('Supabase não configurado.');
-  const { error } = await sb
-    .from('questoes')
-    .delete()
-    .eq('id', id);
-  if(error) throw error;
+  if(sb){
+    try{
+      const { error } = await sb.from('questoes').delete().eq('id', id);
+      if(error) throw error;
+      return;
+    }catch(err){
+      console.warn('Supabase falhou, excluindo local:', err.message);
+    }
+  }
+  const all = lsLoad().filter(q => q.id !== id); lsSave(all);
 }
 
 async function uploadImagem(file){
-  if(!sb) throw new Error('Supabase não configurado.');
-  const ext = file.name.split('.').pop();
-  const path = `questoes/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-  const { data, error } = await sb.storage
-    .from('questoes-imagens')
-    .upload(path, file, { cacheControl: '3600', upsert: false });
-  if(error) throw error;
-  const { data: urlData } = sb.storage
-    .from('questoes-imagens')
-    .getPublicUrl(path);
-  return urlData.publicUrl;
+  if(sb){
+    try{
+      const ext = file.name.split('.').pop();
+      const path = `questoes/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { data, error } = await sb.storage.from('questoes-imagens').upload(path, file, { cacheControl: '3600', upsert: false });
+      if(error) throw error;
+      const { data: urlData } = sb.storage.from('questoes-imagens').getPublicUrl(path);
+      return urlData.publicUrl;
+    }catch(err){
+      console.warn('Upload Supabase falhou:', err.message);
+    }
+  }
+  return null;
 }
 
 // ══════════════════════════════════════════════════════════════
