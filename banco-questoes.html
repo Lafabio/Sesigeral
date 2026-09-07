@@ -663,6 +663,23 @@ async function carregarQuestoes(){
   } else {
     questoesDB = lsLoad();
   }
+
+  // Migrar dados do localStorage para Supabase se vazio
+  if(sb && questoesDB.length === 0){
+    const local = lsLoad();
+    if(local.length > 0){
+      console.log('Migrando ' + local.length + ' questões do localStorage para Supabase...');
+      for(const q of local){
+        try{
+          const { id, created_at, updated_at, ...rest } = q;
+          await sb.from('questoes').insert(rest);
+        }catch(e){ console.error('Erro ao migrar questão:', e); }
+      }
+      const { data } = await sb.from('questoes').select('*').order('created_at', { ascending: false });
+      questoesDB = data || [];
+    }
+  }
+
   aplicarFiltros();
   renderizarStats();
   atualizarContador();
