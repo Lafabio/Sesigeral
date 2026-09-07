@@ -1501,7 +1501,7 @@ async function parseQuestoesIA(){
       body: JSON.stringify({
         model: 'gemini-3.5-flash-lite',
         temperature: 0.2,
-        max_tokens: 4000,
+        max_tokens: 8000,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: `Você é um especialista em avaliação educacional brasileira.
@@ -1524,8 +1524,9 @@ Responda SOMENTE com um JSON válido no formato:
     }
   ]
 }
-Se não identificar alguma informação, use null. Extraia TODAS as questões encontradas, mesmo que incompletas.` },
-          { role: 'user', content: 'Analise este texto de provas e extraia todas as questões:\n\n' + importedText.substring(0, 12000) }
+Se não identificar alguma informação, use null. Extraia TODAS as questões encontradas, mesmo que incompletas.
+IMPORTANTE: mantenha o JSON válido. Não trunque campos. Se o texto for muito longo, resuma o enunciado mas mantenha as alternativas completas.` },
+          { role: 'user', content: 'Analise este texto de provas e extraia todas as questões:\n\n' + importedText.substring(0, 15000) }
         ]
       })
     });
@@ -1541,9 +1542,26 @@ Se não identificar alguma informação, use null. Extraia TODAS as questões en
     let resultado;
     try{ resultado = JSON.parse(jsonStr); }
     catch(pe){
-      const match = jsonStr.match(/\{[\s\S]+\}/);
-      if(match) resultado = JSON.parse(match[0]);
-      else throw new Error('Resposta da IA não é JSON válido.');
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if(match){
+        let candidate = match[0];
+        try{ resultado = JSON.parse(candidate); }
+        catch(pe2){
+          const lastClose = candidate.lastIndexOf('}');
+          const lastComma = candidate.lastIndexOf(',');
+          if(lastComma > lastClose){
+            candidate = candidate.substring(0, lastComma) + ']}';
+          } else {
+            candidate = candidate + ']}';
+          }
+          try{ resultado = JSON.parse(candidate); }
+          catch(pe3){
+            throw new Error('Resposta da IA não é JSON válido. Tente com menos questões.');
+          }
+        }
+      } else {
+        throw new Error('Resposta da IA não é JSON válido.');
+      }
     }
 
     parsedQuestoes = resultado.questoes || [];
