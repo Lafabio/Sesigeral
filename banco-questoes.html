@@ -184,6 +184,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
   <div class="topbar__brand">
     <div class="topbar__logo">BQ</div>
     <span class="topbar__title">Banco de Questões</span>
+    <span id="counterBadge" style="display:none;background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;white-space:nowrap;"></span>
   </div>
   <div class="topbar__actions">
     <a href="index.html" class="btn btn-ghost btn-sm">Planejamento</a>
@@ -619,6 +620,18 @@ async function carregarQuestoes(){
   }
   aplicarFiltros();
   renderizarStats();
+  atualizarContador();
+}
+
+function atualizarContador(){
+  const badge = document.getElementById('counterBadge');
+  const total = questoesDB.length;
+  if(total > 0){
+    badge.style.display = '';
+    badge.textContent = total + ' questão' + (total !== 1 ? 's' : '');
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 async function salvarQuestaoNoBanco(questao){
