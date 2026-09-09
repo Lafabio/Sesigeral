@@ -45,6 +45,7 @@
 </script>
 <style>
 :root{--bg:#eeebe6;--sf:#faf9f7;--card:#fff;--br:#d4cfc6;--brs:#a5a09a;--tx:#1a1916;--mu:#7a7570;--ac:#1d4ed8;--acbg:#eff6ff;--dn:#b91c1c;--ok:#166534;--wn:#92400e;--wnbg:#fef9c3;--r:8px;--sh:0 1px 3px rgba(0,0,0,.08)}
+html[data-theme="dark"]{--bg:#0f1620;--sf:#161f2c;--card:#1d2836;--br:#2a3645;--brs:#3b4a5c;--tx:#e8edf4;--mu:#a6b3c2;--ac:#5c8fe0;--acbg:#1e2c44;--dn:#e27358;--ok:#5fb86c;--wn:#e0ac52;--wnbg:#332712;--sh:0 1px 3px rgba(0,0,0,.3)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
 .topbar{background:var(--ac);color:#fff;padding:0 18px;height:50px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,0,0,.2)}
@@ -262,6 +263,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
     <button class="tbtn prime" id="btnExport" onclick="exportPDF()">📄 Exportar PDF</button>
     <button class="tbtn prime" id="btnDocx" onclick="exportDOCX()">📝 Exportar DOCX</button>
     <button class="tbtn" onclick="window.print()">🖨️ Imprimir</button>
+    <button class="tbtn" onclick="toggleTheme()" title="Alternar tema claro/escuro">🌓 Tema</button>
   </div>
 </div>
 
@@ -647,9 +649,21 @@ let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 const LEM=['A','B','C','D','E'], LEF=['A','B','C','D'];
 const SOMA_SEQ=[1,2,4,8,16,32,64];
 
+// Tema
+function toggleTheme(){
+  const h=document.documentElement;
+  const next=h.getAttribute('data-theme')==='dark'?'light':'dark';
+  h.setAttribute('data-theme',next);
+  localStorage.setItem('gp_theme',next);
+}
+(function(){
+  const saved=localStorage.getItem('gp_theme');
+  if(saved) document.documentElement.setAttribute('data-theme',saved);
+})();
+
 window.addEventListener('DOMContentLoaded',()=>{
   ['Português','Matemática','Ciências','História','Geografia','Inglês','Arte','Educação Física','Biologia','Física','Química','Filosofia','Sociologia','Redação'].forEach(d=>addDiscItem(d));
-  for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla');
+  addQ('multipla');
   renderCal();
   document.addEventListener('click',e=>{ if(!e.target.closest('.cal-wrap')) document.getElementById('calPop').classList.remove('open'); });
   // Restaurar capa do sessionStorage
