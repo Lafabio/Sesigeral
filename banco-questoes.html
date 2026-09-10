@@ -227,6 +227,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
           <option value="Sociologia">Sociologia</option>
           <option value="Arte">Arte</option>
           <option value="Educação Física">Educação Física</option>
+          <option value="Simulado/Olimpíada">Simulado / Olimpíada / Larga Escala</option>
         </select>
       </div>
       <div class="sb-field">
@@ -343,6 +344,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
                 <option value="Sociologia">Sociologia</option>
                 <option value="Arte">Arte</option>
                 <option value="Educação Física">Educação Física</option>
+          <option value="Simulado/Olimpíada">Simulado / Olimpíada / Larga Escala</option>
               </select>
             </div>
           </div>
@@ -1107,7 +1109,7 @@ function editarQuestao(id){
       <div class="field"><label>Disciplina</label>
         <select id="edDisciplina" class="select">
           <option value="">Selecione...</option>
-          ${['Biologia','Física','Química','Matemática','Língua Portuguesa','Língua Inglesa','História','Geografia','Filosofia','Sociologia','Arte','Educação Física'].map(d=>`<option value="${d}" ${q.disciplina===d?'selected':''}>${d}</option>`).join('')}
+          ${['Biologia','Física','Química','Matemática','Língua Portuguesa','Língua Inglesa','História','Geografia','Filosofia','Sociologia','Arte','Educação Física','Simulado/Olimpíada'].map(d=>`<option value="${d}" ${q.disciplina===d?'selected':''}>${d}</option>`).join('')}
         </select>
       </div>
     </div>
