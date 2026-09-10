@@ -890,7 +890,21 @@ async function callGeminiJSON({ system, user, temperature = 0.4, maxTokens = 120
 }
 
 async function iaDissecarHabilidade({ codigo, habilidade, componente, area, competencia }) {
-  const system = `Você é um especialista em currículo do Novo Ensino Médio e na metodologia SESI de análise de habilidades (Raio-X da habilidade).
+  const isGeral = codigo === 'SIM-GERAL-01';
+  const system = isGeral
+    ? `Você é um especialista em avaliação educacional e currículo brasileiro.
+Analise a habilidade generalista para avaliação de larga escala (simulados, olimpíadas, vestibulares).
+ATENÇÃO: Esta habilidade é TRANSVERSAL a todas as áreas do conhecimento. Os objetos de conhecimento e contextos devem ser genéricos e aplicáveis a qualquer disciplina (Linguagens, Matemática, Ciências da Natureza, Ciências Humanas). NÃO foque em uma disciplina específica.
+
+Identifique:
+1. "processoCognitivo": verbo(s) principal(is) e nível na Taxonomia de Bloom revisada.
+2. "objetoConhecimento": objeto de conhecimento genérico e transversal (ex: resolução de problemas, interpretação de textos, análise de dados).
+3. "contexto": contexto aplicável a todas as áreas (provas, simulados, olimpíadas, avaliações externas).
+4. "classificacao_bloom": nível principal e secundários.
+
+Responda SOMENTE com JSON válido:
+{"processoCognitivo":{"texto":"...","nivel_cognitivo":"...","explicacao":"..."},"objetoConhecimento":{"texto":"...","explicacao":"..."},"contexto":{"texto":"...","explicacao":"..."},"sintese":"...","classificacao_bloom":{"nivel_principal":{"nivel":"...","verbo":"...","descricao":"..."},"niveis_secundarios":[{"nivel":"...","verbo":"...","justificativa":"..."}]}}`
+    : `Você é um especialista em currículo do Novo Ensino Médio e na metodologia SESI de análise de habilidades (Raio-X da habilidade).
 Sua tarefa é aplicar o roteiro oficial de análise e estudo de uma habilidade, identificando:
 1. "processoCognitivo": identifique o(s) verbo(s) que expressa(m) o(s) processo(s) cognitivo(s) exigido(s) nesta habilidade (a ação mental/operação que o aluno deve realizar). Inclua o nível segundo a Taxonomia de Bloom revisada (lembrar, compreender, aplicar, analisar, avaliar, criar).
 2. "objetoConhecimento": reconheça o(s) objeto(s) de conhecimento mobilizado(s) nesta habilidade — sobre o que/com o que o aluno age.
@@ -904,7 +918,14 @@ Responda SOMENTE com um objeto JSON válido, sem texto antes ou depois, no forma
 }
 
 async function iaSugerirConteudos({ habilidade, componente, area, objetoConhecimento, conteudosVinculados, disciplina }) {
-  const system = `Você é um especialista em planejamento curricular do Novo Ensino Médio, atuando junto a professores do SESI.
+  const isGeral = (disciplina || '') === 'Simulado/Olimpíada';
+  const system = isGeral
+    ? `Você é um especialista em planejamento curricular e avaliação educacional brasileira.
+Sugira conteúdos para preparação em avaliações de larga escala (simulados, olimpíadas, vestibulares).
+ATENÇÃO: Os conteúdos devem ser TRANSVERSAIS e aplicáveis a todas as áreas do conhecimento (Linguagens, Matemática, Ciências da Natureza, Ciências Humanas). NÃO foque em uma disciplina específica.
+Responda SOMENTE com JSON válido:
+{"conteudos_sugeridos":["...","...","..."],"interdisciplinaridade":[{"area_disciplina":"...","conexao":"..."}],"recursos_didaticos":["...","...","..."]}`
+    : `Você é um especialista em planejamento curricular do Novo Ensino Médio, atuando junto a professores do SESI.
 Dado um objeto de conhecimento definido pelo professor, sugira conteúdos específicos relacionados a ele (sempre pertinentes ao tema), conexões interdisciplinares e recursos didáticos concretos. Os conteúdos devem ser típicos do ensino médio e diretamente ligados ao objeto de conhecimento informado.
 Responda SOMENTE com um objeto JSON válido no formato exato:
 {"conteudos_sugeridos":["...","...","..."],"interdisciplinaridade":[{"area_disciplina":"...","conexao":"..."}],"recursos_didaticos":["...","...","..."]}`;
@@ -927,7 +948,13 @@ Os valores de "duracao_minutos" devem ser números inteiros (minutos), nunca tex
 }
 
 async function iaSugerirTituloAula({ habilidade, objetoConhecimento, conteudo }) {
-  const system = `Você é um especialista em planejamento de aulas para o Novo Ensino Médio.
+  const isGeral = (habilidade || '').includes('avaliação de larga escala') || (habilidade || '').includes('olimpíadas');
+  const system = isGeral
+    ? `Você é um especialista em planejamento educacional.
+Crie um título curto para atividade de preparação em avaliações de larga escala.
+Responda SOMENTE com JSON válido:
+{"titulo_aula":"título curto, sem ponto final"}`
+    : `Você é um especialista em planejamento de aulas para o Novo Ensino Médio.
 Crie um título curto e específico para a aula (estilo "Exercícios de Análise Combinatória", "Introdução à Fotossíntese") a partir da habilidade e do conteúdo trabalhado.
 Responda SOMENTE com um objeto JSON válido no formato exato:
 {"titulo_aula":"título curto e específico, sem ponto final"}`;
@@ -936,7 +963,13 @@ Responda SOMENTE com um objeto JSON válido no formato exato:
 }
 
 async function iaSugerirObjetivoAprendizagem({ habilidade, processoCognitivo, objetoConhecimento, contexto, conteudos }) {
-  const system = `Você é um especialista em avaliação formativa para o Novo Ensino Médio, seguindo a metodologia oficial SESI de construção de rubricas.
+  const isGeral = (habilidade || '').includes('avaliação de larga escala') || (habilidade || '').includes('olimpíadas');
+  const system = isGeral
+    ? `Você é um especialista em avaliação educacional para o Ensino Médio.
+ATENÇÃO: O objetivo deve ser TRANSVERSAL a todas as áreas do conhecimento. Não foque em uma disciplina específica. O objetivo deve ser aplicável a qualquer prova, simulado, olimpíada ou avaliação externa.
+Responda SOMENTE com JSON válido:
+{"objetivo_aprendizagem":"frase clara e objetiva, transversal a todas as áreas"}`
+    : `Você é um especialista em avaliação formativa para o Novo Ensino Médio, seguindo a metodologia oficial SESI de construção de rubricas.
 A partir da habilidade e do seu Raio-X, defina o OBJETIVO DE APRENDIZAGEM desta aula. O objetivo deve ser FOCADO no objeto de conhecimento / conteúdo específico trabalhado. Por exemplo, se o objeto de conhecimento for "Fotossíntese", escreva objetivos relacionados aos processos da fotossíntese típicos do ensino médio; se for "Respiração celular", escreva objetivos sobre respiração celular. Seja sempre claro, específico e contextualizado no conteúdo da aula.
 Atenção à taxonomia de Bloom e ao grau de complexidade exigido pelo processo cognitivo.
 Este texto será usado também como "Objetivos da aula" no registro do diário online (SGN), então deve ser uma frase direta e objetiva, sem introduções genéricas.
@@ -948,7 +981,19 @@ Responda SOMENTE com um objeto JSON válido no formato exato:
 }
 
 async function iaSugerirRubrica({ habilidade, objetivoAprendizagem, processoCognitivo, conteudos }) {
-  const system = `Você é um especialista em avaliação formativa para o Novo Ensino Médio, seguindo a metodologia oficial SESI de construção de rubricas (Escala + Critério).
+  const isGeral = (habilidade || '').includes('avaliação de larga escala') || (habilidade || '').includes('olimpíadas');
+  const system = isGeral
+    ? `Você é um especialista em avaliação educacional para o Ensino Médio.
+ATENÇÃO: Esta rubrica é para habilidade TRANSVERSAL (simulados, olimpíadas, vestibulares). As descrições devem ser genéricas e aplicáveis a todas as áreas do conhecimento. NÃO mencione disciplina específica.
+Siga o roteiro:
+1. EVIDÊNCIA DE APRENDIZAGEM: o que comprova que o estudante atingiu o objetivo (geral, transversal).
+2. EVIDÊNCIAS LISTA: 2 a 4 itens curtos.
+3. ESTRATÉGIAS: como observar em sala.
+4. 2 CRITÉRIOS: detalhe o que é esperado do estudante em cada critério (genérico, transversal).
+5. CONCEITOS A/B/C: detalhe o que é esperado em cada critério para cada conceito.
+Responda SOMENTE com JSON válido:
+{"evidencia_aprendizagem":"...","evidencias_lista":["..."],"estrategias":"...","criterio_1":{"titulo":"...","descricao":"..."},"criterio_2":{"titulo":"...","descricao":"..."},"conceito_a":["..."],"conceito_b":["...","variação"],"conceito_c":["..."]}`
+    : `Você é um especialista em avaliação formativa para o Novo Ensino Médio, seguindo a metodologia oficial SESI de construção de rubricas (Escala + Critério).
 A partir do objetivo de aprendizagem, siga este roteiro:
 1. Defina a EVIDÊNCIA DE APRENDIZAGEM: o que comprova, de forma concreta e observável, que o estudante atingiu o objetivo (descrição específica e escalonável do que o professor vai ver/receber, sempre contextualizada no conteúdo da aula).
 2. Liste essa mesma evidência também como 2 a 4 itens curtos e específicos (estilo item de lista, sem ponto final), para uso no registro do diário online (SGN).
