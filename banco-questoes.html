@@ -1281,7 +1281,9 @@ async function enemBCarregarProvas(){
   try{
     enemBProvas = await ENEM.exams();
     const sel = document.getElementById('enemBAno');
-    sel.innerHTML = enemBProvas.map(p => `<option value="${p.year}">${p.year}</option>`).join('');
+    const anos = enemBProvas.map(p => p.year);
+    const minAno = Math.min.apply(null, anos), maxAno = Math.max.apply(null, anos);
+    sel.innerHTML = `<option value="todos">Todos os anos (${minAno}–${maxAno})</option>` + anos.map(y => `<option value="${y}">${y}</option>`).join('');
     sel.value = String(enemBProvas.length ? enemBProvas[0].year : '');
     enemBPreencherDisciplinas();
     await enemBCarregarQuestoes();
@@ -1290,11 +1292,18 @@ async function enemBCarregarProvas(){
 
 function enemBPreencherDisciplinas(){
   const selAno = document.getElementById('enemBAno');
-  const ano = enemBAnoAtual || (selAno ? selAno.value : '');
-  const prova = enemBProvas.find(p => String(p.year) === String(ano));
+  const ano = selAno ? selAno.value : '';
   const sel = document.getElementById('enemBDisc');
+  let discs = [];
+  if(ano === 'todos'){
+    const vistos = {};
+    enemBProvas.forEach(p => (p.disciplines || []).forEach(d => { if(!vistos[d.value]){ vistos[d.value] = 1; discs.push(d); } }));
+  } else {
+    const prova = enemBProvas.find(p => String(p.year) === String(ano));
+    discs = (prova && prova.disciplines) || [];
+  }
   sel.innerHTML = '<option value="">Todas</option>' +
-    ((prova && prova.disciplines) || []).map(d => `<option value="${enemBEsc(d.value)}">${enemBEsc(d.label)}</option>`).join('');
+    discs.map(d => `<option value="${enemBEsc(d.value)}">${enemBEsc(d.label)}</option>`).join('');
 }
 
 function enemBTrocarAno(){ enemBPreencherDisciplinas(); enemBCarregarQuestoes(); }
@@ -1303,11 +1312,26 @@ async function enemBCarregarQuestoes(){
   const ano = document.getElementById('enemBAno').value;
   if(!ano) return;
   enemBAnoAtual = ano;
-  mostrarStatus('enemBStatus', '⏳ Baixando questões do ENEM ' + ano + '… (1 requisição/segundo; a 1ª carga faz ~4 chamadas)', 'load');
+  const rotulo = ano === 'todos' ? 'de todos os anos' : 'do ENEM ' + ano;
+  mostrarStatus('enemBStatus', ano === 'todos'
+    ? '⏳ Baixando todos os anos… (1 requisição/segundo; já baixados ficam em cache)'
+    : '⏳ Baixando questões do ENEM ' + ano + '… (1 requisição/segundo; a 1ª carga faz ~4 chamadas)', 'load');
   document.getElementById('enemBLista').innerHTML = '';
   try{
-    enemBQuestoes = await ENEM.questoes(ano);
-    mostrarStatus('enemBStatus', '✅ ' + enemBQuestoes.length + ' questões do ENEM ' + ano + ' disponíveis.', 'ok');
+    if(ano === 'todos'){
+      const anos = enemBProvas.map(p => p.year);
+      const todas = [];
+      for(let i = 0; i < anos.length; i++){
+        mostrarStatus('enemBStatus', '⏳ Baixando ENEM ' + anos[i] + '… (' + (i+1) + '/' + anos.length + ')', 'load');
+        const qs = await ENEM.questoes(anos[i]);
+        qs.forEach(q => { if(!todas.some(x => x.year === q.year && x.index === q.index)) todas.push(q); });
+        enemBQuestoes = todas.slice();
+        enemBRender();
+      }
+    } else {
+      enemBQuestoes = await ENEM.questoes(ano);
+    }
+    mostrarStatus('enemBStatus', '✅ ' + enemBQuestoes.length + ' questões ' + rotulo + ' disponíveis.', 'ok');
     enemBRender();
   }catch(e){ mostrarStatus('enemBStatus', '⚠️ ' + e.message, 'erro'); }
 }
@@ -1337,7 +1361,7 @@ function enemBFiltradas(){
 }
 
 function enemBJaSalva(q){
-  const conv = ENEM.converter(q, parseInt(enemBAnoAtual, 10));
+  const conv = ENEM.converter(q, q.year);
   return (questoesDB || []).some(x => x.observacoes === conv.observacoes);
 }
 
@@ -1351,12 +1375,12 @@ function enemBRender(){
     const ja = enemBJaSalva(q);
     const disc = ENEM.rotuloDisciplina(q.discipline);
     return `<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-bottom:1px solid var(--border);font-size:.85rem;cursor:pointer;${ja ? 'opacity:.6;' : ''}">
-      <input type="checkbox" class="enemB-cb" value="${q.index}" style="margin-top:3px;" ${ja ? 'disabled' : ''}>
+      <input type="checkbox" class="enemB-cb" value="${q.year}-${q.index}" style="margin-top:3px;" ${ja ? 'disabled' : ''}>
       <div style="flex:1;">
         <strong>Questão ${q.index}</strong> · ${enemBEsc(disc)}${q.language ? ' · ' + enemBEsc(q.language) : ''}${ja ? ' <span style="color:var(--success);font-weight:700;">✓ no banco</span>' : ''}
         <div style="color:var(--ink-muted);margin-top:2px;">${enemBPreview(q)}</div>
       </div>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="event.preventDefault();enemBEnviarGerador(${q.index})" title="Enviar ao gerador">➡️</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="event.preventDefault();enemBEnviarGerador(${q.year},${q.index})" title="Enviar ao gerador">➡️</button>
     </label>`;
   }).join('');
 }
@@ -1372,9 +1396,10 @@ async function enemBSalvarSelecionadas(){
   if(!cbs.length){ mostrarStatus('enemBStatus', '⚠️ Marque ao menos uma questão.', 'erro'); return; }
   let salv = 0, pul = 0, err = 0;
   for (const cb of cbs) {
-    const q = enemBQuestoes.find(x => x.index === parseInt(cb.value, 10));
+    const partes = String(cb.value).split('-');
+    const q = enemBQuestoes.find(x => x.year === parseInt(partes[0], 10) && x.index === parseInt(partes[1], 10));
     if(!q) continue;
-    const conv = ENEM.converter(q, parseInt(enemBAnoAtual, 10));
+    const conv = ENEM.converter(q, q.year);
     if(enemBJaSalva(q)){ pul++; continue; }
     try{ await salvarQuestaoNoBanco(conv); salv++; }
     catch(e){ err++; }
@@ -1399,10 +1424,10 @@ function enemBFilaParaGerador(convs){
   return convs.length;
 }
 
-function enemBEnviarGerador(idx){
-  const q = enemBQuestoes.find(x => x.index === idx);
+function enemBEnviarGerador(ano, idx){
+  const q = enemBQuestoes.find(x => x.year === ano && x.index === idx);
   if(!q) return;
-  const n = enemBFilaParaGerador([ENEM.converter(q, parseInt(enemBAnoAtual, 10))]);
+  const n = enemBFilaParaGerador([ENEM.converter(q, q.year)]);
   mostrarStatus('enemBStatus', '✅ ' + n + ' questão enviada ao Gerador de Provas' + (window.opener && !window.opener.closed ? ' (janela aberta recebeu agora).' : ' (será importada ao abrir o gerador).'), 'ok');
 }
 
@@ -1411,8 +1436,9 @@ function enemBEnviarGeradorSelecionadas(){
   if(!cbs.length){ mostrarStatus('enemBStatus', '⚠️ Marque ao menos uma questão.', 'erro'); return; }
   const convs = [];
   Array.prototype.forEach.call(cbs, cb => {
-    const q = enemBQuestoes.find(x => x.index === parseInt(cb.value, 10));
-    if(q) convs.push(ENEM.converter(q, parseInt(enemBAnoAtual, 10)));
+    const partes = String(cb.value).split('-');
+    const q = enemBQuestoes.find(x => x.year === parseInt(partes[0], 10) && x.index === parseInt(partes[1], 10));
+    if(q) convs.push(ENEM.converter(q, q.year));
   });
   const n = enemBFilaParaGerador(convs);
   mostrarStatus('enemBStatus', '✅ ' + n + ' questão(ões) enviada(s) ao Gerador de Provas' + (window.opener && !window.opener.closed ? ' (janela aberta recebeu agora).' : ' (serão importadas ao abrir o gerador).'), 'ok');

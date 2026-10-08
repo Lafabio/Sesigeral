@@ -770,7 +770,9 @@ async function enemCarregarProvas(){
   try{
     enemProvas = await ENEM.exams();
     const sel = document.getElementById('enemAno');
-    sel.innerHTML = enemProvas.map(p => `<option value="${p.year}">${p.year}</option>`).join('');
+    const anos = enemProvas.map(p => p.year);
+    const minAno = Math.min.apply(null, anos), maxAno = Math.max.apply(null, anos);
+    sel.innerHTML = `<option value="todos">Todos os anos (${minAno}–${maxAno})</option>` + anos.map(y => `<option value="${y}">${y}</option>`).join('');
     sel.value = String(enemProvas.length ? enemProvas[0].year : '');
     enemPreencherDisciplinas();
     await enemCarregarQuestoes();
@@ -779,9 +781,16 @@ async function enemCarregarProvas(){
 
 function enemPreencherDisciplinas(){
   const ano = document.getElementById('enemAno').value;
-  const prova = enemProvas.find(p => String(p.year) === ano);
   const sel = document.getElementById('enemDisc');
-  sel.innerHTML = '<option value="">Todas</option>' + (prova && prova.disciplines ? prova.disciplines : [])
+  let discs = [];
+  if(ano === 'todos'){
+    const vistos = {};
+    enemProvas.forEach(p => (p.disciplines || []).forEach(d => { if(!vistos[d.value]){ vistos[d.value] = 1; discs.push(d); } }));
+  } else {
+    const prova = enemProvas.find(p => String(p.year) === ano);
+    discs = (prova && prova.disciplines) || [];
+  }
+  sel.innerHTML = '<option value="">Todas</option>' + discs
     .map(d => `<option value="${esc(d.value)}">${esc(d.label)}</option>`).join('');
 }
 
@@ -790,11 +799,26 @@ function enemTrocarAno(){ enemPreencherDisciplinas(); enemCarregarQuestoes(); }
 async function enemCarregarQuestoes(){
   const ano = document.getElementById('enemAno').value;
   if(!ano) return;
-  setEnemStatus('Baixando questões do ENEM ' + ano + '… (1 requisição/segundo; a 1ª carga faz ~4 chamadas)');
+  const rotulo = ano === 'todos' ? 'de todos os anos' : 'do ENEM ' + ano;
+  setEnemStatus(ano === 'todos'
+    ? 'Baixando todos os anos… (1 requisição/segundo; já baixados ficam em cache)'
+    : 'Baixando questões do ENEM ' + ano + '… (1 requisição/segundo; a 1ª carga faz ~4 chamadas)');
   document.getElementById('enemLista').innerHTML = '';
   try{
-    enemQuestoesAno = await ENEM.questoes(ano);
-    setEnemStatus(enemQuestoesAno.length + ' questões do ENEM ' + ano + ' disponíveis' + (enemAdicionadas.size ? ' · ' + enemAdicionadas.size + ' já na prova' : '') + '.');
+    if(ano === 'todos'){
+      const anos = enemProvas.map(p => p.year);
+      const todas = [];
+      for(let i = 0; i < anos.length; i++){
+        setEnemStatus('Baixando ENEM ' + anos[i] + '… (' + (i+1) + '/' + anos.length + ')');
+        const qs = await ENEM.questoes(anos[i]);
+        qs.forEach(q => { if(!todas.some(x => x.year === q.year && x.index === q.index)) todas.push(q); });
+        enemQuestoesAno = todas.slice();
+        enemRenderLista();
+      }
+    } else {
+      enemQuestoesAno = await ENEM.questoes(ano);
+    }
+    setEnemStatus(enemQuestoesAno.length + ' questões ' + rotulo + ' disponíveis' + (enemAdicionadas.size ? ' · ' + enemAdicionadas.size + ' já na prova' : '') + '.');
     enemRenderLista();
   }catch(e){ setEnemStatus('⚠️ ' + e.message, '#dc2626'); }
 }
@@ -840,7 +864,7 @@ function enemRenderLista(){
         <strong>Questão ${q.index}</strong> · ${esc(disc)}${esc(idio)}${ja ? ' <span style="color:#16a34a;font-weight:700;">✓ na prova</span>' : ''}
         <div style="color:var(--mu);margin-top:2px;">${esc(enemTextoPreview(q))}</div>
       </div>
-      <button type="button" onclick="event.preventDefault();enemAdicionarUma(${q.index})" ${ja ? 'disabled' : ''} style="background:var(--ac);color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:700;cursor:pointer;">➕</button>
+      <button type="button" onclick="event.preventDefault();enemAdicionarUma(${q.year},${q.index})" ${ja ? 'disabled' : ''} style="background:var(--ac);color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:700;cursor:pointer;">➕</button>
     </label>`;
   }).join('');
 }
@@ -851,10 +875,10 @@ function enemMarcarTodos(){
   Array.prototype.forEach.call(cbs, (cb) => { cb.checked = marcar; });
 }
 
-function enemAdicionarUma(idx){
-  const q = enemQuestoesAno.find((x) => x.index === idx);
+function enemAdicionarUma(anoQ, idx){
+  const q = enemQuestoesAno.find((x) => x.year === anoQ && x.index === idx);
   if(!q || enemAdicionadas.has(enemChave(q))) return;
-  importarQuestaoDoBanco(ENEM.converter(q, parseInt(document.getElementById('enemAno').value, 10)), true);
+  importarQuestaoDoBanco(ENEM.converter(q, q.year), true);
   enemAdicionadas.add(enemChave(q));
   enemRenderLista();
 }
@@ -862,13 +886,13 @@ function enemAdicionarUma(idx){
 function enemAdicionarSelecionadas(){
   const cbs = document.querySelectorAll('#enemLista .enem-cb:checked');
   if(!cbs.length){ alert('Marque ao menos uma questão.'); return; }
-  const ano = parseInt(document.getElementById('enemAno').value, 10);
   let n = 0;
   Array.prototype.forEach.call(cbs, (cb) => {
-    const idx = parseInt(cb.value.split('-')[1], 10);
-    const q = enemQuestoesAno.find((x) => x.index === idx);
+    const partes = String(cb.value).split('-');
+    const anoQ = parseInt(partes[0], 10), idx = parseInt(partes[1], 10);
+    const q = enemQuestoesAno.find((x) => x.year === anoQ && x.index === idx);
     if(!q || enemAdicionadas.has(cb.value)) return;
-    importarQuestaoDoBanco(ENEM.converter(q, ano), true);
+    importarQuestaoDoBanco(ENEM.converter(q, q.year), true);
     enemAdicionadas.add(cb.value);
     n++;
   });
@@ -879,10 +903,9 @@ function enemAdicionarSelecionadas(){
 function enemAdicionarAleatorias(n){
   const disp = enemFiltradas().filter((q) => !enemAdicionadas.has(enemChave(q)));
   if(!disp.length){ alert('Não há questões disponíveis com os filtros atuais.'); return; }
-  const ano = parseInt(document.getElementById('enemAno').value, 10);
   const sorteadas = disp.slice().sort(() => Math.random() - 0.5).slice(0, n);
   sorteadas.forEach((q) => {
-    importarQuestaoDoBanco(ENEM.converter(q, ano), true);
+    importarQuestaoDoBanco(ENEM.converter(q, q.year), true);
     enemAdicionadas.add(enemChave(q));
   });
   enemRenderLista();

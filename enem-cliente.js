@@ -99,12 +99,15 @@
     return dados;
   }
 
+  var MEM_QUESTOES = {};
+
   async function questoes(ano, opts) {
     opts = opts || {};
     var chave = 'enem_quests_' + ano;
     if (!opts.forcar) {
+      if (Array.isArray(MEM_QUESTOES[chave]) && MEM_QUESTOES[chave].length) return MEM_QUESTOES[chave];
       var cache = cacheGet(chave, TTL_QUESTOES);
-      if (Array.isArray(cache) && cache.length) return cache;
+      if (Array.isArray(cache) && cache.length) { MEM_QUESTOES[chave] = cache; return cache; }
     }
     var mapa = {};
     var offset = 0;
@@ -119,7 +122,7 @@
     var ordenadas = Object.keys(mapa)
       .map(function (k) { return mapa[k]; })
       .sort(function (a, b) { return (a.index || 0) - (b.index || 0); });
-    if (ordenadas.length) cacheSet(chave, ordenadas);
+    if (ordenadas.length) { MEM_QUESTOES[chave] = ordenadas; cacheSet(chave, ordenadas); }
     return ordenadas;
   }
 
