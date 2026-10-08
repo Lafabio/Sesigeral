@@ -249,6 +249,7 @@ main.content{flex:1;width:100%;max-width:880px;margin:0 auto;padding:24px 20px 1
 </head>
 <body>
 <div id="app"></div>
+<script src="matrizes-sesi.js"></script>
 <script>
 // As credenciais abaixo podem ser sobrescritas via Config → Chave da API
 window._defaultGeminiKey = atob('QVEuQWI4Uk42S0c5NmtiMHlwOU9mLVpHSjM0V1J1U0Y0R3gzaDZMLUpfNEhONndXUk1PZ2c=');
@@ -1714,8 +1715,8 @@ function montarTabelaPlano(plano) {
       dataPrevista,
       ch,
       habilidadesTxt,
-      (proj.habilidadesSocioemocionais || []).join('\n') || '—',
-      (proj.habilidadesEduTec || []).join('\n') || '—',
+      (proj.habilidadesSocioemocionais || []).map((x) => typeof x === 'string' ? x : (x.nome + (x.competencia ? ' — ' + x.competencia : ''))).join('\n') || '—',
+      (proj.habilidadesEduTec || []).map((x) => typeof x === 'string' ? x : (x.codigo + ' — ' + x.texto)).join('\n') || '—',
       metod.tituloAula || '—',
       registro.join('\n') || '—',
       descricao.join('\n')
@@ -1773,8 +1774,8 @@ function montarTabelaProjeto(plano) {
     ],
     blocos: [
       secao('Habilidades da Área/Componente/UC', 'Escolher a habilidade da matriz. *Lembrete: toda habilidade está vinculada a uma competência.', [habPrincipal.codigo, habPrincipal.habilidade].filter(Boolean).join(' — ')),
-      secao('Habilidades Socioemocionais', 'Escolher a habilidade da matriz (a mesma que está disponível no SGN)', (proj.habilidadesSocioemocionais || []).join('\n')),
-      secao('Habilidades EduTec', 'Escolher a habilidade da matriz (a mesma que está disponível no SGN)', (proj.habilidadesEduTec || []).join('\n')),
+      secao('Habilidades Socioemocionais', 'Escolher a habilidade da matriz (a mesma que está disponível no SGN)', (proj.habilidadesSocioemocionais || []).map((x) => typeof x === 'string' ? x : (x.nome + (x.competencia ? ' — ' + x.competencia : ''))).join('\n')),
+      secao('Habilidades EduTec', 'Escolher a habilidade da matriz (a mesma que está disponível no SGN)', (proj.habilidadesEduTec || []).map((x) => typeof x === 'string' ? x : (x.codigo + ' — ' + x.texto)).join('\n')),
       secao('Objetivos de Aprendizagem', '“o que aprender”', proj.objetivosAprendizagem),
       secao('Problema / Desafio Norteador', '“o que investigar”', proj.problemaNorteador),
       secao('Contextualização', '"por que aprender e investigar isso, neste contexto?"', proj.contextualizacao),
@@ -2226,6 +2227,10 @@ function showGeradorView() {
         turma: p.identificacao?.turma || '',
         trimestre: p.identificacao?.trimestre || null,
         atualizadoEm: p.atualizadoEm || '',
+        projeto: {
+          habilidadesSocioemocionais: ((p.projeto || {}).habilidadesSocioemocionais || []).filter((x) => x && typeof x === 'object'),
+          habilidadesEduTec: ((p.projeto || {}).habilidadesEduTec || []).filter((x) => x && typeof x === 'object')
+        },
         habilidades: (p.habilidades || []).map((h) => ({
           codigo: h.codigo || '',
           habilidade: h.habilidade || '',
@@ -2234,7 +2239,8 @@ function showGeradorView() {
           objetivoAprendizagem: p.avaliacao?.rubricasPorHabilidade?.[h.codigo]?.objetivoAprendizagem || ''
         }))
       }));
-      frame.contentWindow.postMessage({ tipo: 'sesigeral-planos', planos }, '*');
+      const professorNome = (state.dados.professor && state.dados.professor.nome) || '';
+      frame.contentWindow.postMessage({ tipo: 'sesigeral-planos', planos, professor: professorNome }, '*');
       frame.contentWindow.postMessage({ tipo: 'sesigeral-habilidades', habilidades: (typeof HABILIDADES_DATA !== 'undefined' ? HABILIDADES_DATA : []) }, '*');
     } catch (e) { /* noop */ }
   });
@@ -3726,6 +3732,24 @@ function renderStep2(container, { onNext }) {
         <div id="lista-habilidades"></div>
         <button class="btn btn-secondary btn-block mt-16" id="btn-adicionar-habilidade">+ Adicionar habilidade</button>
       </div>
+      <div class="page-card" style="margin-top:16px;">
+        <div class="page-header">
+          <div class="page-header__eyebrow">Etapa 2 de 7 · Opcional</div>
+          <h2>Habilidade Socioemocional</h2>
+          <p class="page-header__desc">Escolha uma ou mais das 31 habilidades da matriz socioemocional SESI 2026 (10 competências BNCC). Aparece nas exportações e na capa das avaliações vinculadas.</p>
+        </div>
+        <div id="lista-socio"></div>
+        <button class="btn btn-secondary btn-block mt-16" id="btn-add-socio">+ Adicionar habilidade socioemocional</button>
+      </div>
+      <div class="page-card" style="margin-top:16px;">
+        <div class="page-header">
+          <div class="page-header__eyebrow">Etapa 2 de 7 · Opcional</div>
+          <h2>Habilidade de Educação Tecnológica</h2>
+          <p class="page-header__desc">Escolha entre as 90 habilidades da matriz de Educação Tecnológica: Design, Pensamento Computacional, Letramento Digital e Iniciação Científica. Aparece nas exportações e na capa das avaliações vinculadas.</p>
+        </div>
+        <div id="lista-edutech"></div>
+        <button class="btn btn-secondary btn-block mt-16" id="btn-add-edutech">+ Adicionar habilidade de Educação Tecnológica</button>
+      </div>
     `));
 
     const lista = container.querySelector('#lista-habilidades');
@@ -3735,6 +3759,9 @@ function renderStep2(container, { onNext }) {
     container.querySelector('#btn-adicionar-habilidade').addEventListener('click', () => {
       abrirModalHabilidade({ onSelecionar: adicionarHabilidade });
     });
+    renderMatrizListas();
+    container.querySelector('#btn-add-socio').addEventListener('click', () => abrirModalMatriz('socio'));
+    container.querySelector('#btn-add-edutech').addEventListener('click', () => abrirModalMatriz('edutech'));
   }
 
   function renderHabilidadeBloco(hab) {
@@ -3834,6 +3861,121 @@ function renderStep2(container, { onNext }) {
   }
 
   function cssSafe(str) { return str.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+  // ── Matrizes Socioemocional e Educação Tecnológica (opcionais) ──
+  function matrizProjeto() { state.plano.projeto = state.plano.projeto || {}; return state.plano.projeto; }
+  function listaMatriz(tipo) {
+    return (tipo === 'socio' ? matrizProjeto().habilidadesSocioemocionais : matrizProjeto().habilidadesEduTec) || [];
+  }
+  function setListaMatriz(tipo, arr) {
+    const p = matrizProjeto();
+    if (tipo === 'socio') p.habilidadesSocioemocionais = arr; else p.habilidadesEduTec = arr;
+    salvarPlanoAtual();
+  }
+  function chaveMatriz(tipo, item) { return tipo === 'socio' ? item.id : item.codigo; }
+  function renderMatrizListas() {
+    ['socio', 'edutech'].forEach((tipo) => {
+      const box = container.querySelector(tipo === 'socio' ? '#lista-socio' : '#lista-edutech');
+      if (!box) return;
+      const itens = listaMatriz(tipo);
+      box.innerHTML = itens.length ? '' : '<div class="empty-state">Nenhuma selecionada (opcional).</div>';
+      itens.forEach((item) => box.appendChild(blocoMatriz(item, tipo)));
+    });
+  }
+  function blocoMatriz(item, tipo) {
+    const chave = chaveMatriz(tipo, item);
+    const badge = tipo === 'socio' ? (item.id || '') : (item.codigo || '');
+    const extra = tipo === 'socio' ? (item.competencia || '') : (item.dimensao || '');
+    const texto = tipo === 'socio' ? (item.nome || '') : (item.texto || '');
+    const bloco = el(`
+      <div class="page-card" style="margin-bottom:10px;padding:14px;">
+        <div class="habilidade-card__top">
+          <span class="badge-codigo">${escapeHtml(badge)}</span>
+          <div class="flex gap-8">
+            ${extra ? `<span class="badge badge-componente">${escapeHtml(extra)}</span>` : ''}
+            <button class="btn-icon btn-remover" data-tipo="${tipo}" data-chave="${escapeHtml(chave)}">✕</button>
+          </div>
+        </div>
+        <div class="habilidade-card__texto mt-8 mb-16">${escapeHtml(texto)}</div>
+      </div>`);
+    bloco.querySelector('.btn-remover').addEventListener('click', () => {
+      setListaMatriz(tipo, listaMatriz(tipo).filter((x) => chaveMatriz(tipo, x) !== chave));
+      renderMatrizListas();
+    });
+    return bloco;
+  }
+  function abrirModalMatriz(tipo) {
+    const isSocio = tipo === 'socio';
+    const marcados = new Set(listaMatriz(tipo).map((x) => chaveMatriz(tipo, x)).filter(Boolean));
+    const grupos = isSocio
+      ? matrizSocioCompetencias().map((g) => ({ titulo: g.competencia, itens: g.itens.map((x) => ({ chave: x.id, label: x.nome })) }))
+      : matrizEdTechDimensoes().map((g) => ({ titulo: g.dimensao + ' — ' + g.competencia, itens: g.itens.map((x) => ({ chave: x.codigo, label: x.texto })) }));
+    const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const overlay = el(`
+      <div class="modal-overlay">
+        <div class="modal">
+          <div class="modal__header">
+            <h3>${isSocio ? 'Habilidades Socioemocionais — 31 (10 competências)' : 'Habilidades de Educação Tecnológica — 90 (4 dimensões)'}</h3>
+            <button class="btn-icon" data-act="fechar">✕</button>
+          </div>
+          <div class="modal__body">
+            <div class="field" style="margin-bottom:10px;">
+              <label for="mx-busca">Busca</label>
+              <input class="input" id="mx-busca" placeholder="Digite 2+ letras para filtrar…" autocomplete="off">
+            </div>
+            <div id="mx-lista" style="max-height:48vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+          <div class="modal__footer">
+            <span id="mx-cont" style="margin-right:auto;font-size:.8rem;color:var(--ink-muted);align-self:center;"></span>
+            <button class="btn btn-ghost" data-act="limpar">Limpar</button>
+            <button class="btn btn-secondary" data-act="fechar">Cancelar</button>
+            <button class="btn btn-primary" data-act="ok">Adicionar selecionadas</button>
+          </div>
+        </div>
+      </div>`);
+    document.body.appendChild(overlay);
+    function contar() { const c = overlay.querySelector('#mx-cont'); if (c) c.textContent = marcados.size + ' selecionada(s)'; }
+    function renderLista() {
+      const termo = norm(overlay.querySelector('#mx-busca').value.trim());
+      const partes = termo ? termo.split(/\s+/) : [];
+      const html = grupos.map((g) => {
+        const itens = g.itens.filter((it) => {
+          if (!partes.length) return true;
+          const alvo = norm(it.chave + ' ' + it.label + ' ' + g.titulo);
+          return partes.every((p) => alvo.includes(p));
+        });
+        if (!itens.length) return '';
+        return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;">${escapeHtml(g.titulo)}</div>
+          ${itens.map((it) => `<label style="display:flex;gap:7px;align-items:flex-start;padding:3px 0;font-size:.85rem;cursor:pointer;">
+            <input type="checkbox" data-chave="${escapeHtml(it.chave)}" ${marcados.has(it.chave) ? 'checked' : ''} style="margin-top:3px;">
+            <span><strong>${escapeHtml(it.chave)}</strong> — ${escapeHtml(it.label)}</span></label>`).join('')}
+        </div>`;
+      }).join('');
+      const box = overlay.querySelector('#mx-lista');
+      box.innerHTML = html || '<div class="empty-state">Nada encontrado.</div>';
+      box.querySelectorAll('input[type=checkbox]').forEach((cb) => {
+        cb.addEventListener('change', () => { cb.checked ? marcados.add(cb.dataset.chave) : marcados.delete(cb.dataset.chave); contar(); });
+      });
+      contar();
+    }
+    overlay.querySelector('#mx-busca').addEventListener('input', renderLista);
+    overlay.addEventListener('click', (e) => {
+      const act = e.target && e.target.dataset ? e.target.dataset.act : null;
+      if (e.target === overlay || act === 'fechar') { overlay.remove(); return; }
+      if (act === 'limpar') { marcados.clear(); renderLista(); return; }
+      if (act === 'ok') {
+        const fonte = isSocio ? MATRIZ_SOCIO : MATRIZ_EDUTECH;
+        const arr = fonte.filter((x) => marcados.has(chaveMatriz(tipo, x))).map((x) => isSocio
+          ? { id: x.id, competencia: x.competencia, nome: x.nome, conceito: x.conceito }
+          : { codigo: x.codigo, dimensao: x.dimensao, texto: x.texto, descritor: x.descritor });
+        setListaMatriz(tipo, arr);
+        renderMatrizListas();
+        overlay.remove();
+      }
+    });
+    renderLista();
+  }
 
   render();
 

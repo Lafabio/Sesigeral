@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="enem-cliente.js"></script>
+<script src="matrizes-sesi.js"></script>
 <script>
 (function(){
   try{
@@ -20,6 +21,13 @@
       if(d&&d.tipo==='sesigeral-chave'&&d.chave){localStorage.setItem('gemini_api_key',d.chave);}
       if(d&&d.tipo==='sesigeral-planos'&&Array.isArray(d.planos)){
         window.SESIGERAL_PLANOS=d.planos;
+        if(typeof d.professor==='string'&&d.professor){
+          try{
+            if(professors.indexOf(d.professor)===-1){ professors.push(d.professor); if(typeof saveProfessors==='function')saveProfessors(); if(typeof renderProfList==='function')renderProfList(); }
+            if(typeof renderProfSelect==='function')renderProfSelect();
+            var spSel=document.getElementById('selProf'); if(spSel&&!spSel.value)spSel.value=d.professor;
+          }catch(e){}
+        }
         if(typeof renderPlanoSelect==='function')renderPlanoSelect();
       }
       if(d&&d.tipo==='sesigeral-habilidades'&&Array.isArray(d.habilidades)){
@@ -340,9 +348,15 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
       </div>
     </div>
     <div class="fl"><label>Orientações da capa</label><textarea id="capaOrientacoes" rows="7" oninput="autoSave()"></textarea></div>
-    <div class="fl"><label>Habilidade Socioemocional — objetivo (opcional)</label><input id="capaObjSocioemo" placeholder="Deixar em branco para preencher à mão" oninput="autoSave()"></div>
-    <div class="fl"><label>Habilidade Ed. Tecnológica — objetivo (opcional)</label><input id="capaObjEdTech" placeholder="Deixar em branco para preencher à mão" oninput="autoSave()"></div>
-    <div class="fl"><label>Habilidades p/ Rubricas da capa</label><textarea id="capaRubricasHabs" rows="8" placeholder="(EM13CNT101) - Texto da habilidade…&#10;Uma por linha" oninput="autoSave()"></textarea>
+    <div class="fl"><label>Habilidades Socioemocionais (matriz SESI)</label>
+      <div class="cad-list" id="capaSocioList" style="max-height:160px"></div>
+      <button type="button" class="cad-btn" style="margin-top:4px;width:100%" onclick="abrirPickerMatriz('socio')">+ Adicionar da matriz</button>
+      <div style="font-size:10px;color:var(--mu);line-height:1.5;margin-top:3px">Cada habilidade vira uma linha da tabela "Orientações" da capa, junto às habilidades BNCC. Clique no objetivo para editar.</div></div>
+    <div class="fl"><label>Habilidades Educação Tecnológica (matriz SESI)</label>
+      <div class="cad-list" id="capaEdTechList" style="max-height:160px"></div>
+      <button type="button" class="cad-btn" style="margin-top:4px;width:100%" onclick="abrirPickerMatriz('edutech')">+ Adicionar da matriz</button>
+      <div style="font-size:10px;color:var(--mu);line-height:1.5;margin-top:3px">90 habilidades (DESIGN · Pensamento Computacional · Letramento Digital · Iniciação Científica).</div></div>
+    <div class="fl"><label>Habilidades p/ Rubricas da capa</label><textarea id="capaRubricasHabs" rows="8" placeholder="(SESI.EM13CNT202.s.8) - Texto completo da habilidade…&#10;Uma por linha (código + texto)"> oninput="autoSave()"></textarea>
       <div style="font-size:10px;color:var(--mu);line-height:1.5;margin-top:3px">Aparecem na tabela de Rubricas (conceitos A · B · C) da capa.</div></div>
   </div>
   <div class="sb-s">
@@ -352,6 +366,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
       <input type="text" id="profNovo" placeholder="Nome do(a) professor(a)…" onkeydown="if(event.key==='Enter')addProf()">
       <button class="cad-btn" onclick="addProf()">+ Add</button>
     </div>
+    <button type="button" class="cad-btn" style="width:100%" onclick="novoProf()">Criar novo</button>
   </div>
   <div class="sb-s">
     <div class="slbl">Cadastro de Disciplinas</div>
@@ -689,6 +704,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tx)
 // ── ESTADO ──
 let tipoProva='efaf', questoes=[], qId=0, logoB64=null;
 let professors=[], disciplinas=[], selectedDate=null;
+let capaSocioSel=[], capaEdTecSel=[];
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 const LEM=['A','B','C','D','E'], LEF=['A','B','C','D'];
 const SOMA_SEQ=[1,2,4,8,16,32,64];
@@ -708,10 +724,22 @@ function toggleTheme(){
 window.addEventListener('DOMContentLoaded',()=>{
   ['Português','Matemática','Ciências','História','Geografia','Inglês','Arte','Educação Física','Biologia','Física','Química','Filosofia','Sociologia','Redação'].forEach(d=>addDiscItem(d));
   addQ('multipla');
+  // Professores cadastrados (persistidos em localStorage)
+  try{ const p=JSON.parse(localStorage.getItem('gp_profs')||'[]'); if(Array.isArray(p)) professors=p; }catch(e){}
+  renderProfList(); renderProfSelect();
+  // Seleções da matriz na capa
+  try{ const s=JSON.parse(sessionStorage.getItem('gp_sel')||'null'); if(s){ capaSocioSel=Array.isArray(s.socio)?s.socio:[]; capaEdTecSel=Array.isArray(s.edutech)?s.edutech:[]; } }catch(e){}
+  renderCapaSel();
+  // Restaurar capa do sessionStorage
+  try{ const saved=JSON.parse(sessionStorage.getItem('gp_c')||'null'); if(saved){ const m={capaArea:'s',capaTurmas:'t',capaOrientacoes:'o',capaRubricasHabs:'r',capaEstudante:'est'}; Object.entries(m).forEach(([id,key])=>{ const el=document.getElementById(id); if(el&&saved[key]) el.value=saved[key]; });
+    // Migracao: campos livres antigos de objetivo
+    if(saved.se&&!capaSocioSel.length){ capaSocioSel=[{id:'',texto:'',objetivo:saved.se}]; renderCapaSel(); }
+    if(saved.et&&!capaEdTecSel.length){ capaEdTecSel=[{codigo:'',texto:'',objetivo:saved.et}]; renderCapaSel(); }
+  } }catch(e){}
+  // Data da avaliacao
+  try{ const dd=sessionStorage.getItem('gp_d'); if(dd){ const nd=parseDataSalva(dd); if(nd){ selectedDate=nd; calYear=nd.getFullYear(); calMonth=nd.getMonth(); setCalBtn(nd); } } }catch(e){}
   renderCal();
   document.addEventListener('click',e=>{ if(!e.target.closest('.cal-wrap')) document.getElementById('calPop').classList.remove('open'); });
-  // Restaurar capa do sessionStorage
-  try{ const saved=JSON.parse(sessionStorage.getItem('gp_c')||'null'); if(saved){ const m={capaArea:'s',capaTurmas:'t',capaOrientacoes:'o',capaObjSocioemo:'se',capaObjEdTech:'et',capaRubricasHabs:'r',capaEstudante:'est'}; Object.entries(m).forEach(([id,key])=>{ const el=document.getElementById(id); if(el&&saved[key]) el.value=saved[key]; }); } }catch(e){}
   try{ const e=sessionStorage.getItem('gp_e'); if(e) document.getElementById('nomeEscola').value=e; }catch(e){}
 });
 
@@ -1119,8 +1147,10 @@ function printNEE(){
   win.onload=()=>{ win.focus(); win.print(); };
 }
 
-function addProf(){ const inp=document.getElementById('profNovo'); const v=inp.value.trim(); if(!v||professors.includes(v))return; professors.push(v); inp.value=''; renderProfList(); renderProfSelect(); }
-function delProf(i){ professors.splice(i,1); renderProfList(); renderProfSelect(); }
+function addProf(){ const inp=document.getElementById('profNovo'); const v=inp.value.trim(); if(!v||professors.includes(v))return; professors.push(v); inp.value=''; renderProfList(); renderProfSelect(); saveProfessors(); const sel=document.getElementById('selProf'); if(sel&&!sel.value)sel.value=v; autoSave(); }
+function delProf(i){ professors.splice(i,1); renderProfList(); renderProfSelect(); saveProfessors(); autoSave(); }
+function novoProf(){ const inp=document.getElementById('profNovo'); if(inp){ inp.value=''; inp.focus(); } }
+function saveProfessors(){ try{ localStorage.setItem('gp_profs', JSON.stringify(professors)); }catch(e){} }
 function renderProfList(){ document.getElementById('profList').innerHTML=professors.map((p,i)=>`<div class="cad-item"><span>${p}</span><button class="cad-del" onclick="delProf(${i})">✕</button></div>`).join(''); }
 function renderProfSelect(){ const sel=document.getElementById('selProf'); const cur=sel.value; sel.innerHTML='<option value="">— Selecione —</option>'+professors.map(p=>`<option value="${p}">${p}</option>`).join(''); if(professors.includes(cur)) sel.value=cur; }
 
@@ -1130,8 +1160,113 @@ function delDisc(i){ disciplinas.splice(i,1); renderDiscList(); renderDiscSelect
 function renderDiscList(){ document.getElementById('discList').innerHTML=disciplinas.map((d,i)=>`<div class="cad-item"><span>${d}</span><button class="cad-del" onclick="delDisc(${i})">✕</button></div>`).join(''); }
 function renderDiscSelect(){ const sel=document.getElementById('selDisc'); const cur=sel.value; sel.innerHTML='<option value="">— Selecione —</option>'+disciplinas.map(d=>`<option value="${d}">${d}</option>`).join(''); if(disciplinas.includes(cur)) sel.value=cur; }
 
+// ── Matrizes na capa (Socioemocional + Educação Tecnológica) ──
+function capaSelLabel(tipo, item){
+  if(tipo==='socio') return 'Habilidade Socioemocional'+(item.texto?' — '+item.texto:'');
+  return 'Habilidade Educação Tecnológica'+(item.codigo?' ('+item.codigo+')':'');
+}
+function capaSelRemover(tipo, i){
+  const arr = tipo==='socio'?capaSocioSel:capaEdTecSel;
+  arr.splice(i,1); renderCapaSel(); autoSave();
+}
+function capaSelObj(tipo, i, v){
+  const arr = tipo==='socio'?capaSocioSel:capaEdTecSel;
+  if(arr[i]){ arr[i].objetivo=v; autoSave(); }
+}
+function renderCapaSel(){
+  const montar = (arr, tipo) => arr.length ? arr.map((s,i)=>`
+    <div style="border:1px solid var(--br);border-radius:5px;padding:5px 7px;background:var(--bg)">
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="flex:1;font-size:10.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(s.texto||s.objetivo||'').replace(/"/g,'&quot;')}">${esc(capaSelLabel(tipo,s))}</span>
+        <button type="button" class="cad-del" onclick="capaSelRemover('${tipo}',${i})" title="Remover">✕</button>
+      </div>
+      <input type="text" style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;border:1px solid var(--br);background:var(--card);color:var(--tx);border-radius:4px;padding:3px 6px;margin-top:3px" placeholder="Objetivo nesta avaliação (opcional)" value="${(s.objetivo||'').replace(/"/g,'&quot;')}" oninput="capaSelObj('${tipo}',${i},this.value)">
+    </div>`).join('') : `<div style="font-size:10px;color:var(--mu)">Nenhuma selecionada.</div>`;
+  const elS=document.getElementById('capaSocioList'), elE=document.getElementById('capaEdTechList');
+  if(elS) elS.innerHTML = montar(capaSocioSel,'socio');
+  if(elE) elE.innerHTML = montar(capaEdTecSel,'edutech');
+}
+function abrirPickerMatriz(tipo){
+  const antigo=document.getElementById('modalMatrizPick'); if(antigo) antigo.remove();
+  const isSocio = tipo==='socio';
+  const marcados = new Set((isSocio?capaSocioSel:capaEdTecSel).map(x=>isSocio?x.id:x.codigo).filter(Boolean));
+  const grupos = isSocio
+    ? matrizSocioCompetencias().map(g=>({titulo:g.competencia, itens:g.itens.map(x=>({chave:x.id,label:x.nome}))}))
+    : matrizEdTechDimensoes().map(g=>({titulo:g.dimensao+' — '+g.competencia, itens:g.itens.map(x=>({chave:x.codigo,label:x.texto}))}));
+  const ov=document.createElement('div');
+  ov.className='modal-ov'; ov.id='modalMatrizPick';
+  ov.innerHTML=`<div class="modal-box" style="max-width:700px;">
+    <div class="modal-hd"><h2>${isSocio?'Matriz Socioemocional SESI 2026 — 31 habilidades':'Matriz Educação Tecnológica SESI — 90 habilidades'}</h2><button type="button" data-act="fechar">✕ Fechar</button></div>
+    <div class="modal-bd" style="font-family:'IBM Plex Sans',sans-serif;">
+      <input type="text" id="mxBusca" placeholder="Buscar por nome, código ou competência…" style="width:100%;font-size:12px;border:1px solid var(--br);border-radius:6px;padding:7px 10px;background:var(--card);color:var(--tx);margin-bottom:10px">
+      <div id="mxLista" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:12px;align-items:center;">
+        <span id="mxCont" style="font-size:11px;color:var(--mu)"></span>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="cad-btn" data-act="limpar" style="background:var(--bg);color:var(--tx);border:1px solid var(--br)">Limpar</button>
+          <button type="button" class="cad-btn" data-act="fechar">Cancelar</button>
+          <button type="button" class="cad-btn" data-act="ok">Adicionar selecionadas</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function renderLista(){
+    const termo = norm(document.getElementById('mxBusca').value.trim());
+    const partes = termo?termo.split(/\s+/):[];
+    const html = grupos.map(g=>{
+      const itens = g.itens.filter(it=>{
+        if(!partes.length) return true;
+        const alvo = norm(it.chave+' '+it.label+' '+g.titulo);
+        return partes.every(p=>alvo.includes(p));
+      });
+      if(!itens.length) return '';
+      return `<div style="border:1px solid var(--br);border-radius:6px;padding:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;">${g.titulo}</div>
+        ${itens.map(it=>`<label style="display:flex;gap:7px;align-items:flex-start;padding:3px 0;font-size:11.5px;cursor:pointer;">
+          <input type="checkbox" data-chave="${it.chave}" ${marcados.has(it.chave)?'checked':''} style="margin-top:2px">
+          <span><b>${it.chave}</b> — ${it.label}</span></label>`).join('')}
+      </div>`;
+    }).join('');
+    document.getElementById('mxLista').innerHTML = html || '<div style="font-size:12px;color:var(--mu);padding:10px;">Nada encontrado.</div>';
+    document.getElementById('mxLista').querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change',()=>{ cb.checked?marcados.add(cb.dataset.chave):marcados.delete(cb.dataset.chave); contar(); });
+    });
+    contar();
+  }
+  function contar(){ const c=document.getElementById('mxCont'); if(c) c.textContent=marcados.size+' selecionada(s)'; }
+  ov.querySelector('#mxBusca').addEventListener('input', renderLista);
+  ov.addEventListener('click', e=>{
+    const act=e.target&&e.target.dataset?e.target.dataset.act:null;
+    if(e.target===ov||act==='fechar'){ ov.remove(); return; }
+    if(act==='limpar'){ marcados.clear(); renderLista(); return; }
+    if(act==='ok'){
+      if(isSocio){
+        marcados.forEach(id=>{ if(!capaSocioSel.some(x=>x.id===id)){ const it=matrizSocioPorId(id); if(it) capaSocioSel.push({id:it.id,competencia:it.competencia,nome:it.nome,conceito:it.conceito,objetivo:it.conceito}); } });
+        capaSocioSel = capaSocioSel.filter(x=>x.id?marcados.has(x.id):true);
+      }else{
+        marcados.forEach(cod=>{ if(!capaEdTecSel.some(x=>x.codigo===cod)){ const it=matrizEdTechPorCodigo(cod); if(it) capaEdTecSel.push({codigo:it.codigo,dimensao:it.dimensao,texto:it.texto,descritor:it.descritor,objetivo:it.descritor}); } });
+        capaEdTecSel = capaEdTecSel.filter(x=>x.codigo?marcados.has(x.codigo):true);
+      }
+      renderCapaSel(); autoSave(); ov.remove();
+    }
+  });
+  renderLista();
+}
+
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function fmtDataISO(d){ return d&&!isNaN(d) ? d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0') : ''; }
+function fmtDataBR(d){ return d&&!isNaN(d) ? String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear() : ''; }
+function parseDataSalva(sd){
+  if(!sd) return null;
+  if(typeof sd==='object'&&sd&&typeof sd.y==='number') return new Date(sd.y, sd.m, sd.d);
+  if(typeof sd==='string'){ const m=sd.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return new Date(+m[1],+m[2]-1,+m[3]); const d=new Date(sd); return isNaN(d)?null:d; }
+  if(sd instanceof Date) return isNaN(sd)?null:sd;
+  return null;
+}
+function setCalBtn(d){ const b=document.getElementById('calBtn'); if(b) b.textContent = d?fmtDataBR(d):'Selecionar data…'; }
 function toggleCal(e){ if(e) e.stopPropagation(); document.getElementById('calPop').classList.toggle('open'); }
 function calNav(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
 function renderCal(){
@@ -1142,15 +1277,16 @@ function renderCal(){
   const today=new Date(), prevDays=new Date(calYear,calMonth,0).getDate();
   for(let i=first-1;i>=0;i--) grid.innerHTML+=`<div class="cal-d other-m">${prevDays-i}</div>`;
   for(let d=1;d<=days;d++){
-    const isSel=selectedDate&&selectedDate.y===calYear&&selectedDate.m===calMonth&&selectedDate.d===d;
+    const isSel=selectedDate&&selectedDate.getFullYear()===calYear&&selectedDate.getMonth()===calMonth&&selectedDate.getDate()===d;
     const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
     grid.innerHTML+=`<div class="cal-d${isSel?' sel':isToday?' today':''}" onclick="pickDate(${d})">${d}</div>`;
   }
 }
 function pickDate(d){
-  selectedDate={y:calYear,m:calMonth,d};
-  document.getElementById('calBtn').textContent=`${String(d).padStart(2,'0')}/${String(calMonth+1).padStart(2,'0')}/${calYear}`;
+  selectedDate=new Date(calYear,calMonth,d);
+  setCalBtn(selectedDate);
   document.getElementById('calPop').classList.remove('open'); renderCal();
+  try{ sessionStorage.setItem('gp_d', fmtDataISO(selectedDate)); }catch(e){}
 }
 
 function setTipoProva(t,btn){ tipoProva=t; document.querySelectorAll('#tipoTg button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderAll(); }
@@ -1234,7 +1370,7 @@ function setSomat(id,i,f,v){ const q=questoes.find(q=>q.id===id); if(!q)return; 
 function setImg(id,inp){ if(!inp.files[0])return; const r=new FileReader(); r.onload=e=>{ const q=questoes.find(q=>q.id===id); if(q){q.imagem=e.target.result;renderAll();}}; r.readAsDataURL(inp.files[0]); }
 function rmImg(id){ const q=questoes.find(q=>q.id===id); if(q){q.imagem=null;renderAll();} }
 function resetAll(){ if(!confirm('Apagar tudo e recomeçar?'))return; questoes=[];qId=0; document.getElementById('qContainer').innerHTML=''; for(let i=0;i<10;i++) addQ(i<2?'discursiva':'multipla'); }
-function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const se=document.getElementById('capaObjSocioemo')?.value||''; const et=document.getElementById('capaObjEdTech')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; const est=document.getElementById('capaEstudante')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,se,et,r,est})); }catch(e){} }
+function autoSave(){ try{ const e=document.getElementById('nomeEscola').value; const s=document.getElementById('capaArea')?.value||''; const t=document.getElementById('capaTurmas')?.value||''; const o=document.getElementById('capaOrientacoes')?.value||''; const r=document.getElementById('capaRubricasHabs')?.value||''; const est=document.getElementById('capaEstudante')?.value||''; sessionStorage.setItem('gp_e',e); sessionStorage.setItem('gp_c',JSON.stringify({s,t,o,r,est})); sessionStorage.setItem('gp_sel', JSON.stringify({socio:capaSocioSel, edutech:capaEdTecSel})); sessionStorage.setItem('gp_d', fmtDataISO(selectedDate)||''); }catch(e){} }
 function openPreview(){ try{ document.getElementById('modalBd').innerHTML=buildHTML(questoes,null); document.getElementById('modalPreview').classList.remove('hidden'); extrairESalvarGabarito(); }catch(e){ console.error('Erro no preview:',e); alert('Erro ao gerar preview:\n'+e.message); } }
 function closePreview(){ document.getElementById('modalPreview').classList.add('hidden'); }
 
@@ -1253,8 +1389,6 @@ function buildHTML(_questoes, _versaoLabel){
   const capaEstudante=document.getElementById('capaEstudante')?.value||'';
   const capaTurmas=document.getElementById('capaTurmas')?.value||'';
   const capaOrientacoes=document.getElementById('capaOrientacoes')?.value||'';
-  const capaObjSocioemo=document.getElementById('capaObjSocioemo')?.value||'';
-  const capaObjEdTech=document.getElementById('capaObjEdTech')?.value||'';
   const capaRubricasHabs=document.getElementById('capaRubricasHabs')?.value||'';
   const letras=tipoProva==='em'?[...LEM]:[...LEF];
   const tituloFinal = _versaoLabel ? `${titulo} — VERSÃO ${_versaoLabel}` : titulo;
@@ -1280,15 +1414,36 @@ function buildHTML(_questoes, _versaoLabel){
   const _ck = '☐';
 
   const turmasCapa = capaTurmas ? capaTurmas.split(',').map(t=>`<u>${esc(t.trim())}</u>`).join(', ') : '_______________';
-  const socioRow = `<tr><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;">Habilidade Socioemocional</td><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;">${esc(capaObjSocioemo)}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td></tr>`;
-  const tecRow = `<tr><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;">Habilidade Educação Tecnológica</td><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;">${esc(capaObjEdTech)}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td></tr>`;
+  const _orow = (label,obj,extra)=>`<tr><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;"${extra?` title="${esc(extra).replace(/"/g,'&quot;')}"`:''}>${esc(label)}</td><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;">${esc(obj||'')}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td><td style="border:1px solid #000;text-align:center;font-size:11pt;">${_ck}</td></tr>`;
+  const socioRows = capaSocioSel.length
+    ? capaSocioSel.map(s=>_orow(capaSelLabel('socio',s), s.objetivo, s.texto)).join('')
+    : _orow('Habilidade Socioemocional','');
+  const tecRows = capaEdTecSel.length
+    ? capaEdTecSel.map(s=>_orow(capaSelLabel('edutech',s), s.objetivo, s.texto)).join('')
+    : _orow('Habilidade Educação Tecnológica','');
 
+  const ABC_A='Demonstra domínio da habilidade, mobilizando os conhecimentos de forma autônoma, adequada e consistente. Analisa, interpreta e/ou aplica os conhecimentos em diferentes situações, estabelecendo relações e apresentando justificativas coerentes.';
+  const ABC_B='Demonstra domínio parcial da habilidade. Compreende e aplica os conhecimentos em situações conhecidas, mas apresenta dificuldades em análises mais complexas, no estabelecimento de relações ou na justificativa de suas respostas. Pode necessitar de orientação pontual.';
+  const ABC_C='Ainda não demonstra domínio suficiente da habilidade. Apresenta dificuldades para compreender, interpretar e/ou aplicar os conhecimentos necessários, mesmo em situações mais diretas, necessitando de retomada, mediação e novas oportunidades de aprendizagem.';
+  const _thL=(txt)=>`<th style="border:1px solid #000;padding:3px 6px;font-size:8.5pt;text-align:left;background:#e8e8e8;width:46%;">${txt}</th>`;
+  const _thCabc=(txt)=>`<th style="border:1px solid #000;padding:3px 4px;font-size:8.5pt;text-align:center;background:#e8e8e8;width:18%;">${txt}</th>`;
+  const _tdRub=(txt)=>`<td style="border:1px solid #000;padding:4px 6px;font-size:7.5pt;text-align:center;width:18%;">${txt}</td>`;
+  const _rubRow=(hab)=>`<tr><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;width:46%;vertical-align:middle;">${esc(hab)}</td>${_tdRub(ABC_A)}${_tdRub(ABC_B)}${_tdRub(ABC_C)}</tr>`;
+
+  const _rubHab = (linha)=>{
+    let l=String(linha).trim(), cod='', txt=l;
+    const i=l.indexOf(')');
+    if(i>-1){ cod=l.slice(0,i).replace(/^\(/,'').trim(); txt=l.slice(i+1).trim().replace(/^[-–—]\s*/,''); }
+    else { const m=l.match(/^(\S+)\s+[-–—]\s+(.+)$/); if(m){ cod=m[1]; txt=m[2]; } else if(/^\S+$/.test(l)&&/\d/.test(l)){ cod=l; txt=''; } }
+    if(cod){
+      if(!txt){ try{ const bd=(window.SESI_HABILIDADES||[]).find(h=>String(h.codigo||'').trim().toUpperCase()===cod.toUpperCase()); if(bd) txt=bd.habilidade||''; }catch(e){} }
+      return txt? cod+' — '+txt : cod;
+    }
+    return l;
+  };
   const rubricasRows = capaRubricasHabs
-    ? capaRubricasHabs.split('\n').filter(l=>l.trim()).map(l=>{
-        const parts=l.split(')'); const hab=parts.length>1?parts.slice(1).join(')').trim():l.trim();
-        return `<tr><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;">${esc(hab)}</td><td style="border:1px solid #000;padding:4px 6px;font-size:8pt;">Desenvolveu os objetivos propostos de forma plena.</td><td style="border:1px solid #000;padding:4px 6px;font-size:8pt;">Desenvolveu parcialmente os objetivos propostos.</td><td style="border:1px solid #000;padding:4px 6px;font-size:8pt;">Não desenvolveu os objetivos propostos.</td></tr>`;
-      }).join('')
-    : `<tr><td style="border:1px solid #000;padding:4px 6px;font-size:8.5pt;"><em style="color:#aaa;">Habilidade da área / UCs</em></td><td style="border:1px solid #000;padding:4px 6px;font-size:8pt;">Desenvolveu os objetivos propostos de forma plena.</td><td style="border:1px solid #000;padding:4px 6px;font-size:8pt;">Desenvolveu parcialmente os objetivos propostos.</td><td style="border:1px solid #000;padding:4px 6px;font-size:8pt;">Não desenvolveu os objetivos propostos.</td></tr>`;
+    ? capaRubricasHabs.split('\n').filter(l=>l.trim()).map(l=>_rubRow(_rubHab(l))).join('')
+    : _rubRow('Habilidade da área / UCs');
 
   const wrap = `<div style="font-family:Arial,sans-serif;margin-bottom:14px;page-break-after:always;">
   <div style="text-align:center;margin-bottom:6px;">${logoSesi}</div>
@@ -1301,17 +1456,14 @@ function buildHTML(_questoes, _versaoLabel){
   <div style="font-size:9.5pt;font-weight:bold;margin:8px 0 3px;border-bottom:1px solid #000;padding-bottom:2px;">Orientações</div>
   <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
     <tr>${_th('Habilidade')}${_th('Objetivo nesta avaliação')}${_thC('Evidenciado','55px')}${_thC('Em Processo','60px')}${_thC('Não evid.','60px')}</tr>
-    ${socioRow}${tecRow}
+    ${socioRows}${tecRows}
   </table>
   ${capaOrientacoes?`<div style="font-size:8pt;margin-bottom:8px;padding:4px 6px;border:1px solid #ccc;background:#fafafa;white-space:pre-wrap;">${esc(capaOrientacoes)}</div>`:''}
   <div style="font-size:9.5pt;font-weight:bold;margin:8px 0 3px;border-bottom:1px solid #000;padding-bottom:2px;">Rubricas</div>
   <table style="width:100%;border-collapse:collapse;margin-bottom:4px;">
-    <tr>${_th('Habilidade da área de conhecimento ou UCs')}${_th('A')}${_th('B')}${_th('C')}</tr>
+    <tr>${_thL('Habilidade da área de conhecimento ou UCs')}${_thCabc('A')}${_thCabc('B')}${_thCabc('C')}</tr>
     ${rubricasRows}
   </table>
-  <div style="font-size:7.5pt;color:#555;margin:5px 0;border:1px dashed #aaa;padding:4px 6px;line-height:1.5;">
-    <strong>Orientações:</strong> Seguir orientações do Ebook, no item 5.1.3 ou 5.1.4 — "Entendendo na prática como construir uma boa rubrica de avaliação a partir de uma habilidade". Elaborar os critérios avaliativos a partir dos objetivos de aprendizagem.
-  </div>
   <div style="border:1px solid #000;padding:6px 8px;margin-top:8px;">
     <div style="font-weight:bold;font-size:9.5pt;margin-bottom:3px;">Descrição da Avaliação</div>
     <div style="font-size:8.5pt;">${instrucoes?esc(instrucoes):'<em style="color:#aaa;">Descrição da avaliação...</em>'}</div>
@@ -1343,7 +1495,7 @@ function buildHTML(_questoes, _versaoLabel){
 async function exportPDF(){
   const btn=document.getElementById('btnExport');
   btn.disabled=true; btn.textContent='⏳ Gerando PDF…';
-  extrairESalvarGabarito();
+  try{ extrairESalvarGabarito(); }catch(e){ console.warn('Gabarito não salvo:', e); }
   try{
     const d=document.createElement('div');
     d.style.cssText='position:absolute;left:-9999px;top:0;width:190mm;padding:10mm;background:white;';
@@ -1371,7 +1523,7 @@ async function exportPDF(){
 async function exportDOCX(){
   const btn=document.getElementById('btnDocx');
   btn.disabled=true; btn.textContent='⏳ Gerando DOCX…';
-  extrairESalvarGabarito();
+  try{ extrairESalvarGabarito(); }catch(e){ console.warn('Gabarito não salvo:', e); }
   try{
     await buildAndDownloadDocx(questoes, null);
   }catch(err){
@@ -1935,7 +2087,7 @@ function extrairESalvarGabarito(){
   const titulo = document.getElementById('tituloAval')?.value || '';
   const turma = document.getElementById('selTurma')?.value || '';
   const disciplina = document.getElementById('selDisc')?.value || '';
-  const dataAval = selectedDate ? selectedDate.toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  const dataAval = fmtDataISO(selectedDate) || fmtDataISO(new Date());
   gabarito._total = questoes.length;
   gabarito._tipo = tipo;
   gabarito._letras = tipo === 'em' ? LEM.join('') : LEF.join('');
@@ -1946,7 +2098,7 @@ function extrairESalvarGabarito(){
   gabarito._escola = document.getElementById('nomeEscola')?.value || '';
   gabarito._serie = document.getElementById('selSerie')?.value || '';
   gabarito._trim = document.getElementById('selTrim')?.value || '';
-  localStorage.setItem('sesi_gabarito_gerado', JSON.stringify(gabarito));
+  try{ localStorage.setItem('sesi_gabarito_gerado', JSON.stringify(gabarito)); }catch(e){ console.warn('Erro ao salvar gabarito:', e); }
 
   // Salvar no histórico de provas (lista索引 por nome+data)
   try {
@@ -1987,7 +2139,7 @@ function salvarAvaliacao(){
     instrucoes:document.getElementById('instrucoes').value,
     capaEstudante: document.getElementById('capaEstudante')?.value||'',
     tipoProva,
-    selectedDate,
+    selectedDate: fmtDataISO(selectedDate) || null,
     professors,
     disciplinas,
     qId,
@@ -2027,12 +2179,13 @@ function carregarAvaliacao(inp){
         if(st.trim)  document.getElementById('selTrim').value  = st.trim;
       },50);
       if(st.selectedDate){
-        selectedDate = new Date(st.selectedDate);
-        calYear = selectedDate.getFullYear(); calMonth = selectedDate.getMonth();
-        renderCal();
-        const d = selectedDate;
-        document.getElementById('calBtn').textContent =
-          d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();
+        const nd = parseDataSalva(st.selectedDate);
+        if(nd){
+          selectedDate = nd;
+          calYear = nd.getFullYear(); calMonth = nd.getMonth();
+          renderCal();
+          setCalBtn(nd);
+        }
       }
       tipoProva = st.tipoProva||'efaf';
       document.querySelectorAll('.tipo-tg button').forEach(b=>{
@@ -2088,12 +2241,20 @@ function aplicarPlanoVinculado(){
     // Capa SESI 2026
     if(p.disciplina) document.getElementById('capaArea').value=p.disciplina;
     if(p.turma) document.getElementById('capaTurmas').value=p.turma;
-    // Data da prova a partir do plano
+    // Data da prova a partir do plano (sem deslocamento de fuso)
     const dataStr=p.dataAula||p.atualizadoEm||'';
-    if(dataStr){ const d=new Date(dataStr); if(!isNaN(d)){ selectedDate=d; calYear=d.getFullYear(); calMonth=d.getMonth(); renderCal(); document.getElementById('calBtn').textContent=d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear(); }}
+    const mD=String(dataStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(mD){ const d=new Date(+mD[1],+mD[2]-1,+mD[3]); selectedDate=d; calYear=d.getFullYear(); calMonth=d.getMonth(); renderCal(); setCalBtn(d); try{ sessionStorage.setItem('gp_d', fmtDataISO(d)); }catch(e){} }
     // Rubricas da capa: habilidades do plano (uma por linha)
     const habs=p.habilidades||[];
     if(habs.length){ document.getElementById('capaRubricasHabs').value=habs.map(h=>(h.codigo||'')+') '+String(h.habilidade||'')).join('\n'); }
+    // Matrizes da capa: socioemocional e educação tecnológica do plano
+    const projP=p.projeto||{};
+    const socioP=(projP.habilidadesSocioemocionais||[]).filter(x=>x&&typeof x==='object');
+    if(socioP.length){ capaSocioSel=socioP.map(x=>({id:x.id||'',competencia:x.competencia||'',texto:x.nome||'',objetivo:x.objetivo||x.conceito||''})); }
+    const edutecP=(projP.habilidadesEduTec||[]).filter(x=>x&&typeof x==='object');
+    if(edutecP.length){ capaEdTecSel=edutecP.map(x=>({codigo:x.codigo||'',dimensao:x.dimensao||'',texto:x.texto||'',objetivo:x.objetivo||x.descritor||''})); }
+    renderCapaSel();
   }catch(e){}
   const habs=p.habilidades||[];
   info.innerHTML=habs.length
@@ -2462,7 +2623,7 @@ function atualizarBnccExemplos(){
   const habs = (window.PLANO_VINCULADO&&window.PLANO_VINCULADO.habilidades)||[];
   if(!habs.length){ wrap.style.display='none'; el.innerHTML=''; return; }
   wrap.style.display='block';
-  el.innerHTML = habs.map((h,i)=>`<span onclick="usarHabilidadeDoPlanoIdx(${i})" style="background:var(--acbg);padding:2px 6px;border-radius:4px;margin-right:4px;border:1px solid #bfdbfe;display:inline-block;margin-bottom:3px;color:var(--ac);" title="${(h.habilidade||'').replace(/"/g,'&quot;')}">${h.codigo||('H'+(i+1))}</span>`).join('');
+  el.innerHTML = habs.map((h,i)=>`<span onclick="usarHabilidadeDoPlanoIdx(${i})" style="background:var(--acbg);padding:2px 6px;border-radius:4px;margin-right:4px;border:1px solid #bfdbfe;display:inline-block;margin-bottom:3px;color:var(--ac);max-width:100%;" title="${(h.habilidade||'').replace(/"/g,'&quot;')}">${h.codigo||('H'+(i+1))}${h.habilidade?' — '+h.habilidade:''}</span>`).join('');
 }
 function usarHabilidadeDoPlanoIdx(i){
   const sel = document.getElementById('iaPlanoHab');
