@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="enem-cliente.js"></script>
 <style>
 :root{--bg:#F5F7FA;--surface:#FFFFFF;--surface-alt:#EAF1F8;--ink:#1D1D1B;--ink-muted:#54657A;--ink-faint:#8C99A8;--border:#DCE4ED;--border-strong:#C2CEDC;--primary:#0047B6;--primary-hover:#003485;--primary-soft:#E5ECF8;--primary-soft-border:#BBCBEA;--sesi-blue:#0047B6;--sesi-blue-light:#47B9BB;--success:#2E7A22;--success-soft:#E7F4E2;--success-border:#A8D89C;--danger:#AE2C20;--danger-soft:#FBE7E4;--danger-border:#E7AA9F;--warning:#A6740C;--warning-soft:#FCF1DC;--warning-border:#EBC77E;--font-display:'Fraunces',Georgia,serif;--font-body:'IBM Plex Sans',-apple-system,sans-serif;--font-mono:'IBM Plex Mono','Courier New',monospace;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--shadow-sm:0 1px 2px rgba(20,36,54,.07);--shadow-md:0 4px 16px rgba(20,36,54,.12);--shadow-lg:0 12px 32px rgba(20,36,54,.18)}
 html[data-theme="dark"]{--bg:#0F1620;--surface:#161F2C;--surface-alt:#1D2836;--ink:#E8EDF4;--ink-muted:#A6B3C2;--ink-faint:#71808F;--border:#2A3645;--border-strong:#3B4A5C;--primary:#5C8FE0;--primary-hover:#7BA5E8;--primary-soft:#1E2C44;--primary-soft-border:#344B6E;--sesi-blue:#5C8FE0;--sesi-blue-light:#5FC3C5;--success:#5FB86C;--success-soft:#19301F;--success-border:#2F6B3C;--danger:#E27358;--danger-soft:#32201C;--danger-border:#6B3A2C;--warning:#E0AC52;--warning-soft:#332712;--warning-border:#6B5226;--shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 16px rgba(0,0,0,.4);--shadow-lg:0 12px 32px rgba(0,0,0,.5)}
@@ -279,6 +280,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
       <button class="tab-btn" onclick="mudarAba('importar')">📄 Importar</button>
       <button class="tab-btn" onclick="mudarAba('buscar')">🔍 Buscar</button>
       <button class="tab-btn" onclick="mudarAba('stats')">📊 Estatísticas</button>
+      <button class="tab-btn" onclick="mudarAba('enem')">🌐 ENEM</button>
     </div>
 
     <!-- ABA: Cadastrar -->
@@ -566,6 +568,33 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 
         <h3 style="margin-bottom:12px">Por Estilo</h3>
         <div class="bar-chart" id="chartEstilo"></div>
+      </div>
+    </div>
+
+    <!-- ABA: ENEM -->
+    <div class="aba-content" id="aba-enem" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <h2>🌐 Banco do ENEM</h2>
+          <span id="enemBQtd" style="font-size:.85rem;color:var(--ink-muted);"></span>
+        </div>
+        <p style="font-size:.85rem;color:var(--ink-muted);margin-bottom:12px;">
+          Questões oficiais do ENEM via API pública (api.enem.dev). Selecione para <strong>salvar no banco</strong>
+          (Supabase com fallback local) ou <strong>enviar direto ao Gerador de Provas</strong>.
+        </p>
+        <div class="input-row" style="margin-bottom:12px;">
+          <div class="field" style="margin:0"><label for="enemBAno">Ano da prova</label><select class="input" id="enemBAno" onchange="enemBTrocarAno()"></select></div>
+          <div class="field" style="margin:0"><label for="enemBDisc">Disciplina</label><select class="input" id="enemBDisc" onchange="enemBRender()"><option value="">Todas</option></select></div>
+          <div class="field" style="margin:0"><label for="enemBIdioma">Idioma</label><select class="input" id="enemBIdioma" onchange="enemBRender()"><option value="">Todos</option><option value="portugues">Português</option><option value="ingles">Inglês</option><option value="espanhol">Espanhol</option></select></div>
+          <div class="field" style="margin:0"><label for="enemBBusca">Buscar no texto</label><input class="input" type="text" id="enemBBusca" placeholder="palavra-chave…" oninput="enemBRender()"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn btn-primary btn-sm" onclick="enemBSalvarSelecionadas()">💾 Salvar selecionadas</button>
+          <button class="btn btn-secondary btn-sm" onclick="enemBEnviarGeradorSelecionadas()">➡️ Enviar ao gerador</button>
+          <button class="btn btn-ghost btn-sm" onclick="enemBMarcarTodos()">☑ Marcar todos</button>
+        </div>
+        <div id="enemBStatus" class="ia-status"></div>
+        <div id="enemBLista" style="max-height:52vh;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
       </div>
     </div>
   </div>
@@ -1238,6 +1267,157 @@ window.addEventListener('message', function(ev){
 // ══════════════════════════════════════════════════════════════
 // ESTATÍSTICAS
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// BANCO DO ENEM (API pública — enem-cliente.js)
+// ══════════════════════════════════════════════════════════════
+let enemBProvas = [], enemBQuestoes = [], enemBAnoAtual = '';
+
+function enemBEsc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function enemBAbrir(){ if(!enemBProvas.length) enemBCarregarProvas(); }
+
+async function enemBCarregarProvas(){
+  mostrarStatus('enemBStatus', '⏳ Carregando lista de provas do ENEM…', 'load');
+  try{
+    enemBProvas = await ENEM.exams();
+    const sel = document.getElementById('enemBAno');
+    sel.innerHTML = enemBProvas.map(p => `<option value="${p.year}">${p.year}</option>`).join('');
+    sel.value = String(enemBProvas.length ? enemBProvas[0].year : '');
+    enemBPreencherDisciplinas();
+    await enemBCarregarQuestoes();
+  }catch(e){ mostrarStatus('enemBStatus', '⚠️ ' + e.message, 'erro'); }
+}
+
+function enemBPreencherDisciplinas(){
+  const selAno = document.getElementById('enemBAno');
+  const ano = enemBAnoAtual || (selAno ? selAno.value : '');
+  const prova = enemBProvas.find(p => String(p.year) === String(ano));
+  const sel = document.getElementById('enemBDisc');
+  sel.innerHTML = '<option value="">Todas</option>' +
+    ((prova && prova.disciplines) || []).map(d => `<option value="${enemBEsc(d.value)}">${enemBEsc(d.label)}</option>`).join('');
+}
+
+function enemBTrocarAno(){ enemBPreencherDisciplinas(); enemBCarregarQuestoes(); }
+
+async function enemBCarregarQuestoes(){
+  const ano = document.getElementById('enemBAno').value;
+  if(!ano) return;
+  enemBAnoAtual = ano;
+  mostrarStatus('enemBStatus', '⏳ Baixando questões do ENEM ' + ano + '… (1 requisição/segundo; a 1ª carga faz ~4 chamadas)', 'load');
+  document.getElementById('enemBLista').innerHTML = '';
+  try{
+    enemBQuestoes = await ENEM.questoes(ano);
+    mostrarStatus('enemBStatus', '✅ ' + enemBQuestoes.length + ' questões do ENEM ' + ano + ' disponíveis.', 'ok');
+    enemBRender();
+  }catch(e){ mostrarStatus('enemBStatus', '⚠️ ' + e.message, 'erro'); }
+}
+
+function enemBPreview(q){
+  const t = ((q.context ? q.context + '\n' : '') + (q.alternativesIntroduction || '')).replace(/\s+/g, ' ').trim();
+  return enemBEsc(t.length > 170 ? t.slice(0, 170) + '…' : t);
+}
+
+function enemBFiltradas(){
+  const disc = document.getElementById('enemBDisc').value;
+  const idio = document.getElementById('enemBIdioma').value;
+  const termo = (document.getElementById('enemBBusca').value || '').toLowerCase().trim();
+  return enemBQuestoes.filter(q => {
+    if(disc && q.discipline !== disc) return false;
+    if(idio){
+      const lang = (q.language || '').toLowerCase();
+      if(idio === 'portugues'){ if(lang && lang !== 'portugues') return false; }
+      else if(lang !== idio) return false;
+    }
+    if(termo){
+      const t = ((q.context || '') + ' ' + (q.alternativesIntroduction || '') + ' ' + (q.alternatives || []).map(a => a.text || '').join(' ')).toLowerCase();
+      if(t.indexOf(termo) < 0) return false;
+    }
+    return true;
+  });
+}
+
+function enemBJaSalva(q){
+  const conv = ENEM.converter(q, parseInt(enemBAnoAtual, 10));
+  return (questoesDB || []).some(x => x.observacoes === conv.observacoes);
+}
+
+function enemBRender(){
+  const lista = enemBFiltradas();
+  const cont = document.getElementById('enemBLista');
+  const qtd = document.getElementById('enemBQtd');
+  if(qtd) qtd.textContent = lista.length ? lista.length + ' questão(ões) exibida(s)' : '';
+  if(!lista.length){ cont.innerHTML = '<div style="padding:14px;font-size:.85rem;color:var(--ink-muted);">Nenhuma questão com esses filtros.</div>'; return; }
+  cont.innerHTML = lista.map(q => {
+    const ja = enemBJaSalva(q);
+    const disc = ENEM.rotuloDisciplina(q.discipline);
+    return `<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-bottom:1px solid var(--border);font-size:.85rem;cursor:pointer;${ja ? 'opacity:.6;' : ''}">
+      <input type="checkbox" class="enemB-cb" value="${q.index}" style="margin-top:3px;" ${ja ? 'disabled' : ''}>
+      <div style="flex:1;">
+        <strong>Questão ${q.index}</strong> · ${enemBEsc(disc)}${q.language ? ' · ' + enemBEsc(q.language) : ''}${ja ? ' <span style="color:var(--success);font-weight:700;">✓ no banco</span>' : ''}
+        <div style="color:var(--ink-muted);margin-top:2px;">${enemBPreview(q)}</div>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="event.preventDefault();enemBEnviarGerador(${q.index})" title="Enviar ao gerador">➡️</button>
+    </label>`;
+  }).join('');
+}
+
+function enemBMarcarTodos(){
+  const cbs = document.querySelectorAll('#enemBLista .enemB-cb:not(:disabled)');
+  const marcar = Array.prototype.some.call(cbs, cb => !cb.checked);
+  Array.prototype.forEach.call(cbs, cb => { cb.checked = marcar; });
+}
+
+async function enemBSalvarSelecionadas(){
+  const cbs = document.querySelectorAll('#enemBLista .enemB-cb:checked');
+  if(!cbs.length){ mostrarStatus('enemBStatus', '⚠️ Marque ao menos uma questão.', 'erro'); return; }
+  let salv = 0, pul = 0, err = 0;
+  for (const cb of cbs) {
+    const q = enemBQuestoes.find(x => x.index === parseInt(cb.value, 10));
+    if(!q) continue;
+    const conv = ENEM.converter(q, parseInt(enemBAnoAtual, 10));
+    if(enemBJaSalva(q)){ pul++; continue; }
+    try{ await salvarQuestaoNoBanco(conv); salv++; }
+    catch(e){ err++; }
+  }
+  await carregarQuestoes();
+  enemBRender();
+  const partes = [];
+  if(salv) partes.push(salv + ' salva(s)');
+  if(pul) partes.push(pul + ' já existente(s) pulada(s)');
+  if(err) partes.push(err + ' erro(s)');
+  mostrarStatus('enemBStatus', (salv ? '✅ ' : 'ℹ️ ') + 'Resultado: ' + (partes.join(' · ') || 'nada a fazer') + '.', salv ? 'ok' : 'load');
+}
+
+function enemBFilaParaGerador(convs){
+  if(!convs.length) return 0;
+  if(window.opener && !window.opener.closed){
+    try{ window.opener.postMessage({ tipo: 'banco-questoes-importar', questoes: convs }, '*'); return convs.length; }catch(e){}
+  }
+  const fila = JSON.parse(localStorage.getItem('bq_import_queue') || '[]');
+  convs.forEach(c => fila.push(c));
+  localStorage.setItem('bq_import_queue', JSON.stringify(fila));
+  return convs.length;
+}
+
+function enemBEnviarGerador(idx){
+  const q = enemBQuestoes.find(x => x.index === idx);
+  if(!q) return;
+  const n = enemBFilaParaGerador([ENEM.converter(q, parseInt(enemBAnoAtual, 10))]);
+  mostrarStatus('enemBStatus', '✅ ' + n + ' questão enviada ao Gerador de Provas' + (window.opener && !window.opener.closed ? ' (janela aberta recebeu agora).' : ' (será importada ao abrir o gerador).'), 'ok');
+}
+
+function enemBEnviarGeradorSelecionadas(){
+  const cbs = document.querySelectorAll('#enemBLista .enemB-cb:checked');
+  if(!cbs.length){ mostrarStatus('enemBStatus', '⚠️ Marque ao menos uma questão.', 'erro'); return; }
+  const convs = [];
+  Array.prototype.forEach.call(cbs, cb => {
+    const q = enemBQuestoes.find(x => x.index === parseInt(cb.value, 10));
+    if(q) convs.push(ENEM.converter(q, parseInt(enemBAnoAtual, 10)));
+  });
+  const n = enemBFilaParaGerador(convs);
+  mostrarStatus('enemBStatus', '✅ ' + n + ' questão(ões) enviada(s) ao Gerador de Provas' + (window.opener && !window.opener.closed ? ' (janela aberta recebeu agora).' : ' (serão importadas ao abrir o gerador).'), 'ok');
+}
+
 function renderizarStats(){
   const total = questoesDB.length;
 
@@ -1354,6 +1534,7 @@ function mudarAba(aba){
 
   if(aba === 'buscar') aplicarFiltros();
   if(aba === 'stats') renderizarStats();
+  if(aba === 'enem') enemBAbrir();
 }
 
 // ══════════════════════════════════════════════════════════════

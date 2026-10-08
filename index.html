@@ -192,6 +192,10 @@ main.content{flex:1;width:100%;max-width:880px;margin:0 auto;padding:24px 20px 1
 .schedule-grid__cell:hover{background:var(--primary-soft);}
 .schedule-grid__cell.is-empty{cursor:default;}
 .schedule-grid__cell.is-empty:hover{background:var(--surface);}
+.schedule-grid__cell.is-edit{cursor:pointer;}
+.schedule-grid__cell.is-edit:hover{background:var(--primary-soft);outline:2px dashed var(--primary);outline-offset:-3px;}
+.schedule-grid__cell.is-empty.is-edit{color:var(--ink-faint);align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;}
+.schedule-grid__cell.is-empty.is-edit:hover{background:var(--primary-soft);color:var(--primary);}
 .schedule-cell__subject{font-weight:600;font-size:.78rem;color:var(--primary);line-height:1.2;}
 .schedule-cell__class{font-size:.7rem;color:var(--ink-muted);}
 .schedule-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;color:var(--ink-muted);margin-bottom:12px;}
@@ -329,19 +333,19 @@ const SCHEDULE_DATA = {
         { id: "QUI-0930-BIOH-302", inicio: "09:30", fim: "10:30", componente: "Biohackeria", turma: "302", curso: "Ensino Médio", ano: 2026, bloco: "QUI-BIOH-302-0845", bloco_continuo: true, aula_no_bloco: 2 },
         { id: "QUI-1030-ROB-301", inicio: "10:30", fim: "11:15", componente: "Robótica", turma: "301", curso: "Ensino Médio", ano: 2026, bloco: "QUI-ROB-301-1030", bloco_continuo: true, aula_no_bloco: 1 },
         { id: "QUI-1115-ROB-301", inicio: "11:15", fim: "12:00", componente: "Robótica", turma: "301", curso: "Ensino Médio", ano: 2026, bloco: "QUI-ROB-301-1030", bloco_continuo: true, aula_no_bloco: 2 },
-        { id: "QUI-1200-PL-302", inicio: "12:00", fim: "12:45", componente: "Projetos Livres LAFAIETE", turma: "302", curso: "Ensino Médio", ano: 2026, bloco: "QUI-PL-302-1200", bloco_continuo: false, aula_no_bloco: 1 }
+        { id: "QUI-1200-PL-301", inicio: "12:00", fim: "12:45", componente: "Projetos Livres LAFAIETE", turma: "301", curso: "Ensino Médio", ano: 2026, bloco: "QUI-PL-301-1200", bloco_continuo: false, aula_no_bloco: 1 }
       ]
     },
     sexta: {
       ordem: 5,
       aulas: [
-        { id: "SEX-0715-BIO-201", inicio: "07:15", fim: "08:00", componente: "Biologia", turma: "201", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-201-0715", bloco_continuo: true, aula_no_bloco: 1 },
-        { id: "SEX-0800-BIO-201", inicio: "08:00", fim: "08:45", componente: "Biologia", turma: "201", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-201-0715", bloco_continuo: true, aula_no_bloco: 2 },
-        { id: "SEX-0845-IC-202", inicio: "08:45", fim: "09:30", componente: "Iniciação Científica e Projetos - CNT", turma: "202", curso: "Ensino Médio", ano: 2026, bloco: "SEX-IC-202-0845", bloco_continuo: true, aula_no_bloco: 1 },
-        { id: "SEX-0930-IC-202", inicio: "09:30", fim: "10:30", componente: "Iniciação Científica e Projetos - CNT", turma: "202", curso: "Ensino Médio", ano: 2026, bloco: "SEX-IC-202-0845", bloco_continuo: true, aula_no_bloco: 2 },
-        { id: "SEX-1030-BIO-102", inicio: "10:30", fim: "11:15", componente: "Biologia", turma: "102", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-102-1030", bloco_continuo: true, aula_no_bloco: 1 },
-        { id: "SEX-1115-BIO-102", inicio: "11:15", fim: "12:00", componente: "Biologia", turma: "102", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-102-1030", bloco_continuo: true, aula_no_bloco: 2 },
-        { id: "SEX-1200-BIO-301", inicio: "12:00", fim: "12:45", componente: "Biologia", turma: "301", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-301-1200", bloco_continuo: false, aula_no_bloco: 1 }
+        { id: "SEX-0715-IC-202", inicio: "07:15", fim: "08:00", componente: "Iniciação Científica e Projetos - CNT", turma: "202", curso: "Ensino Médio", ano: 2026, bloco: "SEX-IC-202-0715", bloco_continuo: true, aula_no_bloco: 1 },
+        { id: "SEX-0800-IC-202", inicio: "08:00", fim: "08:45", componente: "Iniciação Científica e Projetos - CNT", turma: "202", curso: "Ensino Médio", ano: 2026, bloco: "SEX-IC-202-0715", bloco_continuo: true, aula_no_bloco: 2 },
+        { id: "SEX-0845-BIO-201", inicio: "08:45", fim: "09:30", componente: "Biologia", turma: "201", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-201-0845", bloco_continuo: true, aula_no_bloco: 1 },
+        { id: "SEX-0930-BIO-201", inicio: "09:30", fim: "10:30", componente: "Biologia", turma: "201", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-201-0845", bloco_continuo: true, aula_no_bloco: 2 },
+        { id: "SEX-1030-BIO-301", inicio: "10:30", fim: "11:15", componente: "Biologia", turma: "301", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-301-1030", bloco_continuo: false, aula_no_bloco: 1 },
+        { id: "SEX-1115-BIO-102", inicio: "11:15", fim: "12:00", componente: "Biologia", turma: "102", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-102-1115", bloco_continuo: true, aula_no_bloco: 1 },
+        { id: "SEX-1200-BIO-102", inicio: "12:00", fim: "12:45", componente: "Biologia", turma: "102", curso: "Ensino Médio", ano: 2026, bloco: "SEX-BIO-102-1115", bloco_continuo: true, aula_no_bloco: 2 }
       ]
     }
   },
@@ -356,6 +360,7 @@ const SCHEDULE_DATA = {
     status: "rascunho", observacoes: ""
   }
 };
+window.SCHEDULE_DATA = SCHEDULE_DATA;
 
 // ---------------------------------------------------------------------------
 // Helpers de acesso à grade horária
@@ -811,17 +816,43 @@ function getFiltrosHabilidades() {
   return { areas, componentes };
 }
 
+function normalizarTermoBusca(txt) {
+  return String(txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function termosDaBusca(q) {
+  return normalizarTermoBusca(q).split(/\s+/).filter(Boolean);
+}
+
+function destacarTermosHabilidade(texto, termos) {
+  const escapado = escapeHtml(texto);
+  if (!termos || !termos.length) return escapado;
+  const mapa = { a: '[aàáâãä]', e: '[eèéêë]', i: '[iìíîï]', o: '[oòóôõö]', u: '[uùúûü]', c: '[cç]' };
+  let html = escapado;
+  termos.forEach((t) => {
+    if (!t) return;
+    const padrao = t.split('').map((ch) => (mapa[ch] ? mapa[ch] : ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('');
+    if (!padrao) return;
+    try {
+      html = html.replace(new RegExp(`(${padrao})`, 'gi'), '<mark style="background:#F2B817;color:#1D1D1B;border-radius:2px;padding:0 1px;">$1</mark>');
+    } catch { /* padrão inválido — segue sem destaque */ }
+  });
+  return html;
+}
+
 function buscarHabilidades({ area, componente, q } = {}) {
   let results = HABILIDADES_DATA;
   if (area) results = results.filter((h) => (h.area || '').toLowerCase() === area.toLowerCase());
   if (componente) results = results.filter((h) => (h.componente || '').toLowerCase() === componente.toLowerCase());
-  if (q) {
-    const term = q.trim().toLowerCase();
-    results = results.filter((h) =>
-      h.codigo.toLowerCase().includes(term) ||
-      h.habilidade.toLowerCase().includes(term) ||
-      (h.competencia || '').toLowerCase().includes(term)
-    );
+  const termos = termosDaBusca(q);
+  if (termos.length) {
+    results = results.filter((h) => {
+      const alvo = normalizarTermoBusca([
+        h.codigo, h.habilidade, h.competencia, h.area, h.componente, h.segmento,
+        ...(Array.isArray(h.conteudos) ? h.conteudos : [])
+      ].filter(Boolean).join(' '));
+      return termos.every((t) => alvo.includes(t));
+    });
   }
   return results;
 }
@@ -1580,6 +1611,586 @@ function exportarPlanoDocx(plano) {
 }
 
 // ============================================================================
+// Exportação em formato TABELA — modelo "Documentos para Planejamento 2026"
+// ============================================================================
+const TABELA_DOC_CSS = `
+  @page{size:A4 landscape;margin:10mm;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'IBM Plex Sans',Arial,sans-serif;font-size:9px;color:#1D1D1B;background:#fff;}
+  .doc__marca{display:flex;align-items:center;gap:8px;border-bottom:3px solid #0047B6;padding-bottom:6px;margin-bottom:8px;}
+  .doc__icone{display:flex;flex-direction:column;gap:2.5px;background:#0047B6;border-radius:5px;padding:5px 8px;}
+  .doc__icone span{display:block;width:13px;height:2.5px;border-radius:1px;background:rgba(255,255,255,.85);}
+  .doc__icone span:nth-child(2){width:9px;}
+  .doc__word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-style:italic;color:#fff;font-size:15px;}
+  .doc__escola{font-weight:800;text-transform:uppercase;font-size:9.5px;line-height:1.15;color:#1D1D1B;}
+  .doc__tipo{margin-left:6px;padding-left:10px;border-left:1px solid #DCE4ED;font-weight:600;font-size:9.5px;color:#54657A;text-transform:uppercase;letter-spacing:.05em;}
+  .doc__titulo1{font-size:15px;font-weight:800;color:#0047B6;margin:0 0 2px;line-height:1.2;}
+  .doc__titulo2{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px;color:#1D1D1B;}
+  .doc__ident{font-size:8.5px;color:#54657A;margin-bottom:7px;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8px;}
+  th,td{border:1px solid #B9C4D2;padding:4px 5px;font-size:8.5px;line-height:1.35;vertical-align:top;white-space:pre-wrap;word-break:break-word;}
+  th{background:#0047B6;color:#fff;font-weight:700;text-align:center;font-size:8.5px;}
+  td.rotulo{background:#E8F0FB;font-weight:700;color:#1D1D1B;}
+  .bloco-tit{background:#E8F0FB;border:1px solid #B9C4D2;padding:4px 6px;font-weight:700;color:#0047B6;font-size:9.5px;}
+  .bloco-tit .sub{display:block;font-weight:500;font-style:italic;color:#54657A;font-size:8.5px;}
+  .bloco-txt{border:1px solid #B9C4D2;border-top:none;padding:5px 6px;min-height:24px;font-size:9px;white-space:pre-wrap;margin-bottom:8px;}
+  .doc__rodape{margin-top:6px;font-size:7.5px;color:#8C99A8;border-top:1px solid #DCE4ED;padding-top:4px;}
+`;
+
+function textoIdentificacaoTabela(plano) {
+  const i = plano.identificacao || {};
+  const partes = [];
+  if (i.professor) partes.push(`Professor(a): ${i.professor}`);
+  if (i.disciplina) partes.push(`Disciplina: ${i.disciplina}`);
+  if (i.unidadeEducacional) partes.push(`Unidade: ${i.unidadeEducacional}`);
+  const anoTurma = [i.anoSerie, i.turma].filter(Boolean).join(' ');
+  if (anoTurma) partes.push(`Ano/Turma: ${anoTurma}`);
+  const tri = i.trimestre ?? i.bimestre;
+  if (tri) partes.push(`Trimestre: ${tri}º`);
+  if (i.dataAula) partes.push(`Data da aula: ${new Date(i.dataAula + 'T00:00:00').toLocaleDateString('pt-BR')}`);
+  return partes.join(' · ');
+}
+
+function montarTabelaPlano(plano) {
+  const ident = plano.identificacao || {};
+  const proj = plano.projeto || {};
+  const distribuicoes = (plano.habilidades || []).length ? distribuirHabilidadesNoTempo(plano) : [];
+
+  const colunas = [
+    'DATA PREVISTA', 'CH', 'HABILIDADES A SEREM DESENVOLVIDAS',
+    'HABILIDADE SOCIOEMOCIONAL', 'HABILIDADE EDUTEC', 'Título da aula',
+    'Registro de avaliação\n*Estratégias de ensino e descrição da proposta',
+    'Descrição de aula\n*Estratégia em sala de aula'
+  ];
+
+  const f = (dt) => `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+
+  const linhas = distribuicoes.map((d) => {
+    const hab = d.hab || {};
+    const metod = plano.metodologiaPorHabilidade?.[hab.codigo] || {};
+    const objConh = plano.objetoConhecimentoPorHabilidade?.[hab.codigo] || {};
+    const rub = plano.avaliacao?.rubricasPorHabilidade?.[hab.codigo] || {};
+
+    let dataPrevista = '—';
+    if (d.dataInicio && d.dataFim) dataPrevista = d.dataInicio.getTime() === d.dataFim.getTime() ? f(d.dataInicio) : `${f(d.dataInicio)} a ${f(d.dataFim)}`;
+    else if (ident.dataAula) dataPrevista = f(new Date(ident.dataAula + 'T00:00:00'));
+
+    const qtd = d.qtdAulas || 1;
+    const min = ident.minutosPorAula ? qtd * ident.minutosPorAula : 0;
+    const ch = min ? `${qtd} aula(s) · ${formatarMinutos(min)}` : `${qtd} aula(s)`;
+
+    const rotulo = distribuicoes.length > 1 ? formatarRotuloDistribuicao(d, true) : '';
+    const habilidadesTxt = [`${hab.codigo || ''} — ${hab.habilidade || '—'}`, rotulo].filter(Boolean).join('\n');
+
+    const evidencias = (rub.evidenciasLista && rub.evidenciasLista.length) ? rub.evidenciasLista : (rub.evidenciaAprendizagem ? [rub.evidenciaAprendizagem] : []);
+    const instrumentos = [...(plano.avaliacao?.instrumentos || [])];
+    if (plano.avaliacao?.instrumentosOutros) instrumentos.push(plano.avaliacao.instrumentosOutros);
+    const criterios = [];
+    if (rub.criterio1?.descricao) criterios.push(`${rub.criterio1.titulo ? rub.criterio1.titulo + ': ' : ''}${rub.criterio1.descricao}`);
+    if (rub.criterio2?.descricao) criterios.push(`${rub.criterio2.titulo ? rub.criterio2.titulo + ': ' : ''}${rub.criterio2.descricao}`);
+
+    const registro = [];
+    if (rub.objetivoAprendizagem) registro.push(`Objetivo da Avaliação: ${rub.objetivoAprendizagem}`);
+    if (evidencias.length) registro.push(`Evidências de Aprendizagem:\n• ${evidencias.join('\n• ')}`);
+    if (instrumentos.length) registro.push(`Instrumento: ${instrumentos.join(', ')}`);
+    if (criterios.length) registro.push(`Critérios de Avaliação:\n• ${criterios.join('\n• ')}`);
+
+    const objetos = [objConh.objetoConhecimento, ...(objConh.conteudo || '').split('\n').map((l) => l.trim()).filter(Boolean)].filter(Boolean);
+    const momentos = [];
+    if (metod.momentoInicial?.descricao) momentos.push(`Abertura: ${metod.momentoInicial.descricao}${metod.momentoInicial.duracao_minutos ? ` (${metod.momentoInicial.duracao_minutos} min)` : ''}`);
+    if (metod.momentoDesenvolvimento?.descricao) momentos.push(`Desenvolvimento: ${metod.momentoDesenvolvimento.descricao}${metod.momentoDesenvolvimento.duracao_minutos ? ` (${metod.momentoDesenvolvimento.duracao_minutos} min)` : ''}`);
+    if (metod.momentoSistematizacao?.descricao) momentos.push(`Consolidação: ${metod.momentoSistematizacao.descricao}${metod.momentoSistematizacao.duracao_minutos ? ` (${metod.momentoSistematizacao.duracao_minutos} min)` : ''}`);
+    if (metod.metodologiasAtivas?.length) momentos.push(`Metodologias e recursos: ${metod.metodologiasAtivas.join(', ')}`);
+
+    const descricao = [];
+    if (rub.objetivoAprendizagem) descricao.push(`Objetivos da aula: ${rub.objetivoAprendizagem}`);
+    if (objetos.length) descricao.push(`Objeto de Conhecimento:\n• ${objetos.join('\n• ')}`);
+    if (momentos.length) descricao.push(`Momentos:\n• ${momentos.join('\n• ')}`);
+    const estrategias = rub.estrategias || metod.metodologiasAtivas?.join(', ');
+    if (estrategias) descricao.push(`Estratégias: ${estrategias}`);
+    descricao.push(`Tarefa de casa: ${metod.tarefaCasa || 'Não há tarefa de casa proposta para esta aula.'}`);
+
+    return [
+      dataPrevista,
+      ch,
+      habilidadesTxt,
+      (proj.habilidadesSocioemocionais || []).join('\n') || '—',
+      (proj.habilidadesEduTec || []).join('\n') || '—',
+      metod.tituloAula || '—',
+      registro.join('\n') || '—',
+      descricao.join('\n')
+    ];
+  });
+
+  return {
+    tipo: 'plano',
+    titulo1: 'Planejamento Semanal',
+    titulo2: 'PLANO DE AULA',
+    tipoLabel: 'Plano de Aula — Tabela (modelo SESI 2026)',
+    identificacao: textoIdentificacaoTabela(plano),
+    colunas,
+    linhas
+  };
+}
+
+function montarTabelaProjeto(plano) {
+  const proj = plano.projeto || {};
+  const ident = plano.identificacao || {};
+  const habilidades = plano.habilidades || [];
+  const habPrincipal = habilidades[0] || {};
+  const aval = proj.avaliacaoProjeto || {};
+  const instrumentos = [...(aval.instrumentos || [])];
+  const vigencia = new Date().getFullYear();
+
+  const secao = (titulo, subtitulo, texto) => ({ tipo: 'secao', titulo, subtitulo: subtitulo || '', texto: (texto || '').trim() || '—' });
+
+  const avaliacaoTxt = [
+    aval.objetivoAvaliacao ? `Objetivo da Avaliação: ${aval.objetivoAvaliacao}` : '',
+    aval.evidencias ? `Evidências de Aprendizagem: ${aval.evidencias}` : '',
+    instrumentos.length ? `Instrumento: ${instrumentos.join(', ')}` : '',
+    aval.criterios ? `Critérios: ${aval.criterios}` : ''
+  ].filter(Boolean).join('\n') || '—';
+
+  const etapasLinhas = (proj.etapas || []).map((e, idx) => [
+    `Etapa ${idx + 1}`,
+    e.data || '—',
+    [e.descricao || '', e.resultadoEsperado ? `Resultado esperado: ${e.resultadoEsperado}` : ''].filter(Boolean).join('\n') || '—',
+    [ident.anoSerie, ident.turma].filter(Boolean).join(' ') || '—'
+  ]);
+
+  return {
+    tipo: 'projeto',
+    titulo: 'PROJETOS – Educação Básica\nEnsino Fundamental e Ensino Médio',
+    tipoLabel: 'Projetos — Tabela (modelo SESI 2026)',
+    vigencia,
+    identPares: [
+      ['Unidade:', ident.unidadeEducacional || '—'],
+      ['Professores:', ident.professor || '—'],
+      ['Ano / Turma:', [ident.anoSerie, ident.turma].filter(Boolean).join(' ') || '—'],
+      ['Área de Conhecimento/UC:', ident.disciplina || '—'],
+      ['Etapa:', 'Ensino Médio'],
+      ['Trimestre:', (ident.trimestre ?? ident.bimestre) ? `${ident.trimestre ?? ident.bimestre}º` : '—']
+    ],
+    blocos: [
+      secao('Habilidades da Área/Componente/UC', 'Escolher a habilidade da matriz. *Lembrete: toda habilidade está vinculada a uma competência.', [habPrincipal.codigo, habPrincipal.habilidade].filter(Boolean).join(' — ')),
+      secao('Habilidades Socioemocionais', 'Escolher a habilidade da matriz (a mesma que está disponível no SGN)', (proj.habilidadesSocioemocionais || []).join('\n')),
+      secao('Habilidades EduTec', 'Escolher a habilidade da matriz (a mesma que está disponível no SGN)', (proj.habilidadesEduTec || []).join('\n')),
+      secao('Objetivos de Aprendizagem', '“o que aprender”', proj.objetivosAprendizagem),
+      secao('Problema / Desafio Norteador', '“o que investigar”', proj.problemaNorteador),
+      secao('Contextualização', '"por que aprender e investigar isso, neste contexto?"', proj.contextualizacao),
+      { tipo: 'tabelaEtapas', colunas: ['Etapas do Projeto', 'Data/Aula', 'Descrição\nDescrição das estratégias que serão desenvolvidas', 'Turma'], linhas: etapasLinhas },
+      secao('Avaliação', 'À partir dos resultados esperados, como os estudantes serão avaliados?', avaliacaoTxt),
+      secao('Recursos Pedagógicos', '(Conjunto de materiais, ferramentas, ambientes e tecnologias, físicos e digitais, utilizados como mediadores das experiências de aprendizagem.)', proj.recursosPedagogicos),
+      secao('Elementos de Acessibilidade e Inclusão', 'Participação plena precisa ser prevista no projeto, com adaptações e estratégias de participação para todos os estudantes', proj.acessibilidadeInclusao),
+      secao('Referências', '(Documentos que fundamentam o planejamento pedagógico)', proj.referencias),
+      secao('Observações:', '', plano.observacoes || '')
+    ]
+  };
+}
+
+function montarTabelaDocumento(plano, tipo) {
+  return tipo === 'projeto' ? montarTabelaProjeto(plano) : montarTabelaPlano(plano);
+}
+
+function renderTabelaHTML(doc) {
+  const marca = `<div class="doc__marca">
+    <div class="doc__icone"><span></span><span></span><span></span></div>
+    <span class="doc__word">SESI</span>
+    <div class="doc__escola">Escola<br/>de Referência</div>
+    <div class="doc__tipo">${escapeHtml(doc.tipoLabel)}</div>
+  </div>`;
+  const rodape = `<div class="doc__rodape">Gerado pelo Planejamento de Aula — SESI Ensino Médio · Modelo: Documentos para Planejamento 2026 — EF e EM.</div>`;
+
+  if (doc.tipo === 'plano') {
+    const larguras = largurasPercentuaisTabela(TABELA_BASE_COLS_PLANO, doc.colunas, doc.linhas);
+    const cabecalho = doc.colunas.map((c, i) => `<th style="width:${larguras[i]}%">${escapeHtml(c)}</th>`).join('');
+    const corpo = doc.linhas.map((linha) => `<tr>${linha.map((v) => `<td>${escapeHtml(v)}</td>`).join('')}</tr>`).join('');
+    return `<div class="doc">
+      ${marca}
+      <div class="doc__titulo1">${escapeHtml(doc.titulo1)}</div>
+      <div class="doc__titulo2">${escapeHtml(doc.titulo2)}</div>
+      ${doc.identificacao ? `<div class="doc__ident">${escapeHtml(doc.identificacao)}</div>` : ''}
+      <table>${doc.linhas.length ? `<thead><tr>${cabecalho}</tr></thead><tbody>${corpo}</tbody>` : `<thead><tr>${cabecalho}</tr></thead>`}</table>
+      ${rodape}
+    </div>`;
+  }
+
+  const pares = [];
+  for (let i = 0; i < doc.identPares.length; i += 2) pares.push([doc.identPares[i], doc.identPares[i + 1]].filter(Boolean));
+  const identHtml = `<table><tbody>${pares.map((par) => `<tr>${par.map(([rot, val]) => `<td class="rotulo" style="width:50%;">${escapeHtml(`${rot} ${val}`)}</td>`).join('')}${par.length === 1 ? '<td class="rotulo" style="width:50%;">&nbsp;</td>' : ''}</tr>`).join('')}</tbody></table>`;
+
+  const blocos = doc.blocos.map((b) => {
+    if (b.tipo === 'tabelaEtapas') {
+      const largurasEtapas = largurasPercentuaisTabela(TABELA_BASE_COLS_ETAPAS, b.colunas, b.linhas);
+      const cabecalho = b.colunas.map((c, i) => `<th style="width:${largurasEtapas[i]}%">${escapeHtml(c)}</th>`).join('');
+      const corpo = b.linhas.map((linha) => `<tr>${linha.map((v) => `<td>${escapeHtml(v)}</td>`).join('')}</tr>`).join('');
+      return `<table style="margin-bottom:8px;"><thead><tr>${cabecalho}</tr></thead><tbody>${corpo || `<tr><td colspan="${b.colunas.length}">—</td></tr>`}</tbody></table>`;
+    }
+    return `<div class="bloco-tit">${escapeHtml(b.titulo)}${b.subtitulo ? `<span class="sub">${escapeHtml(b.subtitulo)}</span>` : ''}</div>
+      <div class="bloco-txt">${escapeHtml(b.texto)}</div>`;
+  }).join('');
+
+  return `<div class="doc">
+    ${marca}
+    <div class="doc__titulo1">${escapeHtml(doc.titulo)}</div>
+    <div class="doc__ident">Vigência: ${doc.vigencia}</div>
+    ${identHtml}
+    ${blocos}
+    ${rodape}
+  </div>`;
+}
+
+function exportarTabelaPDF(plano, tipo) {
+  const doc = montarTabelaDocumento(plano, tipo);
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.', 'info'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${escapeHtml(doc.tipoLabel)}</title>
+    <style>${TABELA_DOC_CSS}</style></head><body>${renderTabelaHTML(doc)}</body></html>`);
+  win.document.close();
+  win.onload = () => { win.print(); };
+}
+
+function exportarTabelaDocx(plano, tipo) {
+  const doc = montarTabelaDocumento(plano, tipo);
+  const nomeArquivo = `${tipo === 'projeto' ? 'Projeto' : 'Plano de Aula'} - tabela (modelo 2026).doc`;
+  const docHtml = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>${TABELA_DOC_CSS.replace('@page{size:A4 landscape;margin:10mm;}', '@page Section1{size:29.7cm 21cm;margin:1.2cm;} div.Section1{page:Section1;}')}</style>
+</head>
+<body><div class="Section1">${renderTabelaHTML(doc)}</div></body></html>`;
+  baixarBlob(new Blob(['\ufeff', docHtml], { type: 'application/msword' }), nomeArquivo);
+  showToast('Documento Word (tabela) gerado. Verifique seus downloads.', 'success');
+}
+
+function baixarBlob(blob, nomeArquivo) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArquivo;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function xmlTabelaEsc(valor) {
+  return String(valor == null ? '' : valor)
+    .replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]))
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+}
+
+function colLetraXLSX(idx) {
+  let n = idx + 1, s = '';
+  while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+
+const TABELA_CRC32 = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+  return t;
+})();
+
+function crc32Tabela(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = TABELA_CRC32[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function zipStoreTabela(arquivos) {
+  const enc = new TextEncoder();
+  const agora = new Date();
+  const dosHora = (agora.getHours() << 11) | (agora.getMinutes() << 5) | Math.floor(agora.getSeconds() / 2);
+  const dosData = ((agora.getFullYear() - 1980) << 9) | ((agora.getMonth() + 1) << 5) | agora.getDate();
+  const partes = [], centrais = [];
+  let offset = 0;
+
+  arquivos.forEach((f) => {
+    const nome = enc.encode(f.nome);
+    const dados = f.dados;
+    const crc = crc32Tabela(dados);
+    const local = new Uint8Array(30 + nome.length);
+    const dv = new DataView(local.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 0x0800, true);
+    dv.setUint16(8, 0, true);
+    dv.setUint16(10, dosHora, true);
+    dv.setUint16(12, dosData, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, dados.length, true);
+    dv.setUint32(22, dados.length, true);
+    dv.setUint16(26, nome.length, true);
+    dv.setUint16(28, 0, true);
+    local.set(nome, 30);
+    partes.push(local, dados);
+    centrais.push({ nome, crc, tamanho: dados.length, offset });
+    offset += local.length + dados.length;
+  });
+
+  const dirPartes = []; let dirTamanho = 0;
+  centrais.forEach((c) => {
+    const dir = new Uint8Array(46 + c.nome.length);
+    const dv = new DataView(dir.buffer);
+    dv.setUint32(0, 0x02014b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 20, true);
+    dv.setUint16(8, 0x0800, true);
+    dv.setUint16(10, 0, true);
+    dv.setUint16(12, dosHora, true);
+    dv.setUint16(14, dosData, true);
+    dv.setUint32(16, c.crc, true);
+    dv.setUint32(20, c.tamanho, true);
+    dv.setUint32(24, c.tamanho, true);
+    dv.setUint16(28, c.nome.length, true);
+    dv.setUint32(42, c.offset, true);
+    dir.set(c.nome, 46);
+    dirPartes.push(dir); dirTamanho += dir.length;
+  });
+
+  const fim = new Uint8Array(22);
+  const dvf = new DataView(fim.buffer);
+  dvf.setUint32(0, 0x06054b50, true);
+  dvf.setUint16(8, arquivos.length, true);
+  dvf.setUint16(10, arquivos.length, true);
+  dvf.setUint32(12, dirTamanho, true);
+  dvf.setUint32(16, offset, true);
+
+  return new Blob([...partes, ...dirPartes, fim], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+const TABELA_STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="5"><font><sz val="10"/><color rgb="FF1D1D1B"/><name val="Calibri"/></font><font><b/><sz val="13"/><color rgb="FF0047B6"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FF1D1D1B"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF0047B6"/><name val="Calibri"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0047B6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8F0FB"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFB9C4D2"/></left><right style="thin"><color rgb="FFB9C4D2"/></right><top style="thin"><color rgb="FFB9C4D2"/></top><bottom style="thin"><color rgb="FFB9C4D2"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="4" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="3" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf></cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+// ----------------------------------------------------------------------------
+// Adaptação das células ao volume de dados:
+// larguras de coluna crescem conforme a riqueza do texto (até 1,6x o modelo)
+// e a altura de cada linha do XLSX é calculada a partir do conteúdo.
+// ----------------------------------------------------------------------------
+const TABELA_BASE_COLS_PLANO = [13, 15, 42, 26, 26, 26, 44, 48];
+const TABELA_BASE_COLS_PROJETO = [46, 16, 16, 16, 44, 44];
+const TABELA_BASE_COLS_ETAPAS = [14, 12, 64, 10];
+const TABELA_LINHAS_ALVO = 8;
+const TABELA_MAX_ALARGAMENTO = 1.6;
+const TABELA_FONTES_STYLE = { 0: 10, 1: 13, 2: 10, 3: 10, 4: 10, 5: 11, 6: 10 };
+
+function linhasQuebraTabela(texto, larguraUnid, fator) {
+  const largura = Math.max(6, Math.round(larguraUnid * (fator || 1.3)) - 3);
+  let total = 0;
+  String(texto == null ? '' : texto).split('\n').forEach((par) => {
+    const t = par.trim();
+    if (!t) { total += 1; return; }
+    let atual = 0;
+    total += 1;
+    t.split(/\s+/).forEach((pal) => {
+      if (!atual) atual = pal.length;
+      else if (atual + 1 + pal.length <= largura) atual += 1 + pal.length;
+      else { total += 1; atual = pal.length; }
+      while (atual > largura) { total += 1; atual -= largura; }
+    });
+  });
+  return Math.max(1, total);
+}
+
+function larguraGrupoTabela(cols, ini, span) {
+  let w = 0;
+  for (let i = ini; i < ini + span && i < cols.length; i++) w += cols[i];
+  return w;
+}
+
+function adaptarLargurasTabela(cols, rows, fator) {
+  return cols.map((base, idx) => {
+    let pior = 1;
+    rows.forEach((row) => {
+      let col = 0;
+      (row.cells || []).forEach((cell) => {
+        const span = cell.span || 1;
+        if (span < 4 && idx >= col && idx < col + span) {
+          const n = linhasQuebraTabela(cell.v, larguraGrupoTabela(cols, col, span), fator);
+          if (n > pior) pior = n;
+        }
+        col += span;
+      });
+    });
+    if (pior <= TABELA_LINHAS_ALVO) return base;
+    const pretendida = Math.ceil((base * pior) / TABELA_LINHAS_ALVO);
+    return Math.min(Math.round(base * TABELA_MAX_ALARGAMENTO), Math.max(base, pretendida));
+  });
+}
+
+function calcularAlturasLinhas(rows, cols, fator) {
+  rows.forEach((row) => {
+    let altura = 15;
+    let col = 0;
+    (row.cells || []).forEach((cell) => {
+      const span = cell.span || 1;
+      const n = linhasQuebraTabela(cell.v, larguraGrupoTabela(cols, col, span), fator);
+      const fonte = TABELA_FONTES_STYLE[cell.s == null ? 3 : cell.s] || 10;
+      const porLinha = fonte >= 13 ? 17.5 : fonte >= 11 ? 15 : 13.4;
+      altura = Math.max(altura, Math.ceil(n * porLinha + 5));
+      col += span;
+    });
+    row.ht = Math.min(409, altura);
+  });
+}
+
+function adaptarSpecTabela(spec) {
+  spec.cols = adaptarLargurasTabela(spec.cols, spec.rows, 1.3);
+  calcularAlturasLinhas(spec.rows, spec.cols, 1.3);
+  return spec;
+}
+
+function fecharCemPercentuais(pcts) {
+  let dif = 100 - pcts.reduce((a, b) => a + b, 0);
+  let i = 0;
+  while (dif !== 0 && i < pcts.length * 20) {
+    const k = i % pcts.length;
+    if (dif > 0) { pcts[k] += 1; dif -= 1; }
+    else if (pcts[k] > 1) { pcts[k] -= 1; dif += 1; }
+    i += 1;
+  }
+}
+
+function largurasPercentuaisTabela(baseCols, colunas, linhas) {
+  const totalBase = baseCols.reduce((a, b) => a + b, 0) || 1;
+  const basePct = baseCols.map((w) => (w * 100) / totalBase);
+  const rows = [
+    { cells: colunas.map((c) => ({ v: c })) },
+    ...linhas.map((l) => ({ cells: l.map((v) => ({ v })) }))
+  ];
+  const cols = adaptarLargurasTabela(basePct, rows, 2.4);
+  const total = cols.reduce((a, b) => a + b, 0) || 1;
+  const pcts = cols.map((w) => Math.round((w * 100) / total));
+  fecharCemPercentuais(pcts);
+  // Piso: colunas curtas (DATA, CH…) não perdem mais que 15% da fatia base do modelo.
+  let deficit = 0;
+  pcts.forEach((p, i) => {
+    const piso = Math.max(1, Math.ceil(basePct[i] * 0.85));
+    if (p < piso) { deficit += piso - p; pcts[i] = piso; }
+  });
+  while (deficit > 0) {
+    let k = -1, folga = 0;
+    pcts.forEach((p, i) => {
+      const extra = p - basePct[i];
+      if (extra > folga) { folga = extra; k = i; }
+    });
+    if (k === -1) break;
+    pcts[k] -= 1;
+    deficit -= 1;
+  }
+  fecharCemPercentuais(pcts);
+  return pcts;
+}
+
+function montarSpecXLSX(plano, tipo) {
+  if (tipo === 'projeto') {
+    const doc = montarTabelaProjeto(plano);
+    const rows = [{ cells: [{ v: doc.titulo.replace(/\n/g, ' — '), s: 1, span: 6 }] }];
+    rows.push({ cells: [{ v: `Vigência: ${doc.vigencia}`, s: 6, span: 6 }] });
+    for (let i = 0; i < doc.identPares.length; i += 2) {
+      const esq = doc.identPares[i];
+      const dir = doc.identPares[i + 1];
+      rows.push({ cells: [{ v: `${esq[0]} ${esq[1]}`, s: 6, span: 1 }, { v: dir ? `${dir[0]} ${dir[1]}` : '', s: 6, span: 5 }] });
+    }
+    doc.blocos.forEach((b) => {
+      if (b.tipo === 'tabelaEtapas') {
+        rows.push({ cells: [{ v: b.colunas[0], s: 2 }, { v: b.colunas[1], s: 2 }, { v: b.colunas[2], s: 2, span: 3 }, { v: b.colunas[3], s: 2 }] });
+        b.linhas.forEach((linha) => rows.push({ cells: [{ v: linha[0], s: 3 }, { v: linha[1], s: 3 }, { v: linha[2], s: 3, span: 3 }, { v: linha[3], s: 3 }] }));
+      } else {
+        rows.push({ cells: [{ v: b.subtitulo ? `${b.titulo}\n${b.subtitulo}` : b.titulo, s: 4, span: 6 }] });
+        rows.push({ cells: [{ v: b.texto, s: 3, span: 6 }] });
+      }
+    });
+    return { nomeAba: 'Projetos', cols: TABELA_BASE_COLS_PROJETO.slice(), rows, nomeArquivo: 'Projetos - tabela (modelo 2026).xlsx' };
+  }
+
+  const doc = montarTabelaPlano(plano);
+  const rows = [
+    { cells: [{ v: doc.titulo1, s: 1, span: 8 }] },
+    { cells: [{ v: doc.titulo2, s: 5, span: 8 }] },
+    { cells: [{ v: doc.identificacao, s: 3, span: 8 }] },
+    { cells: doc.colunas.map((c) => ({ v: c, s: 2 })) },
+    ...doc.linhas.map((linha) => ({ cells: linha.map((v) => ({ v, s: 3 })) }))
+  ];
+  return { nomeAba: 'Plano de Aula', cols: TABELA_BASE_COLS_PLANO.slice(), rows, nomeArquivo: 'Plano de Aula - tabela (modelo 2026).xlsx' };
+}
+
+function exportarTabelaXLSX(plano, tipo) {
+  const spec = adaptarSpecTabela(montarSpecXLSX(plano, tipo));
+  const enc = new TextEncoder();
+  const cab = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const merges = [];
+  let dados = '';
+  spec.rows.forEach((row, ri) => {
+    const r = ri + 1;
+    let col = 0;
+    dados += `<row r="${r}" ht="${row.ht}" customHeight="1">`;
+    (row.cells || []).forEach((cell) => {
+      const ref = colLetraXLSX(col) + r;
+      const span = cell.span || 1;
+      if (span > 1) merges.push(`${ref}:${colLetraXLSX(col + span - 1)}${r}`);
+      dados += `<c r="${ref}" s="${cell.s == null ? 3 : cell.s}" t="inlineStr"><is><t xml:space="preserve">${xmlTabelaEsc(cell.v)}</t></is></c>`;
+      col += span;
+    });
+    dados += '</row>';
+  });
+  const colsXml = spec.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('');
+  const mergesXml = merges.length ? `<mergeCells count="${merges.length}">${merges.map((m) => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '';
+  const sheetXml = `${cab}<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>${colsXml}</cols><sheetData>${dados}</sheetData>${mergesXml}</worksheet>`;
+  const nomeAba = xmlTabelaEsc(spec.nomeAba).slice(0, 31);
+  const arquivos = [
+    { nome: '[Content_Types].xml', dados: enc.encode(`${cab}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`) },
+    { nome: '_rels/.rels', dados: enc.encode(`${cab}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`) },
+    { nome: 'xl/workbook.xml', dados: enc.encode(`${cab}<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${nomeAba}" sheetId="1" r:id="rId1"/></sheets></workbook>`) },
+    { nome: 'xl/_rels/workbook.xml.rels', dados: enc.encode(`${cab}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`) },
+    { nome: 'xl/styles.xml', dados: enc.encode(TABELA_STYLES_XML) },
+    { nome: 'xl/worksheets/sheet1.xml', dados: enc.encode(sheetXml) }
+  ];
+  baixarBlob(zipStoreTabela(arquivos), spec.nomeArquivo);
+  showToast('Planilha XLSX (modelo 2026) gerada. Verifique seus downloads.', 'success');
+}
+
+function abrirModalExportTabela() {
+  const plano = state.plano;
+  const tipo = plano.modo === 'projeto' ? 'projeto' : 'plano';
+  if (tipo === 'plano' && !(plano.habilidades || []).length) { showToast('Adicione ao menos uma habilidade antes de exportar.', 'info'); return; }
+  if (tipo === 'projeto' && !(plano.projeto?.etapas || []).length) { showToast('Adicione ao menos uma etapa ao projeto antes de exportar.', 'info'); return; }
+
+  const rotulo = tipo === 'projeto' ? 'Projeto' : 'Plano de Aula';
+  const overlay = el(`
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal__header"><h3>Exportar tabela — ${rotulo}</h3><button class="btn-icon" id="export-tabela-fechar">✕</button></div>
+        <div class="modal__body">
+          <p class="text-sm text-muted mb-16">Formato conforme o modelo <strong>Documentos para Planejamento 2026 — EF e EM</strong> (${tipo === 'projeto' ? 'aba Projetos' : 'aba Plano de Aula — tabela de 8 colunas'}). Página em paisagem.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="export-tabela-pdf">🖨️ PDF</button>
+            <button class="btn btn-secondary" id="export-tabela-docx">📝 Word</button>
+            <button class="btn btn-secondary" id="export-tabela-xlsx">📊 Excel (XLSX)</button>
+            <button class="btn btn-ghost" id="export-tabela-cancelar">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+  document.body.appendChild(overlay);
+  const fechar = () => overlay.remove();
+  overlay.querySelector('#export-tabela-fechar').addEventListener('click', fechar);
+  overlay.querySelector('#export-tabela-cancelar').addEventListener('click', fechar);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(); });
+  overlay.querySelector('#export-tabela-pdf').addEventListener('click', () => { fechar(); exportarTabelaPDF(plano, tipo); });
+  overlay.querySelector('#export-tabela-docx').addEventListener('click', () => { fechar(); exportarTabelaDocx(plano, tipo); });
+  overlay.querySelector('#export-tabela-xlsx').addEventListener('click', () => { fechar(); exportarTabelaXLSX(plano, tipo); });
+}
+window.abrirModalExportTabela = abrirModalExportTabela;
+
+// ============================================================================
 // Grade Horária — visualização do gerenciador de horários
 // ============================================================================
 function showScheduleView() {
@@ -1730,6 +2341,169 @@ function showSchedulePlanWizard() {
   showWizard();
 }
 
+// ============================================================================
+// Edição manual da grade horária (botão "Editar grade")
+// ============================================================================
+let gradeEditMode = false;
+
+const DIAS_LABEL_CURTO = { segunda: 'Segunda', terca: 'Terça', quarta: 'Quarta', quinta: 'Quinta', sexta: 'Sexta' };
+const DIAS_PREFIXO = { segunda: 'SEG', terca: 'TER', quarta: 'QUA', quinta: 'QUI', sexta: 'SEX' };
+
+function slugGrade(txt) {
+  return String(txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '').toUpperCase().slice(0, 8);
+}
+
+function componentesGrade() {
+  const set = new Set();
+  [typeof SCHEDULE_DATA !== 'undefined' ? SCHEDULE_DATA : null, window.SCHEDULE_DATA].forEach(sched => {
+    if (!sched || !sched.dias) return;
+    Object.values(sched.dias).forEach(d => (d?.aulas || []).forEach(a => a.componente && set.add(a.componente)));
+  });
+  getUniqueComponentes().forEach(c => set.add(c));
+  return [...set].filter(Boolean).sort();
+}
+
+function turmasGrade() {
+  const set = new Set(['101', '102', '201', '202', '301', '302']);
+  const sched = window.SCHEDULE_DATA;
+  if (sched && sched.dias) {
+    Object.values(sched.dias).forEach(d => (d?.aulas || []).forEach(a => a.turma && set.add(a.turma)));
+  }
+  return [...set].sort();
+}
+
+function persistirGrade() {
+  const sched = window.SCHEDULE_DATA;
+  if (!sched) return;
+  sched.fonte_versao = PROFESSORES_DATA.schema;
+  if (typeof SCHEDULE_DATA !== 'undefined' && SCHEDULE_DATA !== sched) {
+    SCHEDULE_DATA.dias = sched.dias;
+    SCHEDULE_DATA.horarios_padrao = sched.horarios_padrao;
+  }
+  if (typeof USER_NOME !== 'undefined' && USER_NOME) salvarGradeUsuario(USER_NOME, sched);
+}
+
+function normalizarBlocosDia(dia) {
+  const sched = window.SCHEDULE_DATA;
+  if (!sched?.dias?.[dia]) return;
+  const lista = sched.dias[dia].aulas;
+  const acharFim = a => {
+    if (a.fim) return a.fim;
+    const slot = (sched.horarios_padrao || []).find(h => h.inicio === a.inicio);
+    return slot ? slot.fim : '';
+  };
+  lista.forEach(a => { a.fim = acharFim(a); });
+  lista.sort((a, b) => parseTimeToMinutes(a.inicio) - parseTimeToMinutes(b.inicio));
+  const pre = DIAS_PREFIXO[dia] || 'DIA';
+  let i = 0;
+  while (i < lista.length) {
+    let j = i;
+    while (j + 1 < lista.length
+      && lista[j + 1].componente === lista[i].componente
+      && lista[j + 1].turma === lista[i].turma
+      && parseTimeToMinutes(lista[j].fim) === parseTimeToMinutes(lista[j + 1].inicio)) j++;
+    const n = j - i + 1;
+    const bloco = `${pre}-${slugGrade(lista[i].componente)}-${lista[i].turma}-${String(lista[i].inicio).replace(':', '')}`;
+    for (let k = i; k <= j; k++) {
+      const a = lista[k];
+      a.componente = String(a.componente).trim();
+      a.turma = String(a.turma).trim();
+      a.curso = a.curso || 'Ensino Médio';
+      a.ano = a.ano || sched.configuracao?.ano_letivo || 2026;
+      a.bloco = bloco;
+      a.bloco_continuo = n > 1;
+      a.aula_no_bloco = k - i + 1;
+      a.id = `${pre}-${String(a.inicio).replace(':', '')}-${slugGrade(a.componente)}-${slugGrade(a.turma)}`;
+    }
+    i = j + 1;
+  }
+}
+
+function alternarEdicaoGrade() {
+  gradeEditMode = !gradeEditMode;
+  const view = document.getElementById('view-content');
+  if (view) renderScheduleGrid(view);
+  showToast(gradeEditMode
+    ? 'Modo edição: clique numa célula para editar ou adicionar aula.'
+    : 'Edições da grade salvas.', 'success');
+}
+
+function abrirEditorAula(dia, inicio) {
+  const sched = window.SCHEDULE_DATA;
+  if (!sched?.dias?.[dia]) return;
+  const slot = (sched.horarios_padrao || []).find(h => h.inicio === inicio) || { inicio, fim: '' };
+  const existente = (sched.dias[dia].aulas || []).find(a => a.inicio === inicio);
+  const diaLabel = DIAS_LABEL_CURTO[dia] || dia;
+  const dica = `${diaLabel} · ${slot.inicio}–${slot.fim}`;
+
+  const overlay = el(`
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal__header">
+          <h3>${existente ? 'Editar aula' : 'Adicionar aula'}</h3>
+          <button type="button" class="btn-icon" id="edit-grade-fechar">✕</button>
+        </div>
+        <div class="modal__body">
+          <p class="text-sm text-muted mb-16">${escapeHtml(dica)}</p>
+          <div class="field">
+            <label for="edit-grade-componente">Componente</label>
+            <input class="input" id="edit-grade-componente" list="edit-grade-componentes" value="${escapeHtml(existente?.componente || '')}" placeholder="Ex: Biologia" autocomplete="off" />
+            <datalist id="edit-grade-componentes">${componentesGrade().map(c => `<option value="${escapeHtml(c)}"></option>`).join('')}</datalist>
+          </div>
+          <div class="field">
+            <label for="edit-grade-turma">Turma</label>
+            <input class="input" id="edit-grade-turma" list="edit-grade-turmas" value="${escapeHtml(existente?.turma || '')}" placeholder="Ex: 302" autocomplete="off" />
+            <datalist id="edit-grade-turmas">${turmasGrade().map(t => `<option value="${escapeHtml(t)}"></option>`).join('')}</datalist>
+            <div class="field__hint">Componente em branco remove a aula deste horário.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button type="button" class="btn btn-primary btn-sm" id="edit-grade-salvar">Salvar</button>
+            ${existente ? '<button type="button" class="btn btn-secondary btn-sm" id="edit-grade-remover">Remover aula</button>' : ''}
+            <button type="button" class="btn btn-secondary btn-sm" id="edit-grade-cancelar">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+  document.body.appendChild(overlay);
+
+  const inputComp = overlay.querySelector('#edit-grade-componente');
+  const inputTurma = overlay.querySelector('#edit-grade-turma');
+  inputComp.focus();
+
+  function fechar() { overlay.remove(); }
+
+  function aplicar() {
+    const componente = inputComp.value.trim();
+    const turma = inputTurma.value.trim();
+    const lista = sched.dias[dia].aulas;
+    const idx = lista.findIndex(a => a.inicio === inicio);
+    if (idx >= 0) lista.splice(idx, 1);
+    if (componente && turma) {
+      lista.push({
+        id: '', dia, inicio, fim: slot.fim || '',
+        componente, turma, curso: 'Ensino Médio',
+        ano: sched.configuracao?.ano_letivo || 2026,
+        bloco: '', bloco_continuo: false, aula_no_bloco: 1
+      });
+    }
+    normalizarBlocosDia(dia);
+    persistirGrade();
+    fechar();
+    const view = document.getElementById('view-content');
+    if (view) renderScheduleGrid(view);
+    showToast(componente && turma ? 'Aula salva na grade.' : 'Aula removida da grade.', 'success');
+  }
+
+  overlay.querySelector('#edit-grade-salvar').addEventListener('click', aplicar);
+  overlay.querySelector('#edit-grade-cancelar').addEventListener('click', fechar);
+  overlay.querySelector('#edit-grade-fechar').addEventListener('click', fechar);
+  const btnRemover = overlay.querySelector('#edit-grade-remover');
+  if (btnRemover) btnRemover.addEventListener('click', () => { inputComp.value = ''; aplicar(); });
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); aplicar(); } });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(); });
+}
+
 function renderScheduleGrid(container) {
   const sched = window.SCHEDULE_DATA;
   const diasOrdem = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
@@ -1753,10 +2527,13 @@ function renderScheduleGrid(container) {
         <h2>Grade Horária — ${escapeHtml(sched.configuracao.ano_letivo)}</h2>
         <p class="page-header__desc">${escapeHtml(sched.configuracao.instituicao)} · Prof. ${escapeHtml(sched.configuracao.professor.nome)} · ${escapeHtml(sched.configuracao.periodo)}</p>
       </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button type="button" class="btn btn-sm ${gradeEditMode ? 'btn-primary' : 'btn-secondary'}" id="btn-editar-grade">${gradeEditMode ? '✓ Concluir edição' : '✎ Editar grade'}</button>
+      </div>
     </div>`;
 
   gridHtml += `<div class="schedule-legend">
-    <span>Clique em qualquer aula para criar um plano</span>
+    <span>${gradeEditMode ? 'Clique numa célula para editar, adicionar ou remover aula' : 'Clique em qualquer aula para criar um plano'}</span>
     <span><strong>${sched.horarios_padrao.length}</strong> horários · <strong>${diasOrdem.reduce((t, d) => t + (sched.dias[d]?.aulas?.length || 0), 0)}</strong> aulas na semana</span>
   </div>`;
 
@@ -1775,12 +2552,14 @@ function renderScheduleGrid(container) {
         const isBlock = aulas.length > 1 || aulas[0].bloco_continuo;
         const blocoSize = aulas[0].bloco_continuo && aulas[0].aula_no_bloco === 1
           ? contarAulasNoBloco(dia, aulas[0].bloco) : 1;
-        gridHtml += `<div class="schedule-grid__cell" data-dia="${dia}" data-inicio="${slot.inicio}">
+        gridHtml += `<div class="schedule-grid__cell${gradeEditMode ? ' is-edit' : ''}" data-dia="${dia}" data-inicio="${slot.inicio}">
           <div class="schedule-cell__subject">${short}${isBlock && blocoSize > 1 ? ` (${blocoSize})` : ''}</div>
           <div class="schedule-cell__class">${turma}</div>
         </div>`;
       } else {
-        gridHtml += '<div class="schedule-grid__cell is-empty"></div>';
+        gridHtml += gradeEditMode
+          ? `<div class="schedule-grid__cell is-empty is-edit" data-dia="${dia}" data-inicio="${slot.inicio}"><div>＋</div></div>`
+          : '<div class="schedule-grid__cell is-empty"></div>';
       }
     });
   });
@@ -1789,14 +2568,19 @@ function renderScheduleGrid(container) {
   container.innerHTML = '';
   container.appendChild(el(gridHtml));
 
-  container.querySelectorAll('.schedule-grid__cell:not(.is-empty)').forEach(cell => {
+  container.querySelectorAll('.schedule-grid__cell[data-dia]').forEach(cell => {
     cell.addEventListener('click', () => {
       const dia = cell.dataset.dia;
       const inicio = cell.dataset.inicio;
+      if (gradeEditMode) { abrirEditorAula(dia, inicio); return; }
+      if (cell.classList.contains('is-empty')) return;
       const aulas = (sched.dias[dia]?.aulas || []).filter(a => a.inicio === inicio);
       if (aulas.length) criarPlanoFromSchedule(dia, aulas);
     });
   });
+
+  const btnEditar = container.querySelector('#btn-editar-grade');
+  if (btnEditar) btnEditar.addEventListener('click', alternarEdicaoGrade);
 }
 
 // ============================================================================
@@ -2686,8 +3470,10 @@ function renderStep7Projeto(container) {
       <div style="font-size:.88rem;"><strong>Instrumentos:</strong> ${(proj.avaliacaoProjeto?.instrumentos||[]).join(', ') || '—'}</div>
       <div class="section-divider"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="exportarProjetoPDF()">📄 Exportar PDF</button>
+        <button class="btn btn-primary" onclick="salvarPlanoAtual(); showToast('Plano salvo.', 'success');">💾 Salvar plano</button>
+        <button class="btn btn-secondary" onclick="exportarProjetoPDF()">📄 Exportar PDF</button>
         <button class="btn btn-secondary" onclick="exportarProjetoDocx()">📝 Exportar Word</button>
+        <button class="btn btn-secondary" onclick="window.abrirModalExportTabela()">📊 Exportar tabela (modelo 2026)</button>
         <button class="btn btn-secondary" onclick="copiarResumoProjetoSGN()">📋 Copiar para SGN</button>
         <button class="btn btn-ai" onclick="window.open('gerador-provas.html','geradorProvas')">📚 Gerar Avaliação</button>
       </div>
@@ -2793,15 +3579,20 @@ function abrirModalHabilidade({ onSelecionar }) {
       <div class="modal">
         <div class="modal__header"><h3>Selecionar habilidade</h3><button class="btn-icon" id="modal-fechar">✕</button></div>
         <div class="modal__body">
+          <div class="field" style="margin-bottom:12px;">
+            <label for="input-busca-termo">Busca por termo</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input class="input" id="input-busca-termo" placeholder="Ex: célula, ET-DE01, Biologia, competência digital" autocomplete="off" style="flex:1;" />
+              <button type="button" class="btn btn-secondary" id="btn-limpar-busca" style="display:none;padding:0 12px;" title="Limpar busca">✕</button>
+            </div>
+            <div class="field__hint">Busca no código, no texto da habilidade, na competência, na área, no componente, no segmento e nos conteúdos. Várias palavras são combinadas (todas precisam aparecer) e a busca ignora acentos. <strong>Enter</strong> busca agora.</div>
+          </div>
           <div class="tabs">
             <button class="tab-btn" data-aba="area">Por área</button>
             <button class="tab-btn" data-aba="componente">Por componente</button>
-            <button class="tab-btn" data-aba="codigo">Por código</button>
+            <button class="tab-btn" data-aba="todos">Todas</button>
           </div>
           <div id="modal-filtros"></div>
-          <div id="modal-busca-codigo" style="display:none;" class="field">
-            <input class="input" id="input-codigo" placeholder="Ex: ET-DE01 ou SESI.EM13CHS101.d.2" />
-          </div>
           <div id="modal-resultados"></div>
         </div>
       </div>
@@ -2811,7 +3602,6 @@ function abrirModalHabilidade({ onSelecionar }) {
 
   function renderFiltros() {
     const filtrosDiv = overlay.querySelector('#modal-filtros');
-    overlay.querySelector('#modal-busca-codigo').style.display = abaAtiva === 'codigo' ? 'block' : 'none';
     overlay.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.aba === abaAtiva));
 
     if (abaAtiva === 'area') {
@@ -2835,29 +3625,40 @@ function abrirModalHabilidade({ onSelecionar }) {
 
   function buscar() {
     const resultadosDiv = overlay.querySelector('#modal-resultados');
+    const termo = termoBusca.length >= 2 ? termoBusca : '';
+    const termosAtuais = termo ? termosDaBusca(termo) : [];
     const params = {};
     if (abaAtiva === 'area' && filtroArea) params.area = filtroArea;
     if (abaAtiva === 'componente' && filtroComponente) params.componente = filtroComponente;
-    if (abaAtiva === 'codigo' && termoBusca) params.q = termoBusca;
+    if (termo) params.q = termo;
+
+    if (!params.area && !params.componente && !termo && abaAtiva !== 'todos') {
+      resultadosDiv.innerHTML = '<div class="empty-state">Selecione uma área, um componente ou digite um termo para buscar.</div>';
+      return;
+    }
 
     const habilidades = buscarHabilidades(params);
     if (!habilidades.length) {
-      resultadosDiv.innerHTML = '<div class="empty-state">Nenhuma habilidade encontrada com este filtro.</div>';
+      resultadosDiv.innerHTML = `<div class="empty-state">Nenhuma habilidade encontrada${termo ? ` para “${escapeHtml(termo)}”` : ' com este filtro'}.<br/><button type="button" class="btn btn-ghost btn-sm" id="btn-limpar-busca-vazio">Limpar busca e filtros</button></div>`;
+      const btnVazio = resultadosDiv.querySelector('#btn-limpar-busca-vazio');
+      if (btnVazio) btnVazio.addEventListener('click', limparBusca);
       return;
     }
+
     resultadosDiv.innerHTML = '';
-    resultadosDiv.appendChild(el(`<div class="text-faint text-sm mb-8">${habilidades.length} habilidade(s) encontrada(s)</div>`));
+    const ativos = [params.area, params.componente, termo].filter(Boolean).join(' · ');
+    resultadosDiv.appendChild(el(`<div class="text-faint text-sm mb-8">${habilidades.length} habilidade(s) encontrada(s)${ativos ? ` — <strong>${escapeHtml(ativos)}</strong>` : ''}${habilidades.length > 150 ? ' · exibindo as primeiras 150' : ''}</div>`));
     habilidades.slice(0, 150).forEach((h) => {
       const card = el(`
         <div class="habilidade-card">
           <div class="habilidade-card__top">
-            <span class="badge-codigo">${escapeHtml(h.codigo)}</span>
+            <span class="badge-codigo">${destacarTermosHabilidade(h.codigo, termosAtuais)}</span>
             <span class="flex gap-8">
-              ${h.area ? `<span class="badge badge-area">${escapeHtml(h.area)}</span>` : ''}
-              <span class="badge badge-componente">${escapeHtml(h.componente || '')}</span>
+              ${h.area ? `<span class="badge badge-area">${destacarTermosHabilidade(h.area, termosAtuais)}</span>` : ''}
+              <span class="badge badge-componente">${destacarTermosHabilidade(h.componente || '', termosAtuais)}</span>
             </span>
           </div>
-          <div class="habilidade-card__texto">${escapeHtml(h.habilidade)}</div>
+          <div class="habilidade-card__texto">${destacarTermosHabilidade(h.habilidade, termosAtuais)}</div>
         </div>
       `);
       card.addEventListener('click', () => { onSelecionar(h); fechar(); });
@@ -2865,28 +3666,47 @@ function abrirModalHabilidade({ onSelecionar }) {
     });
   }
 
-  const buscarDebounced = debounce(buscar, 350);
+  const buscarDebounced = debounce(buscar, 300);
+  const inputBusca = overlay.querySelector('#input-busca-termo');
+  const btnLimpar = overlay.querySelector('#btn-limpar-busca');
+
+  function limparBusca() {
+    termoBusca = '';
+    filtroArea = null;
+    filtroComponente = null;
+    inputBusca.value = '';
+    btnLimpar.style.display = 'none';
+    renderFiltros();
+    buscar();
+    inputBusca.focus();
+  }
 
   overlay.querySelectorAll('.tab-btn').forEach((btn) => btn.addEventListener('click', () => {
     abaAtiva = btn.dataset.aba;
     renderFiltros();
-    if (abaAtiva !== 'codigo') buscar();
-    else overlay.querySelector('#modal-resultados').innerHTML = '<div class="empty-state">Digite um código para buscar.</div>';
+    buscar();
   }));
 
-  overlay.querySelector('#input-codigo').addEventListener('input', (e) => {
+  inputBusca.addEventListener('input', (e) => {
     termoBusca = e.target.value.trim();
-    if (termoBusca.length >= 2) buscarDebounced();
-    else overlay.querySelector('#modal-resultados').innerHTML = '<div class="empty-state">Digite ao menos 2 caracteres.</div>';
+    btnLimpar.style.display = termoBusca ? 'block' : 'none';
+    if (termoBusca.length === 0 || termoBusca.length >= 2) buscarDebounced();
+    else overlay.querySelector('#modal-resultados').innerHTML = '<div class="empty-state">Digite ao menos 2 caracteres para buscar.</div>';
   });
+
+  inputBusca.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); buscar(); }
+    if (e.key === 'Escape') { e.preventDefault(); limparBusca(); }
+  });
+
+  btnLimpar.addEventListener('click', limparBusca);
 
   function fechar() { overlay.remove(); }
   overlay.querySelector('#modal-fechar').addEventListener('click', fechar);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(); });
 
   renderFiltros();
-  overlay.querySelector('[data-aba="area"]').classList.add('is-active');
-  overlay.querySelector('#modal-resultados').innerHTML = '<div class="empty-state">Selecione uma área para ver as habilidades.</div>';
+  buscar();
 }
 
 // ============================================================================
@@ -3858,6 +4678,7 @@ function renderStep7(container) {
           <button class="btn btn-secondary" id="btn-marcar-finalizado">Marcar como finalizado</button>
           <button class="btn btn-ai" id="btn-exportar-pdf">Exportar PDF</button>
           <button class="btn btn-ai" id="btn-exportar-docx">Exportar Word</button>
+          <button class="btn btn-secondary" id="btn-exportar-tabela">📊 Exportar tabela (modelo 2026)</button>
         </div>
         <div class="section-divider"></div>
         <h3 class="mb-8" id="titulo-resumo-sgn">Resumo para o SGN</h3>
@@ -3906,6 +4727,11 @@ function renderStep7(container) {
       if (!state.plano.habilidades?.length) { showToast('Adicione ao menos uma habilidade antes de exportar.', 'info'); return; }
       exportarPlanoDocx(state.plano);
       showToast('Documento Word gerado. Verifique seus downloads.', 'success');
+    });
+
+    container.querySelector('#btn-exportar-tabela').addEventListener('click', () => {
+      if (!state.plano.habilidades?.length) { showToast('Adicione ao menos uma habilidade antes de exportar.', 'info'); return; }
+      abrirModalExportTabela();
     });
 
     const box = container.querySelector('#resumo-sgn-box');
@@ -3960,7 +4786,7 @@ function renderStep7(container) {
 // Dados de horários de TODOS os professores (extraído da grade oficial SESI)
 // ============================================================================
 var PROFESSORES_DATA = {
-  schema: "sesi-horarios-professores/v1",
+  schema: "sesi-horarios-professores/v2",
   instituicao: "SESI TUBARÃO II",
   ano_letivo: 2026,
   turno: "Matutino",
@@ -4042,14 +4868,14 @@ var PROFESSORES_DATA = {
       {"dia":"quinta","inicio":"09:30","componente":"Biohackeria 2026","turma":"302 - EM Tubarão 2026"},
       {"dia":"quinta","inicio":"10:30","componente":"Robótica 2026","turma":"301 - EM Tubarão 2026"},
       {"dia":"quinta","inicio":"11:15","componente":"Robótica 2026","turma":"301 - EM Tubarão 2026"},
-      {"dia":"quinta","inicio":"12:00","componente":"Projetos Livres LAFAIETE 2026","turma":"302 - EM Tubarão 2026"},
-      {"dia":"sexta","inicio":"07:15","componente":"Biologia - 2026","turma":"201 - EM Tubarão 2026"},
-      {"dia":"sexta","inicio":"08:00","componente":"Biologia - 2026","turma":"201 - EM Tubarão 2026"},
-      {"dia":"sexta","inicio":"08:45","componente":"Iniciação Científica e Projetos - CNT 2026","turma":"202 - EM Tubarão 2026"},
-      {"dia":"sexta","inicio":"09:30","componente":"Iniciação Científica e Projetos - CNT 2026","turma":"202 - EM Tubarão 2026"},
-      {"dia":"sexta","inicio":"10:30","componente":"Biologia - 2026","turma":"102 - EM Tubarão 2026"},
+      {"dia":"quinta","inicio":"12:00","componente":"Projetos Livres LAFAIETE 2026","turma":"301 - EM Tubarão 2026"},
+      {"dia":"sexta","inicio":"07:15","componente":"Iniciação Científica e Projetos - CNT 2026","turma":"202 - EM Tubarão 2026"},
+      {"dia":"sexta","inicio":"08:00","componente":"Iniciação Científica e Projetos - CNT 2026","turma":"202 - EM Tubarão 2026"},
+      {"dia":"sexta","inicio":"08:45","componente":"Biologia - 2026","turma":"201 - EM Tubarão 2026"},
+      {"dia":"sexta","inicio":"09:30","componente":"Biologia - 2026","turma":"201 - EM Tubarão 2026"},
+      {"dia":"sexta","inicio":"10:30","componente":"Biologia - 2026","turma":"301 - EM Tubarão 2026"},
       {"dia":"sexta","inicio":"11:15","componente":"Biologia - 2026","turma":"102 - EM Tubarão 2026"},
-      {"dia":"sexta","inicio":"12:00","componente":"Biologia - 2026","turma":"301 - EM Tubarão 2026"}
+      {"dia":"sexta","inicio":"12:00","componente":"Biologia - 2026","turma":"102 - EM Tubarão 2026"}
     ]},
     {"id":"layane-da-silva-correa","nome":"Layane da Silva Correa","aulas":[
       {"dia":"terca","inicio":"07:15","componente":"Química - 2026","turma":"301 - EM Tubarão 2026"},
@@ -4248,6 +5074,7 @@ function getProfessorGrade(nomeProfessor) {
       aula_no_bloco: 1
     });
   });
+  sched.fonte_versao = PROFESSORES_DATA.schema;
   return sched;
 }
 
@@ -4376,7 +5203,7 @@ function aoLogar(nome) {
   state.dados = dados;
   USER_NOME = nome;
   let grade = carregarGradeUsuario(nome);
-  if (!grade) {
+  if (!grade || grade.fonte_versao !== PROFESSORES_DATA.schema) {
     grade = getProfessorGrade(nome);
     if (grade) salvarGradeUsuario(nome, grade);
   }
